@@ -10,11 +10,11 @@ posy_static - Script which uses the Posy engine to generate static files.
 
 =head1 VERSION
 
-This describes version B<0.90> of posy_static.
+This describes version B<0.91> of posy_static.
 
 =cut
 
-our $VERSION = '0.90';
+our $VERSION = '0.91';
 
 =head1 SYNOPSIS
 
@@ -24,10 +24,10 @@ posy_static { --actions I<action> } ( --base_dir I<dirname> |
 --config_dir I<dirname> --data_dir I<dirname> --flavour_dir I<dirname>
 --state_dir I<dirname> ) { --DayWeek2Name I<num>=I<name> }
 [ --debug_level I<num> ] { --entry_actions I<action> }
-{ --file_extensions I<extension>=I<type> }
---gen_type I<type> [ --libdir I<dirname> ] { --MonthNum2Name I<num>=I<name> }
-{ --plugins I<plugin> }
---static_dir I<dirname> --url I<url>
+{ --file_extensions I<extension>=I<type> } --gen_type I<type>
+[ --libdir I<dirname> ] { --MonthNum2Name I<num>=I<name> }
+[ --outfile I<filename> ] { --plugins I<plugin> } --static_dir I<dirname>
+--url I<url> I<parameter>=I<value> ...
 
 =head1 DESCRIPTION
 
@@ -120,8 +120,34 @@ directory to the default, then use this argument.
 
 =item --gen_type I<type>
 
-The type of pages to generate.  The possible types are 'entry',
-'category' or 'chrono'.
+The type of pages to generate.
+
+=over
+
+=item init
+
+Run the given actions, but produce no output.  This is useful for
+things like setting up the file indexes before doing a full run.
+
+=item path
+
+Generate one file, given by the path.  If --outfile is set, then
+will output to that file, otherwise will output to the relevant
+file under --static_dir.
+
+=item entry
+
+Generate all entry files.
+
+=item category
+
+Generate all category files.
+
+=item chrono
+
+Generate all chrono files.
+
+=back
 
 =item --help
 
@@ -157,6 +183,12 @@ all month-names to be truncated.
 --MonthNum2Name 7=July --MonthNum2Name 8=August
 --MonthNum2Name 9=September --MonthNum2Name 10=October
 --MonthNum2Name 11=November --MonthNum2Name 12=December
+
+=item --outfile I<filename>
+
+Optional name of an output file if --gen_type is 'path'.  Setting --outfile
+to '-' will print the result to Standard Output; useful to check
+if the output is what you want, first.
 
 =item --plugins I<plugin>
 
@@ -206,6 +238,8 @@ Print version information and exit.
     Getopt::Long
     Pod::Usage
     Getopt::ArgvFile
+    File::Spec
+    Storable
     Posy
 
 =head1 SEE ALSO
@@ -257,6 +291,7 @@ sub process_args ($) {
 	       'libdir=s',
 	       'MonthNum2Name=s%',
 	       'plugins=s@',
+	       'outfile=s',
 	       'state_dir=s',
 	       'static_dir=s',
 	       'gen_type=s',
@@ -292,6 +327,7 @@ MAIN: {
 
     my @plugins = qw(Posy::Core  Posy::Plugin::GenStatic);
     push @plugins, @{$data{plugins}} if ($data{plugins});
+    warn "plugins=", join("\n", @plugins), "\n" if $data{debug_level};
     delete $data{plugins};
 
     $class->import(@plugins);

@@ -1,6 +1,42 @@
 Revision history for Posy
 =========================
 
+0.91 Tue 08 February 2005
+-------------------------
+
+  * (8 Feb 2005) improvements to static generation
+  	I found that when runing posy_static on large numbers of files,
+  the memory usage got larger and larger and larger until the whole machine
+  ground to a halt.  After trying a few things, I was forced to resort to
+  forking a process for each file generation.  Therefore (a) I'm not sure
+  how non-unix systems will take this and (b) this could make static generation
+  for small sites relatively slower.  But perlfork should hopefully take care
+  of the forking, and static generation isn't meant to be as fast as CGI anyway.
+  	Also added two more 'gen_type' options:
+  	- path: generate one single file, given by the path parameter
+  	Useful for updating single files or for checking output.
+  	- init: runs the actions without generating any files.
+  	Useful for doing the indexing on the whole site first, and then
+  running posy_static again to do the actual generation.  It tends to be
+  quicker that way.
+
+  * (8 Feb 2005) can set outfile to STDOUT
+  	If one gives '-' as the outfile, then this will print to STDOUT.
+  This is useful for checking output when using posy_static, where 'outfile'
+  is usually set to something else and thus needs to be overridden.
+
+  * (8 Feb 2005) order of parameter parsing in static mode
+  	Originally, in static mode, this set the $self->param() parameters
+  first from the @ARGV array, and then from the $self->{params} hash,
+  which meant that $self->{params} parameters would override @ARGV parameters.
+  This was against convention, which expects that things given on the
+  command-line (that is, @ARGV) would override things like defaults.
+  So I have fixed this so that @ARGV is processed last.  It means, however,
+  that the @ARGV processing is done by Posy::Core and then passed on to
+  CGI::Minimal, so it is very simple.
+
+  * (8 Feb 2005) fixed bug with static generation
+
 0.90 Sun 06 February 2005
 -------------------------
 

@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.90> of Posy::Core.
+This describes version B<0.91> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.90';
+our $VERSION = '0.91';
 
 =head1 SYNOPSIS
 
@@ -234,6 +234,7 @@ sub init {
 						'flavours'); 
 
     # set the error templates if not already set
+    $self->{templates} = {};
     $self->{templates}->{content_type}->{error} ||= 'text/html';
     $self->{templates}->{head}->{error} ||=
 		'<html><body><p><font color="red">Error: I\'m afraid this is the first I\'ve heard of a "$path_flavour" flavoured Posy.  Try dropping the "/.$path_flavour" bit from the end of the URL.</font>';
@@ -255,6 +256,9 @@ sub init {
     my @tarr = localtime($self->{now});
     $self->{this_year} = $tarr[5] + 1900;
     $self->{this_month} = $tarr[4] + 1;
+
+    # make sure certain things are clear
+    $self->{path} = {};
 
     return ($self);
 } # init
@@ -309,13 +313,12 @@ aren't in CGI mode.
 
 Sets $self->{url} if it isn't already set.
 
-When this is not in dynamic mode, the parameters can be set (a) by giving
-them on the command line and (b) by passing them through the
-$self->{params} hash (by setting params=>{...} when calling L</new> or
-L</run>).  This can be useful for writing scripts that aren't CGI scripts.
-Note that the command-line is checked before the $self->{params}
-hash, so it is probably best, if writing a script, to use one method
-or the other but not both.
+When this is not in dynamic mode, the parameters can be set (a) by passing
+them through the $self->{params} hash (by setting params=>{...} when
+calling L</new> or L</run>), and (b) by giving them on the command line (as
+"param=value" pairs).  This can be useful for writing scripts that aren't
+CGI scripts.  Note that the command-line values override the $self->{param}
+values.
 
 =cut
 sub init_params {
@@ -338,10 +341,10 @@ sub init_params {
     {
 	$self->{dynamic} = 0;
 	$self->{static} = 1;
+
 	# trick CGI::Minimal into NOT reading STDIN
-	# but give it the contents of @ARGV instead
+	# this will now check $ENV{QUERY_STRING}
 	$ENV{REQUEST_METHOD} = 'GET';
-	$ENV{QUERY_STRING} = join(';', @ARGV);
 	$self->{cgi} = new CGI::Minimal;
 
 	# set the parameters from $self->{params}
@@ -351,6 +354,13 @@ sub init_params {
 	    {
 		$self->{cgi}->param($key=>$val);
 	    }
+	}
+	# set the parameters from @ARGV, consuming as we go
+	while (@ARGV)
+	{
+	    my $keyval = shift @ARGV;
+	    my ($key, $val) = split(/=/, $keyval);
+	    $self->{cgi}->param($key=>$val);
 	}
     }
     # only set $self->{url} if it isn't defined; this allows users
@@ -828,7 +838,7 @@ sub index_entries {
 	my $reindex_cat = $self->param('reindex_cat');
 	# since this is a category ID, then need to split it on /
 	# to get something which can be turned into a directory path
-	my @rc_split = split('/', $reindex_cat);
+	my @rc_split = ($reindex_cat ? split('/', $reindex_cat) : ());
 	my $reindex_dir = File::Spec->catdir($self->{data_dir}, @rc_split);
 	if ($reindex_cat and -d $reindex_dir)
 	{
@@ -1265,7 +1275,15 @@ sub render_page {
 	and $self->{outfile}) # print to a file
     {
 	my $fh;
-	if (open $fh, ">$self->{outfile}")
+	if ($self->{outfile} eq '-')
+	{
+	    $fh = \*STDOUT;
+	}
+	else
+	{
+	    open($fh, ">$self->{outfile}") or $fh = undef;
+	}
+	if ($fh)
 	{
 	    print $fh $flow_state->{head};
 	    print $fh @{$flow_state->{page_body}};

@@ -7,15 +7,17 @@ Posy::Plugin::YamlConfig - Posy plugin to read config files in YAML format
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::YamlConfig.
+This describes version B<0.11> of Posy::Plugin::YamlConfig.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-    @plugins = qw(Posy::Core Posy::Plugin::YamlConfig);
+    @plugins = qw(Posy::Core
+	Posy::Plugin::YamlConfig
+	...);
 
 =head1 DESCRIPTION
 
@@ -86,6 +88,7 @@ sub read_config_file {
 
 perl(1).
 Posy
+YAML
 
 =head1 BUGS
 
@@ -99,7 +102,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

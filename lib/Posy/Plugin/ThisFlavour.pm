@@ -3,15 +3,15 @@ use strict;
 
 =head1 NAME
 
-Posy::Plugin::ThisFlavour - change relative links to the current flavour
+Posy::Plugin::ThisFlavour - Posy plugin to change local links to the current flavour
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::ThisFlavour.
+This describes version B<0.11> of Posy::Plugin::ThisFlavour.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ our $VERSION = '0.10';
 
 =head1 DESCRIPTION
 
-This plugin changes relative links in entries from the default flavour
+This plugin changes local links in entries from the default flavour
 into the current flavour (if the flavours are not the same).
 
 =head2 Configuration
@@ -71,9 +71,9 @@ Methods implementing per-entry actions.
 
 =head2 this_flavour
 
-$self->this_flavour(\%flow_state, \%current_entry, \%entry_state)
+$self->this_flavour($flow_state, $current_entry, $entry_state)
 
-Alters $current_entry->{body} by converting the relative links
+Alters $current_entry->{body} by converting the local links
 to the current flavour.
 
 =cut
@@ -117,10 +117,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
-
-Based on the blosxom 'toc' plugin by Gregor Rayman (copyright 2003)
-<rayman <at> grayman <dot> de>
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

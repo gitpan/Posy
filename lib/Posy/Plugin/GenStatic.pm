@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy.
+This describes version B<0.11> of Posy.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -49,9 +49,6 @@ use File::Spec;
 =head2 run
 
 Posy->run(%args);
-
-C<run> is the only methods you should need to use from outside
-this module; other methods are called internally by this one.
 
 This version of run goes through the file list, creates a "fake"
 path for the files wanted to generate, and calls the core
@@ -165,6 +162,7 @@ sub run {
 =head1 SEE ALSO
 
 perl(1).
+posy_static
 
 =head1 BUGS
 
@@ -178,7 +176,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -7,22 +7,21 @@ Posy::Plugin::Toc - Posy plugin create a table of contents
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::Toc.
+This describes version B<0.11> of Posy::Plugin::Toc.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core Posy::Plugin::Toc));
     @entry_actions = qw(header
-	    entry_template
-	    read_entry
+	    ...
 	    parse_entry
 	    make_toc
 	    render_entry
-	    append_entry
+	    ...
 	);
 
 =head1 DESCRIPTION
@@ -34,11 +33,11 @@ contains string $toc_split and only from headers below
 $toc_split. 
 
 If there are no headers (element $toc_chapter_element), then 
-no table of context will be generated.
+no table of contents will be generated.
 
-This creates a 'make_toc' entry action, which should be placed
-after 'parse_entry' in the entry_action list.  If you are using
-the Posy::Plugin::ShortBody plugin, this should be placed after
+This creates a 'make_toc' entry action, which should be placed after
+'parse_entry' and before 'render_entry' in the entry_action list.  If you
+are using the Posy::Plugin::ShortBody plugin, this should be placed after
 'short_body' in the entry_action list, not before it.
 
 =head2 Configuration
@@ -133,7 +132,7 @@ Methods implementing per-entry actions.
 
 =head2 make_toc
 
-$self->make_toc(\%flow_state, \%current_entry, \%entry_state)
+$self->make_toc($flow_state, $current_entry, $entry_state)
 
 Alters $current_entry->{body} by adding a table-of-contents
 if the "toc_split" string is in the body.
@@ -157,7 +156,7 @@ sub make_toc {
 	my $toc_suffix = $self->{config}->{toc_suffix};
 	$self->{toc}->{chap} = 0;
 
-	$text =~ s:<($toc_chapter_element)(.*?)>(.*?)</$toc_chapter_element>:$self->toc_do_stuff($1,$2,$3,\$toc):ego;
+	$text =~ s:<($toc_chapter_element)(.*?)>(.*?)</$toc_chapter_element>:$self->_toc_do_stuff($1,$2,$3,\$toc):ego;
 	if ($toc) {
 	    my $entry_num = $self->{toc}->{entry_num};
 	    $body .= "<a name='TOC${entry_num}'></a>"
@@ -177,13 +176,13 @@ sub make_toc {
 
 =head1 Private Methods
 
-=head2 toc_do_stuff
+=head2 _toc_do_stuff
 
 Return the stuff to be substituted in found header anchors,
 and append to the $toc information.
 
 =cut
-sub toc_do_stuff {
+sub _toc_do_stuff {
     my $self = shift;
     my $chap_el = shift;
     my $chap_att = shift;
@@ -213,7 +212,7 @@ sub toc_do_stuff {
 		      $self->{config}->{toc_line_suffix});
 
     return $newhead;
-} # toc_do_stuff
+} # _toc_do_stuff
 
 =head1 REQUIRES
 
@@ -239,7 +238,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 Based on the blosxom 'toc' plugin by Gregor Rayman (copyright 2003)
 <rayman <at> grayman <dot> de>

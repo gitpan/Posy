@@ -3,38 +3,29 @@ use strict;
 
 =head1 NAME
 
-Posy::Plugin::ThemeCss - Posy plugin to give the start of an entry body
+Posy::Plugin::ThemeCss - Posy plugin for Cascading Style Sheet themes
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::ThemeCss.
+This describes version B<0.11> of Posy::Plugin::ThemeCss.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
+	...
 	Posy::Plugin::TextTemplate
 	Posy::Plugin::YamlConfig
 	Posy::Plugin::ThemeCss));
     @actions = qw(init_params
-	    parse_path
-	    stop_if_not_found
-	    set_config
-	    index_entries
-	    select_by_path
-	    filter_by_date
-	    sort_entries
-	    content_type
+	    ...
 	    head_template
 	    theme_css_set
 	    head_render
-	    do_entry_actions
-	    foot_template
-	    foot_render
-	    render_page
+	    ...
 	);
 
 =head1 DESCRIPTION
@@ -62,7 +53,7 @@ list.  It doesn't really matter where it is in the plugins list,
 just so long as you also have the Posy::Plugin::YamlConfig plugin
 as well.
 
-In the actions list, it needs to go somewhere after B<set_config>
+In the actions list, it needs to go somewhere after B<head_template>
 and before B<head_render>, since the config needs to have been read,
 and this needs to set values before the head is rendered.
 
@@ -109,6 +100,7 @@ These are the (CSS) files associated with the CSS selections.
 =item B<param>
 
 The name of the parameter to check for selecting CSS themes.
+(default: theme_css)
 
 =back
 
@@ -116,6 +108,7 @@ The name of the parameter to check for selecting CSS themes.
 
 Example config file:
 
+	---
 	theme_css_default: Smooth
 	theme_css:
 	  themes:
@@ -160,7 +153,7 @@ Methods implementing actions.
 
 =head2 theme_css_set
 
-$self->theme_css_set(\%flow_state)
+$self->theme_css_set($flow_state)
 
 Sets $flow_state->{theme_css_display} and $flow_state->{theme_css_links}
 (aka $flow_theme_css_display and $flow_theme_css_links)
@@ -256,7 +249,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 Based in part on the 'css' blosxom plugin by
 Eric Davis <edavis <at> foobargeek <dot> com> http://www.foobargeek.com

@@ -25,8 +25,15 @@ my $res = Posy->run(params=>{path=>$path},
 		    outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-my $result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+my $result = look_for($outfile, '^Plugins HOWTO$')
+    and look_for($outfile, '^Plugins$')
+    and look_for($outfile, '<h3 id="content">Content</h3>')
+    and look_for($outfile, '^Alpha$')
+    and look_for($outfile, '<h3 id="welcome">Posy : Welcome</h3>')
+    and look_for($outfile, '<h3 id="index">VR.5: The Wind of the Mind</h3>')
+    and look_for($outfile, '<h1>The File Morgan Sent in "Love and Death"</h1>')
+    and look_for($outfile, '<h3 id="confr">Control Freak</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -41,8 +48,15 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '^Plugins HOWTO$')
+    and look_for($outfile, '^Plugins$')
+    and look_for($outfile, '<h3 id="content">Content</h3>')
+    and look_for($outfile, '^Alpha$')
+    and look_for($outfile, '<h3 id="welcome">Posy : Welcome</h3>')
+    and look_for($outfile, '<h3 id="index">VR.5: The Wind of the Mind</h3>')
+    and look_for($outfile, '<h1>The File Morgan Sent in "Love and Death"</h1>')
+    and look_for($outfile, '<h3 id="confr">Control Freak</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -59,8 +73,9 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '^Plugins HOWTO$')
+    and look_for($outfile, '^Plugins$');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -75,8 +90,9 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '^Plugins HOWTO$')
+    and look_for($outfile, '^Plugins$');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -93,8 +109,10 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '<h3 id="index">VR.5: The Wind of the Mind</h3>')
+    and look_for($outfile, '<h1>The File Morgan Sent in "Love and Death"</h1>')
+    and look_for($outfile, '<h3 id="confr">Control Freak</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -109,8 +127,10 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '<h3 id="index">VR.5: The Wind of the Mind</h3>')
+    and look_for($outfile, '<h1>The File Morgan Sent in "Love and Death"</h1>')
+    and look_for($outfile, '<h3 id="confr">Control Freak</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);

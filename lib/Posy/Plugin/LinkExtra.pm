@@ -7,11 +7,11 @@ Posy::Plugin::LinkExtra - Posy plugin to add extras to local links
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::LinkExtra.
+This describes version B<0.11> of Posy::Plugin::LinkExtra.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -80,7 +80,7 @@ Methods implementing per-entry actions.
 
 =head2 link_extra
 
-$self->link_extra(\%flow_state, \%current_entry, \%entry_state)
+$self->link_extra($flow_state, $current_entry, $entry_state)
 
 Alters $current_entry->{body} by adding extra information to
 flagged local links.
@@ -181,7 +181,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2005 by Kathryn Andersen
 
 Based on the blosxom 'toc' plugin by Gregor Rayman (copyright 2003)
 <rayman <at> grayman <dot> de>

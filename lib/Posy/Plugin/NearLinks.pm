@@ -3,23 +3,26 @@ use strict;
 
 =head1 NAME
 
-Posy::Plugin::NearLinks - give links of articles in the current category
+Posy::Plugin::NearLinks - Posy plugin to give links of articles in the current category
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::NearLinks.
+This describes version B<0.11> of Posy::Plugin::NearLinks.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
 		  Posy::Plugin::TextTemplate
+		  ...
 		  Posy::Plugin::EntryTitles
 		  Posy::Plugin::LinkList
-		  Posy::Plugin::NearLinks));
+		  Posy::Plugin::NearLinks
+		  ...
+		  );
 
 =head1 DESCRIPTION
 
@@ -40,16 +43,50 @@ Methods which can be called from elsewhere.
 
 =head2 near_links
 
-$links = $self->near_links(
-    pre_list=>'<ul>',
-    post_list=>'</ul>',
-    pre_item=>'<li>',
-    post_item=>'</li>'
-    pre_active_item=>'<li><em>',
-    post_active_item=>'</em></li>',
-    item_sep=>"\n");
+    $links = $self->near_links(
+	pre_list=>'<ul>',
+	post_list=>'</ul>',
+	pre_item=>'<li>',
+	post_item=>'</li>'
+	pre_active_item=>'<li><em>',
+	post_active_item=>'</em></li>',
+	item_sep=>"\n");
 
 Generates a list of links of entries in the current category.
+
+Options:
+
+=over
+
+=item pre_list
+
+String to begin the list with.
+
+=item post_list
+
+String to end the list with.
+
+=item pre_item
+
+String to prepend to a non-active item.
+
+=item post_item
+
+String to append to a non-active item.
+
+=item pre_active_item
+
+String to prepend to an active item.
+
+=item post_active_item
+
+String to prepend to an active item.
+
+=item item_sep
+
+String to put between items.
+
+=back
 
 =cut
 sub near_links {
@@ -119,7 +156,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -7,15 +7,18 @@ Posy::Plugin::TextToHTML - Posy plugin to convert plain text files to HTML
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::TextToHTML.
+This describes version B<0.11> of Posy::Plugin::TextToHTML.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-    @plugins = qw(Posy::Core Posy::Plugin::TextToHTML);
+    @plugins = qw(Posy::Core
+	...
+	Posy::Plugin::TextToHTML
+	...);
 
 =head1 DESCRIPTION
 
@@ -79,7 +82,7 @@ Methods implementing per-entry actions.
 
 =head2 parse_entry
 
-$self->parse_entry(\%flow_state, \%current_entry, \%entry_state)
+$self->parse_entry($flow_state, $current_entry, $entry_state)
 
 Parses $current_entry->{raw} into $current_entry->{title}
 and $current_entry->{body}
@@ -132,7 +135,6 @@ sub parse_entry {
     1;
 } # parse_entry
 
-
 =head1 REQUIRES
 
     Posy
@@ -145,6 +147,7 @@ sub parse_entry {
 
 perl(1).
 Posy
+HMTL::TextToHTML
 
 =head1 BUGS
 
@@ -158,7 +161,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

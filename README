@@ -6,17 +6,17 @@ Posy - a website generator inspired by blosxom
 
 ==== VERSION ====
 
-This describes version ``0.10'' of Posy.
+This describes version ``0.11'' of Posy.
 
 
 ==== DESCRIPTION ====
 
-This is a simple website content management system / blog inspired by the
-design of blosxom. The filesystem is the database, there are flavour
-templates, and plugins. However, this system doesn't require one to write
-one's entry files in a particular format; one can choose from pure HTML,
-plain text, or blosxom format. And other formats can be dealt with if one
-writes a plugin to deal with them.
+This is a simple website content management system inspired by the design of
+blosxom. The filesystem is the database, there are flavour templates, and
+plugins. However, this system doesn't require one to write one's entry files
+in a particular format; one can choose from pure HTML, plain text, or
+blosxom format. And other formats can be dealt with if one writes a plugin
+to deal with them.
 
 
 ==== REQUIRES ====
@@ -80,7 +80,7 @@ the PERL5LIB variable to add /home/fred/perl/lib
 
 ==== COPYRIGHT AND LICENCE ====
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

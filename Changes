@@ -1,6 +1,28 @@
 Revision history for Posy
 =========================
 
+0.11 Wed 05 January 2005
+------------------------
+
+  * (5 Jan 2005) extra warning message
+  	There's a bug happening in Win32 which I can't track down because
+  I don't use MS-Windows; I've added an extra warning message which should
+  give extra information at the spot where the bug appears to manifest.
+
+  * (5 Jan 2005) fixing test problems
+  	One reason for test failures on installation is that the
+  modification times of each input data file gets changed to that of
+  the release archive.  Which means that testing anything to do with
+  chrono stuff is impossible, and any files which have date headers
+  in them can't use a whole-file comparison to see if they output
+  okay.
+  	So now I've scrapped both the chrono tests and the whole-file
+  comparisons, and just check to see if some of the expected content
+  is in the output test files.  That's still a reasonable test, and
+  won't be doomed to failure.
+
+  * (4 Jan 2005) improved documentation
+
 0.10 Mon 03 January 2005
 ------------------------
 

@@ -8,11 +8,11 @@ Posy::Plugin::CgiCarp - Posy plugin to aid debugging by using CGI::Carp
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::CgiCarp.
+This describes version B<0.11> of Posy::Plugin::CgiCarp.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -30,6 +30,11 @@ module.
 
 This plugin needs to be added to the plugins list.
 
+Note that since this replaces methods without calling the
+parent methods, if you use this plugin along with other plugins
+which override the methods below, you need to be careful what
+order you place them.
+
 =cut
 use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 
@@ -44,9 +49,6 @@ then flag the actions to stop.
 
 Also sends a 404 error if we are in dynamic mode; this assumes that
 if it can't parse the path, it can't find the file.
-
-This is done as a separate action method so that it makes it easier
-to change this behaviour.
 
 =cut
 sub stop_if_not_found {
@@ -69,12 +71,11 @@ sub stop_if_not_found {
 
 =head2 render_page
 
-$self->render_page(\%flow_state);
+$self->render_page($flow_state);
 
-Put the page together by pasting together 
-its parts in the flow_state hash
-and print it (either to a file, or to STDOUT).
-If printing to a file, don't print content_type
+Put the page together by pasting together its parts in the $flow_state hash
+and print it (either to a file, or to STDOUT).  If printing to a file,
+don't print content_type.
 
 =cut
 sub render_page {
@@ -150,12 +151,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
-
-Based in part on the 'css' blosxom plugin by
-Eric Davis <edavis <at> foobargeek <dot> com> http://www.foobargeek.com
-And in part on the 'flavourmenu' blosxom plugin by
-Tim Lambert (lambert <at> cse <dot> unsw <dot> edu <dot> au)
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -7,11 +7,11 @@ Posy - a website generator inspired by blosxom
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy.
+This describes version B<0.11> of Posy.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -20,9 +20,11 @@ our $VERSION = '0.10';
     Posy->import(@plugins);
     Posy->run(%args);
 
+    use Posy qw(Posy::Core Posy::Plugin::TextTemplate);
+
 =head1 DESCRIPTION
 
-This is a simple website content management system / blog inspired
+This is a simple website content management system inspired
 by the design of blosxom.  The filesystem is the database, there
 are flavour templates, and plugins.  However, this system doesn't
 require one to write one's entry files in a particular format; one
@@ -35,6 +37,8 @@ formats can be dealt with if one writes a plugin to deal with them.
 
 =head2 import
 
+require Posy;
+
 Posy->import(@plugins);
 
 This needs to be run before L</run>.
@@ -46,6 +50,14 @@ module names, in the order in which they should be loaded.  The given
 modules are required and arranged in an "is-a" chain.  That is, Posy
 subclasses the last plugin given, which subclasses the second-to-last, up
 to the first plugin given, which is the base class.
+
+This can be called in two different ways.  It can be called implicitly
+with the "use" directive, or it can be called explicitly if one 'requires'
+Posy rather then 'use'-ing it.
+
+The advantage of calling this explicitly is that one can set the
+plugins dynamically, rather than hard-coding them in the calling
+script.
 
 (idea taken from Module::Starter by Andy Lester and Ricardo Signes)
 
@@ -135,7 +147,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

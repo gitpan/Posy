@@ -3,20 +3,23 @@ use strict;
 
 =head1 NAME
 
-Posy::Plugin::FileStats - caches file statistics
+Posy::Plugin::FileStats - Posy plugin to cache file statistics
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::FileStats.
+This describes version B<0.11> of Posy::Plugin::FileStats.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
-		  Posy::Plugin::FileStats));
+		  ...
+		  Posy::Plugin::FileStats
+		  ...
+		  ));
     @actions = qw(
 	....
 	index_entries
@@ -29,6 +32,9 @@ our $VERSION = '0.10';
 This is a "utility" plugin to be used by other plugins; it maintains a list
 (and cache) of file statistics in $self->{file_stats} which can be used by
 other plugins (such as Posy::Plugin::LinkSized).
+
+It provides an action method L</index_file_stats> which should be put
+after "index_entries" in the action list.
 
 The file_stats hash is referenced by the full name of the file.
 
@@ -51,16 +57,13 @@ The MIME type of the file.
 =item mtime
 
 For convenience, copies the mtime from $self->{files} or $self->{others}
-for the give file.
+for the given file.
 
 =item word_count
 
 The word-count of text and HTML files.
 
 =back
-
-It provides an action method L</index_file_stats> which should be put
-after "index_entries" in the action list.
 
 =head1 Configuration
 
@@ -105,7 +108,6 @@ Methods implementing actions.
 =head2 index_file_stats
 
 Find statistics about entry and other files.
-This uses caching by default.
 
 Expects $self->{path}, $self->{config}, $self->{files}
 and $self->{others} to be set.
@@ -349,7 +351,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

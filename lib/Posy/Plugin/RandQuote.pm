@@ -7,22 +7,23 @@ Posy::Plugin::RandQuote - Posy plugin to give a random quote from a file
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::RandQuote.
+This describes version B<0.11> of Posy::Plugin::RandQuote.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-    @plugins = qw(Posy::Core Posy::Plugin::RandQuote));
+    @plugins = qw(Posy::Core
+	...
+	Posy::Plugin::RandQuote));
     @entry_actions = qw(header
-	    entry_template
-	    read_entry
+	    ...
 	    parse_entry
 	    rand_quote
 	    render_entry
-	    append_entry
+	    ...
 	);
 
     And in the entry file:
@@ -42,9 +43,9 @@ This looks for the quote-file first in the local (data) directory,
 then relative to the top of the data directory, then in the local
 HTML directory, then relative to the top of the HTML directory.
 
-This creates a 'rand_quote' entry action, which should be placed
-after 'parse_entry' in the entry_action list.  If you are using
-the Posy::Plugin::ShortBody plugin, this should be placed after
+This creates a 'rand_quote' entry action, which should be placed after
+'parse_entry' in the entry_action list and before 'render_entry'.  If you
+are using the Posy::Plugin::ShortBody plugin, this should be placed after
 'short_body' in the entry_action list, not before it.
 
 =head2 Configuration
@@ -91,7 +92,7 @@ Methods implementing per-entry actions.
 
 =head2 rand_quote
 
-$self->rand_quote(\%flow_state, \%current_entry, \%entry_state)
+$self->rand_quote($flow_state, $current_entry, $entry_state)
 
 Alters $current_entry->{body} by adding a random quote
 wherever the "rand_quote_anchor" string is in the body.
@@ -184,10 +185,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
-
-Based on the blosxom 'toc' plugin by Gregor Rayman (copyright 2003)
-<rayman <at> grayman <dot> de>
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -7,15 +7,17 @@ Posy::Plugin::LocalDepth - Posy plugin to filter by local depth
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::LocalDepth.
+This describes version B<0.11> of Posy::Plugin::LocalDepth.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-    @plugins = qw(Posy::Core Posy::Plugin::LocalDepth));
+    @plugins = qw(Posy::Core
+	...
+	Posy::Plugin::LocalDepth));
     @actions = qw(header
 	    ...
 	    select_by_path
@@ -72,9 +74,13 @@ sub init {
 	if (!defined $self->{config}->{localdepth});
 } # init
 
+=head1 Flow Action Methods
+
+Methods implementing actions.
+
 =head2 filter_by_localdepth
 
-$self->filter_by_localdepth(\%flow_state);
+$self->filter_by_localdepth($flow_state);
 
 Select entries by looking at the local-depth information
 in $self->{path}.
@@ -129,10 +135,9 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2005 by Kathryn Andersen
 
-Based on the blosxom 'toc' plugin by Gregor Rayman (copyright 2003)
-<rayman <at> grayman <dot> de>
+Inspired by the zlocaldepth blosxom plugin by Fletcher T. Penney.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -7,15 +7,21 @@ Posy::Plugin::LinkList - Posy plugin to give a dynamic list of links
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::LinkList.
+This describes version B<0.11> of Posy::Plugin::LinkList.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-    @plugins = qw(Posy::Core Posy::Plugin::TextTemplate Posy::Plugin::LinkList));
+    @plugins = qw(Posy::Core
+	...
+	Posy::Plugin::TextTemplate
+	...
+	Posy::Plugin::LinkList
+	...
+	));
 
 =head1 DESCRIPTION
 
@@ -42,17 +48,59 @@ Methods which can be called from elsewhere.
 
 =head2 link_list
 
-$links = $self->link_list(labels => \@labels,
-    links=>\%links,
-    pre_list=>'<ul>',
-    post_list=>'</ul>',
-    pre_item=>'<li>',
-    post_item=>'</li>'
-    pre_active_item=>'<li><em>',
-    post_active_item=>'</em></li>',
-    item_sep=>"\n");
+    $links = $self->link_list(labels => \@labels,
+	links=>\%links,
+	pre_list=>'<ul>',
+	post_list=>'</ul>',
+	pre_item=>'<li>',
+	post_item=>'</li>'
+	pre_active_item=>'<li><em>',
+	post_active_item=>'</em></li>',
+	item_sep=>"\n");
 
 Generates a list of links.
+
+Options:
+
+=over
+
+=item labels
+
+The labels for the links, in the order you want them displayed.
+
+=item links
+
+A hash of labels (as above) and the links they should point to.
+
+=item pre_list
+
+String to begin the list with.
+
+=item post_list
+
+String to end the list with.
+
+=item pre_item
+
+String to prepend to a non-active item.
+
+=item post_item
+
+String to append to a non-active item.
+
+=item pre_active_item
+
+String to prepend to an active item.
+
+=item post_active_item
+
+String to prepend to an active item.
+
+=item item_sep
+
+String to put between items.
+
+=back
 
 =cut
 sub link_list {
@@ -111,6 +159,8 @@ sub link_list {
 
 perl(1).
 Posy
+Posy::Plugin::TextTemplate
+Text::Template
 
 =head1 BUGS
 
@@ -124,7 +174,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -57,8 +57,16 @@ my $res = Posy->run(params=>{path=>$path},
 		    outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-my $result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+my $result = look_for($outfile, '<h3 id="plugins_howto">Plugins HOWTO</h3>')
+    and look_for($outfile, '<h3 id="plugins_0intro">Plugins</h3>')
+    and look_for($outfile, '<h3 id="_content">Content</h3>')
+    and look_for($outfile, '<h3 id="_feedback">Feedback</h3>')
+    and look_for($outfile, '<h3 id="_alpha">Alpha</h3>')
+    and look_for($outfile, '<h3 id="_welcome">Posy : Welcome</h3>')
+    and look_for($outfile, '<h3 id="vr5_index">VR.5: The Wind of the Mind</h3>')
+    and look_for($outfile, '<h1>The File Morgan Sent in "Love and Death"</h1>')
+    and look_for($outfile, '<h3 id="vr5_confr">Control Freak</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -75,8 +83,16 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '<h3 id="plugins_howto">Plugins HOWTO</h3>')
+    and look_for($outfile, '<h3 id="plugins_0intro">Plugins</h3>')
+    and look_for($outfile, '<h3 id="_content">Content</h3>')
+    and look_for($outfile, '<h3 id="_feedback">Feedback</h3>')
+    and look_for($outfile, '<h3 id="_alpha">Alpha</h3>')
+    and look_for($outfile, '<h3 id="_welcome">Posy : Welcome</h3>')
+    and look_for($outfile, '<h3 id="vr5_index">VR.5: The Wind of the Mind</h3>')
+    and look_for($outfile, '<h1>The File Morgan Sent in "Love and Death"</h1>')
+    and look_for($outfile, '<h3 id="vr5_confr">Control Freak</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -95,8 +111,9 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '<h3 id="plugins_howto">Plugins HOWTO</h3>')
+    and look_for($outfile, '<h3 id="plugins_0intro">Plugins</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);

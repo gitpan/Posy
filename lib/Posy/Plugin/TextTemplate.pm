@@ -7,15 +7,17 @@ Posy::Plugin::TextTemplate - Posy plugin for interpolating with Text::Template
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::TextTemplate.
+This describes version B<0.11> of Posy::Plugin::TextTemplate.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
-    @plugins = qw(Posy::Core Posy::Plugin::TextTemplate);
+    @plugins = qw(Posy::Core
+	Posy::Plugin::TextTemplate
+	...);
 
 =head1 DESCRIPTION
 
@@ -96,8 +98,8 @@ Methods which can be called from within other methods.
 
 =head2 set_vars
 
-    my %vars = $self->set_vars(\%flow_state);
-    my %vars = $self->set_vars(\%flow_state, \%current_entry, \%entry_state);
+    my %vars = $self->set_vars($flow_state);
+    my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
 
 Sets variable hashes to be used in interpolation of templates.
 
@@ -118,9 +120,7 @@ sub set_vars {
 $content = $self->interpolate($chunk, $template, \%vars);
 
 Interpolate the contents of the vars hash with the template
-and return the result.  (This is passed the chunk name
-just in case one wishes to do something different depending on
-what chunk type it is.)
+and return the result.
 
 =cut
 sub interpolate {
@@ -194,6 +194,7 @@ sub interpolate {
 
 perl(1).
 Posy
+Text::Template
 
 =head1 BUGS
 
@@ -207,7 +208,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

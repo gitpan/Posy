@@ -8,11 +8,11 @@ Posy::Plugin::Dump - Posy plugin to aid debugging by dumping object contents
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::Dump.
+This describes version B<0.11> of Posy::Plugin::Dump.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -50,8 +50,8 @@ Methods implementing actions.
 =head2 dump
 
     $self->dump();
-    $self->dump(\%flow_state);
-    $self->dump(\%flow_state, \%current_entry, \%entry_state);
+    $self->dump($flow_state);
+    $self->dump($flow_state, $current_entry, $entry_state);
 
 Dump object data (for debugging)
 
@@ -103,6 +103,7 @@ sub dump {
 
 perl(1).
 Posy
+Data::Dumper
 
 =head1 BUGS
 
@@ -116,12 +117,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
-
-Based in part on the 'css' blosxom plugin by
-Eric Davis <edavis <at> foobargeek <dot> com> http://www.foobargeek.com
-And in part on the 'flavourmenu' blosxom plugin by
-Tim Lambert (lambert <at> cse <dot> unsw <dot> edu <dot> au)
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

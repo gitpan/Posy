@@ -8,27 +8,35 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy.
+This describes version B<0.11> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
+    # implicitly
+    use Posy qw(Posy::Core Posy::Plugin::TextTemplate ...);
+
+    # or explicitly
     require Posy;
 
+    @plugins = qw(Posy::Core Posy::Plugin::TextTemplate ...);
     Posy->import(@plugins);
     Posy->run(%args);
 
 =head1 DESCRIPTION
 
-This is a simple website content management system / blog inspired
+This is a simple website content management system inspired
 by the design of blosxom.  The filesystem is the database, there
 are flavour templates, and plugins.  However, this system doesn't
 require one to write one's entry files in a particular format; one
 can choose from pure HTML, plain text, or blosxom format.  And other
 formats can be dealt with if one writes a plugin to deal with them.
+
+Posy::Core provides the core functionality of the system.  Other
+functions can be added and overridden by plugin modules.
 
 =cut
 
@@ -41,7 +49,7 @@ use File::stat;
 
 Posy->run(%args);
 
-C<run> is the only methods you should need to use from outside
+C<run> is the only method you should need to use from outside
 this module; other methods are called internally by this one.
 
 This method orchestrates all the work; it creates a new object,
@@ -82,13 +90,111 @@ sub run {
     $self->do_actions();
 } # run
 
+=head1 TERMS
+
+A few terms:
+
+=over
+
+=item data_dir, data directory
+
+The directory where the input data files are kept.  This need not be the
+same directory as the posy.cgi script or any other script.  This is set up
+with sub-directories in a hierarchical fashion and chiefly contains the
+files holding the web content you wish to display.
+
+=item state_dir, state directory
+
+The directory where "state" files are written.  Thus this needs
+to be a directory writable by the script, which may need special
+care when using Posy with a CGI script, since the user and permissions
+tend to be tricky with CGI scripts.
+
+=item config_dir, config directory
+
+The directory where configuration files are kept, in a hierarchical
+manner which mirrors that of the data directory.
+This defaults to being the same directory as the data_dir.
+
+=item flavour_dir, flavour directory
+
+The directory where flavour files are kept (see L</flavour>), in a
+hierarchical manner which mirrors that of the data directory.
+If not defined, this also defaults to the same directory as the data_dir.
+
+=item full path, full filename
+
+The absolute location of a given file; the absolute pathname.
+
+=item path
+
+(a) the relative location of a file (relative to the data directory
+or to the top of the website, depending on context)
+(b) the current request path (which may or may not be the relative location
+of a file)
+
+=item path-type
+
+The type of request path.  This can be "entry", for an individual file,
+"category", for a sub-directory, "chrono" for a dated request, "top_entry"
+for an entry at the top of the website, "top", for the very root page,
+or "file" for a file which is not an entry.
+(These may change slightly in future).
+
+=item chunk
+
+A given output page is pasted together from several chunks, each of which
+has a template for it.  The chunks are:
+
+=over
+
+=item content_type
+
+The MIME-type of the output page.  Usually this is text/html, but some
+veriations may call for text/plain or something else.
+
+=item head
+
+The "head" part of the page; which usually includes the opening
+<html> tag, the <head> content, and the opening <body> tag and
+any initial content required.
+
+=item header
+
+A header part of a page; something which may or may not be repeated
+over the page, depending on how its contents change.
+
+=item entry
+
+The template for the actual page content; for pages which source multiple
+entry-files per page, this is repeated for each entry file.
+An entry file is just an individual input content file.
+
+=item foot
+
+The "foot" part of the page; usually contains trailing content,
+and the closing </body> and </html> tags.
+
+=back
+
+=item flavour
+
+The Posy system, like the blosxom system, enables use of multiple
+template-sets by giving them a "flavour" extension, which can be
+parsed from the initial request path by either the extension of
+the request path, or by a "flav" paramter.  One can then set up
+a different template-set for each flavour, and customize the look
+of the output pages while keeping the content separate.
+
+=back
+
 =head1 OBJECT METHODS
 
 Documentation for developers and those wishing to write plugins.
 
 =head2 new
 
-Make a new object.
+Make a new object.  See L</run> for the arguments.
 
 =cut
 
@@ -103,6 +209,9 @@ sub new {
 
 Do some initialization of the object after it's created.
 Set up defaults for things which haven't been defined.
+
+Plugin writers should override this method rather than L</new>
+if they want to do some initialization for their plugin.
 
 =cut
 
@@ -198,6 +307,8 @@ sub init {
 	    or die "Cannot create state directory ", $self->{state_dir};
 	$self->debug(1, "Creating state dir $self->{state_dir}");
     }
+    $self->{flavour_dir} ||= File::Spec->catdir($self->{data_dir},
+						'.flavours'); 
 
     # set the error templates if not already set
     $self->{templates}->{content_type}->{error} ||= 'text/html';
@@ -229,7 +340,7 @@ sub init {
 
 $self->do_actions();
 
-Do all the actions in the actions list.  (Called from L</run>).
+Do all the actions in the $self->{actions} list.  (Called from L</run>).
 
 =cut
 sub do_actions {
@@ -256,14 +367,17 @@ sub do_actions {
 
 =head1 Flow Action Methods
 
-Methods implementing actions.
+Methods implementing actions.  All such methods expect a
+reference to a flow-state hash, and generally will update
+either that hash or the object itself, or both in the course
+of their running.
 
 =head2 set_config
 
 $self->set_config($flow_state);
 
 Set $self->{config} from the config files.
-Takes into account the path, but no chunk information;
+Takes into account the path, but does not use chunk information;
 useful for setting global parameters.
 
 =cut
@@ -294,7 +408,8 @@ Sets $self->{url} if it isn't already set.
 
 When this is not in dynamic mode, the parameters can be set by passing
 them through the $self->{params} hash (by setting params=>{...}
-when calling L</new> or L</run>.
+when calling L</new> or L</run>.  This can be useful for writing
+scripts that aren't CGI scripts.
 
 =cut
 sub init_params {
@@ -391,20 +506,76 @@ sub index_entries {
 =head2 parse_path
 
 Parse the PATH_INFO (or 'path' parameter) to get the parts of the path
-and figure out what the path-type is, and the flavour.
+and figure out various bits of information about the path.
 If the path is undefined, uses DOCUMENT_URI or REDIRECT_URL.
 
-The path-type can be one of: entry, top_entry (an entry which is
-in the top directory), file (a file which is not
-an input entry file), category, top (the root page), or chrono.
+This checks whether or not the requested file/directory exists
+under the data directory.
 
-Sets $self->{path} hash.
+Sets $self->{path} hash as follows:
+
+=over
+
+=item info
+
+The original PATH_INFO or equivalent.
+
+=item type
+
+The type of the path: entry, top_entry, top, category, chrono, file.
+
+=item file_key
+
+The path without the extension; used as a key in $self->{files}.
+
+=item ext
+
+The extension of the actual entry file or "file" file.
+
+=item data_file
+
+The full path of the found file.
+
+=item basename
+
+The base name of the file without directory or extension.
+
+=item dir
+
+The directory part of the path.
+
+=item depth
+
+The depth of the file from the top directory.
+
+=item flavour
+
+The flavour of the request.
+
+=item name
+
+The path directory with underscores instead of slashes.
+
+=item year
+
+For "chrono" paths, the year part of the request.
+
+=item month
+
+For "chrono" paths, the month part of the request.  Optional.
+
+=item day
+
+For "chrono" paths, the day part of the request.  Optional.
+
+=back
 
 Expects parameters to have been initialized (so that it can check
 $self->param('path') as well as PATH_INFO).
 
-If it fails to parse the path, sets $self->{path}->{error} to true.
-This can be used by later actions.
+If it fails to parse the path, sets $self->{path}->{error} to true,
+and $self->{path}->{info} will be the only other part set.
+This can be used by later actions, such as L</stop_if_not_found>.
 
 =cut
 sub parse_path {
@@ -712,7 +883,7 @@ sub stop_if_not_found {
 
 =head2 select_by_path
 
-$self->select_by_path(\%flow_state);
+$self->select_by_path($flow_state);
 
 Select entries by looking at the path information.
 Assumes that no entries have been selected before.
@@ -753,7 +924,7 @@ sub select_by_path {
 
 =head2 filter_by_date
 
-$self->filter_by_date(\%flow_state);
+$self->filter_by_date($flow_state);
 
 Select entries by looking at the date-time information
 in $self->{path}.
@@ -789,7 +960,7 @@ sub filter_by_date {
 
 =head2 sort_entries
 
-$self->select_entries(\%flow_state);
+$self->sort_entries($flow_state);
 
 Sort the selected entries (that is, $flow_state->{entries})
 Checks $self->{config}->{sort_type} to determine the sort order.
@@ -846,7 +1017,7 @@ sub sort_entries {
 
 =head2 content_type
 
-$self->content_type(\%flow_state);
+$self->content_type($flow_state);
 
 Set the content_type content in $flow_state->{content_type}
 
@@ -870,7 +1041,7 @@ sub content_type {
 
 =head2 head_template
 
-$self->head_template(\%flow_state);
+$self->head_template($flow_state);
 
 Set the head template in $flow_state->{head_template}
 This also sets the $self->{config} for head.
@@ -891,7 +1062,7 @@ sub head_template {
 
 =head2 head_render
 
-$self->head_render(\%flow_state);
+$self->head_render($flow_state);
 
 Interpolate the head template into the head content;
 Set the head content in $flow_state->{head}
@@ -910,7 +1081,7 @@ sub head_render {
 
 =head2 foot_template
 
-$self->foot_template(\%flow_state);
+$self->foot_template($flow_state);
 
 Set the foot template in $flow_state->{foot_template}
 This also sets the $self->{config} for foot.
@@ -931,7 +1102,7 @@ sub foot_template {
 
 =head2 foot_render
 
-$self->foot_render(\%flow_state);
+$self->foot_render($flow_state);
 
 Interpolate the foot template into the foot content;
 Set the foot content in $flow_state->{foot}
@@ -949,10 +1120,9 @@ sub foot_render {
 
 =head2 do_entry_actions
 
-$self->do_entry_actions(\%flow_state);
+$self->do_entry_actions($flow_state);
 
-Process the entry-action list.  This method is passed flow_actions
-state hash, which it can test and alter.
+Process the $self->{entry_action} list.
 
 =cut
 sub do_entry_actions {
@@ -978,6 +1148,10 @@ sub do_entry_actions {
 	$current_entry{path} = $self->{files}->{$entry_id}->{path};
 	$current_entry{path_name} = $self->{files}->{$entry_id}->{path};
 	$current_entry{path_name} =~ s#/#_#g;
+	if (!defined $current_entry{path_name}) # oh dear!
+	{
+	    warn "path_name undefined: entry_id=$entry_id, basename=$current_entry{basename}, path=$current_entry{path}, path_info=$self->{path}->{info}";
+	}
 
 	%entry_state = ();
 	$entry_state{stop} = 0;
@@ -1002,10 +1176,10 @@ sub do_entry_actions {
 
 =head2 render_page
 
-$self->render_page(\%flow_state);
+$self->render_page($flow_state);
 
 Put the page together by pasting together 
-its parts in the flow_state hash
+its parts in the $flow_state hash
 and print it (either to a file, or to STDOUT).
 If printing to a file, don't print content_type
 
@@ -1041,10 +1215,11 @@ Methods implementing per-entry actions.
 
 =head2 count_or_stop
 
-$self->count_or_stop(\%flow_state, \%current_entry, \%entry_state)
+$self->count_or_stop($flow_state, $current_entry, $entry_state)
 
-Increment the entry-count and stop the processing of this
-entry if it goes beyond the required number.
+Increment the $flow_state->{entry_count} and stop the processing of this
+entry if it goes beyond the required number in
+$self->{config}->{num_entries}.
 
 =cut
 sub count_or_stop {
@@ -1065,9 +1240,14 @@ sub count_or_stop {
 
 =head2 header
 
-$self->header(\%flow_state, \%current_entry, \%entry_state)
+$self->header($flow_state, $current_entry, $entry_state)
 
-Sets the entry date vars for this entry.
+Sets the entry date vars for this entry, in $curent_entry.
+See L</nice_date_time> for details.
+
+Also sets the same variables in $flow_state, so that the values for
+the last-processed entry will be preserved (useful for doing
+entry-specific things in foot templates).
 
 Set the header content in $flow_state->{header}
 and add the header to @{$flow_state->{page_body}}
@@ -1107,7 +1287,7 @@ sub header {
 
 =head2 read_entry
 
-$self->read_entry(\%flow_state, \%current_entry, \%entry_state)
+$self->read_entry($flow_state, $current_entry, $entry_state)
 
 Reads in the current entry file.
 Sets $current_entry->{raw} with the contents.
@@ -1141,7 +1321,7 @@ sub read_entry {
 
 =head2 parse_entry
 
-$self->parse_entry(\%flow_state, \%current_entry, \%entry_state)
+$self->parse_entry($flow_state, $current_entry, $entry_state)
 
 Parses $current_entry->{raw} into $current_entry->{title}
 and $current_entry->{body}
@@ -1191,7 +1371,7 @@ sub parse_entry {
 
 =head2 entry_template
 
-$self->entry_template(\%flow_state, \%current_entry, \%entry_state)
+$self->entry_template($flow_state, $current_entry, $entry_state)
 
 Set the entry template in $entry_state->{entry_template}
 This also sets the $self->{config} for entry.
@@ -1214,7 +1394,7 @@ sub entry_template {
 
 =head2 render_entry
 
-$self->render_entry(\%flow_state, \%current_entry, \%entry_state)
+$self->render_entry($flow_state, $current_entry, $entry_state)
 
 Interpolate the current entry, setting $entry_state->{body}.
 
@@ -1233,7 +1413,7 @@ sub render_entry {
 
 =head2 append_entry
 
-$self->append_entry(\%flow_state, \%current_entry, \%entry_state)
+$self->append_entry($flow_state, $current_entry, $entry_state)
 
 Add $entry_state->{body} to @{$flow_state->{page_body}}
 (This is done as a separate step so that plugins can alter
@@ -1261,6 +1441,7 @@ Methods which can be called from within other methods.
 Return or set global parameters.
 
 This passes the arguments on to $self->{cgi}->param();
+See L<CGI::Minimal> for more information.
 
 =cut
 sub param {
@@ -1274,8 +1455,11 @@ sub param {
 
 =head2 set_vars
 
-    my %vars = $self->set_vars(\%flow_state);
-    my %vars = $self->set_vars(\%flow_state, \%current_entry, \%entry_state);
+    my %vars = $self->set_vars($flow_state);
+
+    my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
+
+    $content = $self->interpolate($chunk, $template, \%vars);
 
 Sets variable hashes to be used in interpolation of templates.
 
@@ -1284,13 +1468,13 @@ use the given state hashes accordingly.
 
 This sets the variable hash as follows:
 
-$self->{I<name>} where it is a simple value (eg 'url') -> $I<name>
-$self->{path}->{I<name>} -> $path_I<name>
-$self->param('I<name>') -> $param_<name>
-$self->{config}->{I<name>} -> $config_<name>
-$flow_state->{I<name>} -> $flow_<name>
-$current_entry->{I<name>} -> $entry_<name>
-$entry_state->{I<name>} -> $es_<name>
+    $self->{I<name>} where it is a simple value (eg 'url') -> $I<name>
+    $self->{path}->{I<name>} -> $path_I<name>
+    $self->param('I<name>') -> $param_<name>
+    $self->{config}->{I<name>} -> $config_<name>
+    $flow_state->{I<name>} -> $flow_<name>
+    $current_entry->{I<name>} -> $entry_<name>
+    $entry_state->{I<name>} -> $es_<name>
 
 =cut
 sub set_vars {
@@ -1359,9 +1543,9 @@ sub set_vars {
     my $template = $self->get_template($chunk);
 
 Get the template file for this state, taking into account
-$self->{path}->{dir}
-$self->{path}->{type}
-$self->{path}->{flavour}
+$self->{path}->{dir},
+$self->{path}->{type},
+$self->{path}->{flavour},
 and of course $chunk
 
 Returns (a copy of) the found template.
@@ -1370,7 +1554,10 @@ This is so that the following actions can alter the template as they see fit.
 Possible chunks are "content_type", "head", "header", "entry", "foot".
 The "header" and "entry" chunks are used during entry processing.
 
-Possible path types are "category", "chrono", "top", "entry" and "top_entry".
+The template files are called
+    $chunk.$path_type.$flavour
+or
+    $chunk.$flavour
 
 =cut
 sub get_template {
@@ -1525,22 +1712,20 @@ sub get_template {
     my %config = $self->get_config($chunk);
 
 Get the config settings for this state, taking into account
-$self->{path}->{dir}
+$self->{path}->{dir},
 $self->{path}->{type}
 and $chunk
 
 Possible chunks are nothing, "content_type", "head", "header", "entry",
 "foot".
 
-Possible path types are "category", "chrono", "top", "entry" and
-"top_entry".
-
 The config files are called
-$path_type.$chunk.config
-$path_type.config
-$chunk.config
+
+    $path_type.$chunk.config
+    $path_type.config
+    $chunk.config
 or
-config
+    config
 
 Returns a hash of cumulative config settings.
 
@@ -1709,9 +1894,11 @@ sub read_config_file {
 $content = $self->interpolate($chunk, $template, \%vars);
 
 Interpolate the contents of the vars hash with the template
-and return the result.  (This is passed the chunk name
-just in case one wishes to do something different depending on
-what chunk type it is.)
+and return the result.
+
+(This is passed the chunk name just in case a future plugin which overrides
+this method wishes to do something different depending on what chunk type
+it is.)
 
 =cut
 sub interpolate {
@@ -1726,10 +1913,82 @@ sub interpolate {
     return $content;
 } # interpolate
 
+=head2 nice_date_time
+
+    my %nice_vals = $self->nice_date_time($mtime);
+
+Given a unixtime (in seconds since whenever it was)
+will return a hash containing the portions of the date-time:
+
+=over
+
+=item sec
+
+The second.
+
+=item min
+
+The minute.
+
+=item hour
+
+The hour (24-hour time).
+
+=item year
+
+The 4-digit year.
+
+=item mnum
+
+The number of the month (1-12).
+
+=item da
+
+The day of the month.
+
+=item wday
+
+The day of the week (number).
+
+=item dw
+
+The day of the week (name).
+
+=item month
+
+The month name.
+
+=back
+
+=cut
+
+sub nice_date_time {
+    my $self = shift;
+    my $unixtime = shift;
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+	localtime($unixtime);
+    my %vals = (
+	sec=>$sec,
+	min=>$min,
+	hour=>$hour,
+	year=>$year + 1900,
+	mnum=>$mon + 1,
+	da=>$mday,
+	wday=>$wday,
+	dw=>($self->{DayWeek2Name}->{$wday}),
+	month=>($self->{MonthNum2Name}->{$mon + 1}),
+    );
+    return %vals;
+} # nice_date_time
+
 =head2 debug
 
-Print a debug message (for debugging)
-Checks $self->{'debug_level'}
+    $self->debug($level, $message);
+
+Print a debug message (for debugging).
+Checks $self->{'debug_level'} to see if the message should be printed or
+not.
 
 =cut
 sub debug {
@@ -1748,12 +2007,12 @@ sub debug {
 
 Methods which may or may not be here in future.
 
-=head2 whowasi
+=head2 _whowasi
 
 For debugging: say who called this 
 
 =cut
-sub whowasi { (caller(1))[3] . '()' }
+sub _whowasi { (caller(1))[3] . '()' }
 
 =head2 _find_file_and_ext
 
@@ -1946,73 +2205,6 @@ sub extract_date {
     return ($year + 1900, $mon + 1, $mday);
 } # extract_date
 
-=head2 nice_date_time
-
-Given a unixtime (in seconds since whenever it was)
-will return a hash containing the portions of the date-time:
-
-=over
-
-=item sec
-
-The second.
-
-=item min
-
-The minute.
-
-=item hour
-
-The hour (24-hour time).
-
-=item year
-
-The 4-digit year.
-
-=item mnum
-
-The number of the month (1-12).
-
-=item da
-
-The day of the month.
-
-=item wday
-
-The day of the week (number).
-
-=item dw
-
-The day of the week (name).
-
-=item month
-
-The month name.
-
-=back
-
-=cut
-
-sub nice_date_time {
-    my $self = shift;
-    my $unixtime = shift;
-
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
-	localtime($unixtime);
-    my %vals = (
-	sec=>$sec,
-	min=>$min,
-	hour=>$hour,
-	year=>$year + 1900,
-	mnum=>$mon + 1,
-	da=>$mday,
-	wday=>$wday,
-	dw=>($self->{DayWeek2Name}->{$wday}),
-	month=>($self->{MonthNum2Name}->{$mon + 1}),
-    );
-    return %vals;
-} # nice_date_time
-
 =head2 _url
 
 Figure out the full url.
@@ -2027,12 +2219,12 @@ sub _url {
     if ($vh) {
 	$url .= $vh;
     } else {
-	$url .= $self->_server_name();
+	$url .= ($ENV{SERVER_NAME} || 'localhost');
 	my $port = $self->_server_port;
 	$url .= ":" . $port unless (lc($protocol) eq 'http' && $port == 80)
 	    or (lc($protocol) eq 'https' && $port == 443);
     }
-    $url .= $self->_script_name();
+    $url .= ($ENV{SCRIPT_NAME} || "/$0" || '');
 
     $url =~ s/^included:/http:/; # Fix for Server Side Includes (SSI)
     $url =~ s#/$##;
@@ -2054,22 +2246,16 @@ sub _protocol {
     return lc $protocol;
 } # protocol
 
-=head2 _script_name
-
-=cut
-sub _script_name      { $ENV{'SCRIPT_NAME'} || "/$0" || '' }
-
-=head2 _server_name
-
-=cut
-sub _server_name      { $ENV{'SERVER_NAME'} || 'localhost' }
-
 =head2 _server_port
+
+And the server port.
 
 =cut
 sub _server_port      { $ENV{'SERVER_PORT'} || 80 }
 
 =head2 _server_protocol
+
+And the server protocol.
 
 =cut
 sub _server_protocol  { $ENV{'SERVER_PROTOCOL'} || 'HTTP/1.0' }
@@ -2081,53 +2267,14 @@ sub _server_protocol  { $ENV{'SERVER_PROTOCOL'} || 'HTTP/1.0' }
 
     File::Find
     Storable
-    CGI
+    CGI::Minimal
 
     Test::More
-
-=head1 INSTALLATION
-
-To install this module, run the following commands:
-
-    perl Build.PL
-    ./Build
-    ./Build test
-    ./Build install
-
-Or, if you're on a platform (like DOS or Windows) that doesn't like the
-"./" notation, you can do this:
-
-   perl Build.PL
-   perl Build
-   perl Build test
-   perl Build install
-
-In order to install somewhere other than the default, such as
-in a directory under your home directory, like "/home/fred/perl"
-go
-
-   perl Build.PL --install_base /home/fred/perl
-
-as the first step instead.
-
-This will install the files underneath /home/fred/perl.
-
-You will then need to make sure that you alter the PERL5LIB variable to
-find the modules, and the PATH variable to find the script.
-
-Therefore you will need to change:
-your path, to include /home/fred/perl/script (where the script will be)
-
-	PATH=/home/fred/perl/script:${PATH}
-
-the PERL5LIB variable to add /home/fred/perl/lib
-
-	PERL5LIB=/home/fred/perl/lib:${PERL5LIB}
-
 
 =head1 SEE ALSO
 
 perl(1).
+Posy
 
 =head1 BUGS
 
@@ -2141,13 +2288,12 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
-
 =cut
 
-1; # End of Posy
+1; # End of Posy::Core
 __END__

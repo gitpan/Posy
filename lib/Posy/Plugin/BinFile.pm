@@ -7,11 +7,11 @@ Posy::Plugin::BinFile - Posy plugin to serve (binary) non-entry files
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::BinFile.
+This describes version B<0.11> of Posy::Plugin::BinFile.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ This plugin replaces a number of methods, adding in code for dealing with
 
 If one is using the Posy::Plugin::CgiCarp plugin, one must put this plugin
 I<after> it in the plugin list, since CgiCarp redefines the 'render_page'
-module without calling its parent's render_page method.
+method without calling its parent's render_page method.
 
 =head2 Configuration
 
@@ -87,7 +87,7 @@ Methods implementing actions.
 
 =head2 content_type
 
-$self->content_type(\%flow_state);
+$self->content_type($flow_state);
 
 Set the content_type content in $flow_state->{content_type}
 
@@ -138,10 +138,10 @@ sub content_type {
 
 =head2 render_page
 
-$self->render_page(\%flow_state);
+$self->render_page($flow_state);
 
 Put the page together by pasting together 
-its parts in the flow_state hash
+its parts in the $flow_state hash
 and print it (either to a file, or to STDOUT).
 If printing to a file, don't print content_type
 
@@ -198,6 +198,7 @@ sub render_page {
 
     Posy
     Posy::Core
+    Posy::Plugin::FileStats
 
     Test::More
 
@@ -218,7 +219,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

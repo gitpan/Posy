@@ -7,33 +7,26 @@ Posy::Plugin::DynamicCss - Posy plugin to load different CSS styles based on the
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::DynamicCss.
+This describes version B<0.11> of Posy::Plugin::DynamicCss.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
 	Posy::Plugin::YamlConfig
-	Posy::Plugin::DynamicCss));
+	...
+	Posy::Plugin::DynamicCss
+	...
+	));
     @actions = qw(init_params
-	    parse_path
-	    stop_if_not_found
-	    set_config
-	    index_entries
-	    select_by_path
-	    filter_by_date
-	    sort_entries
-	    content_type
+	    ...
 	    head_template
 	    dynamic_css_set
 	    head_render
-	    do_entry_actions
-	    foot_template
-	    foot_render
-	    render_page
+	    ...
 	);
 
 =head1 DESCRIPTION
@@ -54,7 +47,7 @@ just so long as you also have the Posy::Plugin::YamlConfig plugin
 as well.
 
 In the actions list, 'dynamic_css_set' needs to go somewhere after
-B<set_config> and before B<head_render>, since the config needs to have been
+B<head_template> and before B<head_render>, since the config needs to have been
 read, and this needs to set values before the head is rendered.
 
 =head2 Configuration
@@ -94,6 +87,7 @@ and the CSS file to use if it matches.
 
 Example config file:
 
+	---
 	dynamic_css:
 	  csspath: '/styles'
 	  default: 'layout_netscape.css'
@@ -110,7 +104,7 @@ Methods implementing actions.
 
 =head2 dynamic_css_set
 
-$self->dynamic_css_set(\%flow_state)
+$self->dynamic_css_set($flow_state)
 
 Sets $flow_state->{dynamic_css_line} 
 (aka $flow_dynamic_css_line)
@@ -151,6 +145,7 @@ sub dynamic_css_set {
 
     Posy
     Posy::Core
+    Posy::Plugin::YamlConfig
 
     Test::More
 
@@ -158,6 +153,7 @@ sub dynamic_css_set {
 
 perl(1).
 Posy
+YAML
 
 =head1 BUGS
 
@@ -171,10 +167,10 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
-Original 'dynamiccss' blosxom copyright (c) 2004 by Brian Haberer
-  http://www.canonical.org/~brian/software/dynamiccss
+Original 'dynamiccss' blosxom plugin copyright (c) 2004 by Brian Haberer
+http://www.canonical.org/~brian/software/dynamiccss
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

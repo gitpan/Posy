@@ -3,20 +3,22 @@ use strict;
 
 =head1 NAME
 
-Posy::Plugin::EntryTitles - caches entry titles
+Posy::Plugin::EntryTitles - Posy plugin to cache entry titles
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::EntryTitles.
+This describes version B<0.11> of Posy::Plugin::EntryTitles.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
-		  Posy::Plugin::EntryTitles));
+		  Posy::Plugin::EntryTitles
+		  ...
+		  ));
     @actions = qw(
 	....
 	index_entries
@@ -32,6 +34,13 @@ be used by other plugins (such as Posy::Plugin::NearLinks).
 
 It provides an action method L</index_titles> which should be put
 after "index_entries" in the action list.
+
+This plugin is useful not only for efficiency reasons, but it means that
+other plugins don't have to know how to extract the title from a given
+format of file; the title for a HTML file, for example, is not parsed in
+the same way as that for a plain text file.  Those who wish to introduce
+additional formats need only override the L</get_title> method and 
+everything will work just as smoothly.  Ah, inheritance, I love it.
 
 =head1 Configuration
 
@@ -237,7 +246,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

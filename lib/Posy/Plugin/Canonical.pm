@@ -7,11 +7,11 @@ Posy::Plugin::Canonical - Posy plugin to force redirect to canonical URL.
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::Canonical.
+This describes version B<0.11> of Posy::Plugin::Canonical.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ Methods implementing actions.
 
 =head2 parse_path
 
-Parse the path info.  This calls the parent parse_path and then
+Parse the path info.  This calls the parent parse_path method and then
 redirects to the canonical path if the original path isn't canonical
 (and we are in dynamic mode).
 
@@ -181,7 +181,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 Original canonicaluri blosxom plugin copyright 2004
 Frank Hecker <hecker@hecker.org>, http://www.hecker.org/

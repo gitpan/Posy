@@ -24,8 +24,8 @@ my $res = Posy->run(params=>{path=>$path},
 		    outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-my $result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+my $result = look_for($outfile, '<h1>Welcome to Posy</h1>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -41,8 +41,8 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '^Plugins HOWTO$');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);
@@ -58,8 +58,8 @@ $res = Posy->run(params=>{path=>$path},
 		 outfile=>$outfile);
 ok($res, "Posy run path='$path'");
 ok(-e $outfile, "$outfile exists");
-$result = compare($outfile, "tfiles/${test}_${outfile}.ok");
-ok($result, "$outfile matches tfiles/${test}_${outfile}.ok");
+$result = look_for($outfile, '<h3 id="mfile">Morgan\'s File</h3>');
+ok($result, "$outfile matches expected output");
 if ($result)
 {
     unlink($outfile);

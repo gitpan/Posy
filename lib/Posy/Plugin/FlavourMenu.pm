@@ -7,34 +7,27 @@ Posy::Plugin::FlavourMenu - Posy plugin to make a menu of flavours
 
 =head1 VERSION
 
-This describes version B<0.10> of Posy::Plugin::FlavourMenu.
+This describes version B<0.11> of Posy::Plugin::FlavourMenu.
 
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
-	Posy::Plugin::TextTemplate
+	...
 	Posy::Plugin::YamlConfig
-	Posy::Plugin::FlavourMenu));
+	...
+	Posy::Plugin::FlavourMenu
+	...
+	));
     @actions = qw(init_params
-	    parse_path
-	    stop_if_not_found
-	    set_config
-	    index_entries
-	    select_by_path
-	    filter_by_date
-	    sort_entries
-	    content_type
+	    ...
 	    head_template
 	    flavour_menu_set
 	    head_render
-	    do_entry_actions
-	    foot_template
-	    foot_render
-	    render_page
+	    ...
 	);
 
 =head1 DESCRIPTION
@@ -53,7 +46,7 @@ list.  It doesn't really matter where it is in the plugins list,
 just so long as you also have the Posy::Plugin::YamlConfig plugin
 as well.
 
-In the actions list, it needs to go somewhere after B<set_config>
+In the actions list, it needs to go somewhere after B<head_template>
 and before B<head_render>, since the config needs to have been read,
 and this needs to set values before the head is rendered.
 
@@ -94,6 +87,7 @@ The labels to give the flavours in the menu list.
 
 Example config file:
 
+	---
 	flavour_menu:
 	  flavours:
 	    - html
@@ -114,7 +108,7 @@ Methods implementing actions.
 
 =head2 flavour_menu_set
 
-$self->flavour_menu_set(\%flow_state)
+$self->flavour_menu_set($flow_state)
 
 Sets $flow_state->{flavour_menu} (aka $flow_flavour_menu)
 to be used inside flavour files.
@@ -141,7 +135,8 @@ Methods which can be called from within other methods.
 $links = $self->flavour_menu_links($this_flavour);
 
 Generates the list of all flavour links.
-The $this_flavour variable is the name of the currently active flavour.
+The $this_flavour variable is the name of the currently active flavour;
+it won't be added to the list.
 
 =cut
 sub flavour_menu_links {
@@ -207,7 +202,7 @@ sub flavour_menu_links {
 
     Posy
     Posy::Core
-    Posy::Plugin::TextTemplate
+    Posy::Plugin::YamlConfig
 
     Test::More
 
@@ -215,6 +210,7 @@ sub flavour_menu_links {
 
 perl(1).
 Posy
+YAML
 
 =head1 BUGS
 
@@ -228,7 +224,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 Based in part on the 'css' blosxom plugin by
 Eric Davis <edavis <at> foobargeek <dot> com> http://www.foobargeek.com

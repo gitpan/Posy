@@ -1,18 +1,16 @@
 --- #YAML:1.0
 name: Posy
-version: 0.01
+version: 0.02
 author:
   - Kathryn Andersen
 abstract: a website generator inspired by blosxom
 license: perl
 requires:
-  CGI: 0
-  Carp: 0
+  CGI::Minimal: 0
   Data::Dumper: 0
   File::Find: 0
   File::Spec: 0
   File::stat: 0
-  FileHandle: 0
   Getopt::ArgvFile: 1.09
   Getopt::Long: 2.34
   Pod::Usage: 0
@@ -22,32 +20,50 @@ build_requires:
 provides:
   Posy:
     file: lib/Posy.pm
-    version: 0.01
+    version: 0.02
   Posy::Core:
     file: lib/Posy/Core.pm
-    version: 0.01
+    version: 0.02
+  Posy::Plugin::Categories:
+    file: lib/Posy/Plugin/Categories.pm
+    version: 0.02
+  Posy::Plugin::Dump:
+    file: lib/Posy/Plugin/Dump.pm
+    version: 0.02
   Posy::Plugin::DynamicCss:
     file: lib/Posy/Plugin/DynamicCss.pm
-    version: 0.01
+    version: 0.02
+  Posy::Plugin::EntryTitles:
+    file: lib/Posy/Plugin/EntryTitles.pm
+    version: 0.02
   Posy::Plugin::FlavourMenu:
     file: lib/Posy/Plugin/FlavourMenu.pm
-    version: 0.01
+    version: 0.02
   Posy::Plugin::GenStatic:
     file: lib/Posy/Plugin/GenStatic.pm
-    version: 0.01
+    version: 0.02
+  Posy::Plugin::LinkList:
+    file: lib/Posy/Plugin/LinkList.pm
+    version: 0.02
+  Posy::Plugin::NearLinks:
+    file: lib/Posy/Plugin/NearLinks.pm
+    version: 0.02
   Posy::Plugin::ShortBody:
     file: lib/Posy/Plugin/ShortBody.pm
-    version: 0.01
+    version: 0.02
   Posy::Plugin::TextTemplate:
     file: lib/Posy/Plugin/TextTemplate.pm
-    version: 0.01
+    version: 0.02
   Posy::Plugin::TextToHTML:
     file: lib/Posy/Plugin/TextToHTML.pm
-    version: 0.01
+    version: 0.02
   Posy::Plugin::ThemeCss:
     file: lib/Posy/Plugin/ThemeCss.pm
-    version: 0.01
+    version: 0.02
+  Posy::Plugin::Toc:
+    file: lib/Posy/Plugin/Toc.pm
+    version: 0.02
   Posy::Plugin::YamlConfig:
     file: lib/Posy/Plugin/YamlConfig.pm
-    version: 0.01
-generated_by: Module::Build version 0.2605
+    version: 0.02
+generated_by: Module::Build version 0.2602

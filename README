@@ -6,7 +6,7 @@ Posy - a website generator inspired by blosxom
 
 ==== VERSION ====
 
-This describes version ``0.01'' of Posy.
+This describes version ``0.02'' of Posy.
 
 
 ==== DESCRIPTION ====
@@ -23,13 +23,11 @@ writes a plugin to deal with them.
 
     File::Spec
     File::stat
-    FileHandle
 
     File::Find
     Data::Dumper
     Storable
-    Carp
-    CGI
+    CGI::Minimal
 
     Test::More
 

@@ -1,6 +1,5 @@
 package Posy::Plugin::TextToHTML;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Plugin::TextToHTML - Posy plugin to convert plain text files to HTML
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy::Plugin::TextToHTML.
+This describes version B<0.02> of Posy::Plugin::TextToHTML.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -55,8 +54,6 @@ txt2html_options: xhtml 1 escape_HTML_chars 0 make_anchors 0
 
 =cut
 
-use HTML::TextToHTML;
-
 =head1 OBJECT METHODS
 
 Documentation for developers and those wishing to write plugins.
@@ -97,6 +94,8 @@ sub parse_entry {
     my $id = $current_entry->{id};
     if ($self->{files}->{$id}->{ext} =~ /^t[e]?xt$/)
     {
+	require HTML::TextToHTML;
+
 	my %options = ();
 	if (defined $self->{config}->{txt2html_options})
 	{
@@ -114,9 +113,17 @@ sub parse_entry {
 	$self->debug(2, "$id is txt");
 	$current_entry->{raw} =~ m/^(.*)$/mi;
 	$current_entry->{title} = $1;
-	my $conf = new HTML::TextToHTML(%options);
+	# make only one HTML::TextToHTML object
+	if (!defined $self->{TextToHTML}->{obj})
+	{
+	    $self->{TextToHTML}->{obj} = HTML::TextToHTML->new(%options);
+	}
+	else # set the arguments
+	{
+	    $self->{TextToHTML}->{obj}->args(%options);
+	}
 	$current_entry->{body} =
-	    $conf->process_chunk($current_entry->{raw});
+	    $self->{TextToHTML}->{obj}->process_chunk($current_entry->{raw});
     }
     else # use parent
     {

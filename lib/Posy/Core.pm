@@ -1,6 +1,6 @@
 package Posy::Core;
 use strict;
-use warnings;
+#use warnings;
 
 =head1 NAME
 
@@ -8,11 +8,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy.
+This describes version B<0.02> of Posy.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,6 @@ formats can be dealt with if one writes a plugin to deal with them.
 
 use File::Spec;
 use File::stat;
-use FileHandle;
 
 =head1 CLASS METHODS
 
@@ -239,8 +238,12 @@ sub do_actions {
     $state{stop} = 0;
 
     no strict qw(subs refs);
-    foreach my $action (@{$self->{actions}})
+    # pop off each action as we go;
+    # that way it's possible for an action to
+    # manipulate the actions array
+    while (@{$self->{actions}})
     {
+	my $action = shift @{$self->{actions}};
 	last if $state{stop};
 	$state{action} = $action;
 	$self->debug(1, "action: $action");
@@ -297,37 +300,46 @@ sub init_params {
     my $self = shift;
     my $flow_state = shift;
 
-    use CGI;
-    $self->{cgi} = new CGI;
+    use CGI::Minimal;
 
     if ($ENV{GATEWAY_INTERFACE}) {
 	$self->{dynamic} = 1;
 	$self->{static} = 0;
+	$self->{cgi} = new CGI::Minimal;
     }
     else
     {
 	$self->{dynamic} = 0;
 	$self->{static} = 1;
+	# trick CGI::Minimal into NOT reading STDIN
+	# but give it the contents of @ARGV instead
+	$ENV{REQUEST_METHOD} = 'GET';
+	$ENV{QUERY_STRING} = join(';', @ARGV);
+	$self->{cgi} = new CGI::Minimal;
+
 	# set the parameters from $self->{params}
 	if (exists $self->{params} and defined $self->{params})
 	{
 	    while (my ($key, $val) = each %{$self->{params}})
 	    {
-		$self->{cgi}->param(-name=>$key,-value=>$val);
+		$self->{cgi}->param($key=>$val);
 	    }
 	}
     }
     # only set $self->{url} if it isn't defined; this allows users
     # to define an empty URL for static generation
-    $self->{url} = $self->{cgi}->url() if (!defined $self->{url});
-    $self->{url} =~ s/^included:/http:/; # Fix for Server Side Includes (SSI)
-    $self->{url} =~ s#/$##;
+    if (!defined $self->{url})
+    {
+	$self->{url} = $self->_url();
+    }
 } # init_params
 
 =head2 index_entries
 
 Find the entries files, the "other" files, and the categories.
 This uses caching by default.
+
+Expects $self->{path} and $self->{config} to be set.
 
 =cut
 
@@ -346,10 +358,10 @@ sub index_entries {
 	File::Spec->catfile($self->{state_dir}, 'categories.dat');
 
     my $reindex = $self->param('reindex');
-    $reindex = 1 if (!$self->init_caching());
+    $reindex = 1 if (!$self->_init_caching());
     if (!$reindex)
     {
-	$reindex = 1 if (!$self->read_caches());
+	$reindex = 1 if (!$self->_read_caches());
     }
     # If any files not available, err on side of caution and reindex
     for my $ffn (keys %{$self->{files}})
@@ -360,14 +372,21 @@ sub index_entries {
     for my $cat (keys %{$self->{categories}})
     { -d $self->{categories}->{$cat}->{fullname}
 	or do { $reindex++; delete $self->{categories}->{$cat} }; }
+    # if the current path points to a file not in the cache,
+    # then reindex
+    $reindex++ if (!exists $self->{categories}->{$self->{path}->{dir}});
+    $reindex++ if ($self->{path}->{type} eq 'entry'
+	and !exists $self->{files}->{$self->{path}->{file_key}});
+
     if ($reindex) {
 	use File::Find;
+	no warnings 'File::Find';
 	$self->debug(1, "reindexing $reindex");
-	find({wanted=>sub { $self->wanted() },
+	find({wanted=>sub { $self->_wanted() },
 	    follow=>$self->{follow_symlinks},
 	    },
 	     $self->{data_dir});
-	$self->save_caches();
+	$self->_save_caches();
     }
 } # index_entries
 
@@ -407,7 +426,7 @@ sub parse_path {
     my $flavour = $suffix || $self->param('flav') || $self->{config}->{flavour};
 
     # look for a possible filename
-    my ($fullname, $ext) = $self->find_file_and_ext($path_and_filebase);
+    my ($fullname, $ext) = $self->_find_file_and_ext($path_and_filebase);
     my @path_split = File::Spec->splitdir($path_and_filebase);
     my $full_dir = File::Spec->catdir($data_dir, $path_and_filebase);
 
@@ -420,7 +439,7 @@ sub parse_path {
 	$self->{path}->{basename} = pop @path_split;
 	$self->{path}->{dir} = (@path_split
 	    ? File::Spec->catfile(@path_split) : '');
-	$self->{path}->{depth} = @path_split + 1;
+	$self->{path}->{depth} = @path_split;
     }
     elsif (-f $full_path_info) # is a file
     {
@@ -431,13 +450,13 @@ sub parse_path {
 	$self->{path}->{basename} = pop @path_split;
 	$self->{path}->{dir} = (@path_split
 	    ? File::Spec->catfile(@path_split) : '');
-	$self->{path}->{depth} = @path_split + 1;
+	$self->{path}->{depth} = @path_split;
     }
     elsif (-d $full_dir) # is a category
     {
 	# check for an existing "index" entry first
 	my $paf = File::Spec->catfile($path_and_filebase, 'index');
-	($fullname, $ext) = $self->find_file_and_ext($paf);
+	($fullname, $ext) = $self->_find_file_and_ext($paf);
 	if ($fullname) # is an entry
 	{
 	    $self->{path}->{type} = 'entry';
@@ -446,7 +465,7 @@ sub parse_path {
 	    $self->{path}->{data_file} = $fullname;
 	    $self->{path}->{basename} = 'index';
 	    $self->{path}->{dir} = $path_and_filebase;
-	    $self->{path}->{depth} = @path_split + 1;
+	    $self->{path}->{depth} = @path_split;
 	}
 	else
 	{
@@ -456,7 +475,7 @@ sub parse_path {
 	    $self->{path}->{ext} = '';
 	    $self->{path}->{basename} = '';
 	    $self->{path}->{data_file} = '';
-	    $self->{path}->{depth} = @path_split + 1;
+	    $self->{path}->{depth} = @path_split;
 	}
     }
     elsif ($path_and_filebase eq 'index') # is the top page
@@ -467,7 +486,7 @@ sub parse_path {
 	$self->{path}->{ext} = '';
 	$self->{path}->{basename} = '';
 	$self->{path}->{data_file} = '';
-	$self->{path}->{depth} = 1;
+	$self->{path}->{depth} = 0;
     }
     else
     {
@@ -489,7 +508,7 @@ sub parse_path {
 		$self->{path}->{ext} = '';
 		$self->{path}->{basename} = '';
 		$self->{path}->{data_file} = '';
-		$self->{path}->{depth} = @path_split + 1;
+		$self->{path}->{depth} = @path_split;
 	    }
 	    elsif ($last_bit =~ /\d+/) # assume it's a chrono
 	    {
@@ -502,7 +521,7 @@ sub parse_path {
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
-		    $self->{path}->{depth} = @path_split + 1;
+		    $self->{path}->{depth} = @path_split;
 		}
 		elsif ($last_bit =~ /^\d{1,2}$/) # a month? a day?
 		{
@@ -524,7 +543,7 @@ sub parse_path {
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
-		    $self->{path}->{depth} = @path_split + 1;
+		    $self->{path}->{depth} = @path_split;
 		}
 		else
 		{
@@ -557,7 +576,7 @@ sub parse_path {
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
-		    $self->{path}->{depth} = @path_split + 1;
+		    $self->{path}->{depth} = @path_split;
 		}
 		elsif ($second_last_bit =~ /^\d{1,2}$/) # a month + a day
 		{
@@ -571,7 +590,7 @@ sub parse_path {
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
-		    $self->{path}->{depth} = @path_split + 1;
+		    $self->{path}->{depth} = @path_split;
 		}
 		else
 		{
@@ -598,7 +617,7 @@ sub parse_path {
 			$self->{path}->{ext} = '';
 			$self->{path}->{basename} = '';
 			$self->{path}->{data_file} = '';
-			$self->{path}->{depth} = @path_split + 1;
+			$self->{path}->{depth} = @path_split;
 		    }
 		    elsif ($third_last_bit =~ /^\d{1,2}$/) # short year?
 		    {
@@ -620,7 +639,7 @@ sub parse_path {
 			$self->{path}->{ext} = '';
 			$self->{path}->{basename} = '';
 			$self->{path}->{data_file} = '';
-			$self->{path}->{depth} = @path_split + 1;
+			$self->{path}->{depth} = @path_split;
 		    }
 		    else
 		    {
@@ -938,8 +957,12 @@ sub do_entry_actions {
     my %entry_state = ();
 
     no strict qw(subs refs);
-    foreach my $entry_id (@{$flow_state->{entries}})
+    # pop off each entry as we go;
+    # that way it's possible for an action to
+    # manipulate the entries array
+    while (@{$flow_state->{entries}})
     {
+	my $entry_id = shift @{$flow_state->{entries}};
 	$self->debug(2, "entry_id=$entry_id");
 	last if $current_entry{stop};
 	%current_entry = ();
@@ -951,7 +974,13 @@ sub do_entry_actions {
 
 	%entry_state = ();
 	$entry_state{stop} = 0;
-	foreach my $action (@{$self->{entry_actions}}) {
+	# pop off each action as we go;
+	# that way it's possible for an action to
+	# manipulate the actions array
+	my @entry_actions = @{$self->{entry_actions}};
+	while (@entry_actions)
+	{
+	    my $action = shift @entry_actions;
 	    last if $entry_state{stop};
 	    $entry_state{action} = $action;
 	    $self->debug(1, "entry_action: $action");
@@ -981,71 +1010,23 @@ sub render_page {
     if (defined $self->{outfile}
 	and $self->{outfile}) # print to a file
     {
-	my $fh = new FileHandle $self->{outfile}, "w";
-	if (defined $fh)
+	my $fh;
+	if (open $fh, ">$self->{outfile}")
 	{
 	    print $fh $flow_state->{head};
-	    print $fh join('', @{$flow_state->{page_body}});
+	    print $fh @{$flow_state->{page_body}};
 	    print $fh $flow_state->{foot};
-	    undef $fh;
+	    close($fh);
 	}
     }
     else {
-	print $self->{cgi}->header({-type=>$flow_state->{content_type}});
+	print 'Content-Type: ', $flow_state->{content_type}, "\n\n";
 	print $flow_state->{head};
-	print join('', @{$flow_state->{page_body}});
+	print @{$flow_state->{page_body}};
 	print $flow_state->{foot};
     }
     1;	
 } # render_page
-
-=head2 dump
-
-    $self->dump();
-    $self->dump(\%flow_state);
-    $self->dump(\%flow_state, \%current_entry, \%entry_state);
-
-Dump object data (for debugging)
-Checks $self->{debug_level}
-
-This can be called as a flow action or as an entry action, and will
-dump the given state hashes accordingly.
-
-=cut
-sub dump {
-    my $self = shift;
-    my $flow_state = (@_ ? shift : undef);
-    my $current_entry = (@_ ? shift : undef);
-    my $entry_state = (@_ ? shift : undef);
-
-    if ($self->{'debug_level'} < 1)
-    {
-	return;
-    }
-
-    use Data::Dumper;
-
-    my $class = ref $self;
-    my $oh = \*STDERR;
-    print $oh Data::Dumper->Dump([$self],[$class]);
-    if (exists $self->{cgi} and defined $self->{cgi})
-    {
-	my %params = $self->{cgi}->Vars();
-	print $oh "params: ", join(' ', %params), "\n";
-    }
-    if (defined $flow_state)
-    {
-	print $oh Data::Dumper->Dump([$flow_state],['flow_state']);
-    }
-    if (defined $current_entry)
-    {
-	print $oh Data::Dumper->Dump([$current_entry],['current_entry']);
-    }
-    if (defined $entry_state)
-    {
-	print $oh Data::Dumper->Dump([$entry_state],['entry_state']);
-    }
-} # dump
 
 =head1 Entry Action Methods
 
@@ -1132,14 +1113,14 @@ sub read_entry {
     my $entry_state = shift;
 
     my $fullname = $self->{files}->{$current_entry->{id}}->{fullname};
-    my $fh = new FileHandle;
     {
+	my $fh;
 	local $/;
 	if (-r $fullname
-	    and $fh->open($fullname))
+	    and open $fh, $fullname) 
 	{
 	    $current_entry->{raw} = <$fh>;
-	    $fh->close();
+	    close($fh);
 	}
 	else # error
 	{
@@ -1402,7 +1383,7 @@ sub get_template {
     # (useful for "header" and "story" templates)
     # if we fail to find one, deliberately set it to undefined
 
-    my $fh = new FileHandle;
+    my $fh;
 
     my $template = '';
     my $found = 0;
@@ -1426,11 +1407,11 @@ sub get_template {
 	    local $/;
 	    # look for the file
 	    if (-r "$look_dir/$pathtype_chunk.$flavour"
-		and $fh->open("$look_dir/$pathtype_chunk.$flavour"))
+		and open($fh, "$look_dir/$pathtype_chunk.$flavour"))
 	    {
 		$self->{templates}->{$chunk}->
 		    {$flavour}->{path}->{$path_dir}->{$path_type} = <$fh>;
-		$fh->close();
+		close($fh);
 		$template =
 		    $self->{templates}->{$chunk}->
 		    {$flavour}->{path}->{$path_dir}->{$path_type};
@@ -1461,11 +1442,11 @@ sub get_template {
 		local $/;
 		# look for the file
 		if (-r "$look_dir/$alt_pathtype_chunk.$flavour"
-		    and $fh->open("$look_dir/$alt_pathtype_chunk.$flavour"))
+		    and open($fh, "$look_dir/$alt_pathtype_chunk.$flavour"))
 		{
 		    $self->{templates}->{$chunk}->
 		    {$flavour}->{path}->{$path_dir}->{$alt_path_type} = <$fh>;
-		    $fh->close();
+		    close($fh);
 		    $template =
 			$self->{templates}->{$chunk}->
 			{$flavour}->{path}->{$path_dir}->{$alt_path_type};
@@ -1495,11 +1476,11 @@ sub get_template {
 	    local $/;
 	    # look for the file
 	    if (-r "$look_dir/$chunk.$flavour"
-		and $fh->open("$look_dir/$chunk.$flavour"))
+		and open($fh, "$look_dir/$chunk.$flavour"))
 	    {
 		$self->{templates}->{$chunk}->
 		    {$flavour}->{path}->{$path_dir}->{''} = <$fh>;
-		$fh->close();
+		close($fh);
 		$template =
 		    $self->{templates}->{$chunk}->
 		    {$flavour}->{path}->{$path_dir}->{''};
@@ -1681,8 +1662,8 @@ sub read_config_file {
     my %config;
     if (-r $filename)
     {
-	my $fh = new FileHandle;
-	$fh->open($filename)
+	my $fh;
+	open($fh, $filename)
 		or die "couldn't open config file $filename: $!";
 	$self->debug(2, "read_config_file: file found");
 
@@ -1696,7 +1677,7 @@ sub read_config_file {
 		    $config{$arg} = $val;
 		}
 	}
-	$fh->close();
+	close($fh);
 	return %config;
     }
     return ();
@@ -1753,16 +1734,16 @@ For debugging: say who called this
 =cut
 sub whowasi { (caller(1))[3] . '()' }
 
-=head2 find_file_and_ext
+=head2 _find_file_and_ext
 
-($fullname, $ext) = $self->find_file_and_ext($path_and_filebase);
+($fullname, $ext) = $self->_find_file_and_ext($path_and_filebase);
 
 Returns the full path file and the extentsion of the given
 path-plus-basename-of-file; if no matching entry file exists
 under the data directory, the returned values are empty strings.
 
 =cut
-sub find_file_and_ext {
+sub _find_file_and_ext {
     my $self = shift;
     my $path_and_filebase = shift;
 
@@ -1781,18 +1762,18 @@ sub find_file_and_ext {
 	}
     }
     return ($fullname, $ext);
-} # find_file_and_ext
+} # _find_file_and_ext
 
-=head2 wanted
+=head2 _wanted
 
-$self->wanted();
+$self->_wanted();
 
 This is a method called from a wrapper 'wanted' function inside
 the call to File::Find::find inside the index_entries method.
 This does all the work in indexing the entries.
 
 =cut
-sub wanted {
+sub _wanted {
     my $self = shift;
 
     my $d; 
@@ -1809,6 +1790,11 @@ sub wanted {
 	    $path =~ s#/$##;
 	    $self->{categories}->{$path}->{id} = $path;
 	    $self->{categories}->{$path}->{fullname} = $File::Find::name;
+	    my @path_split = File::Spec->splitdir($path);
+	    $self->{categories}->{$path}->{depth} = 
+		(@path_split ? @path_split : 0);
+	    $self->{categories}->{$path}->{basename} = $path_split[$#path_split];
+	    $self->{categories}->{$path}->{num_entries} = 0;
 	}
 	else {
 	    my ($path) = $File::Find::dir =~ m#^$self->{data_dir}(.*)$#;;
@@ -1842,6 +1828,8 @@ sub wanted {
 		    @{$self->{files}->{$path_and_filebase}->{date}} =
 			$self->extract_date(
 			    $self->{files}->{$path_and_filebase}->{mtime});
+		    $self->{categories}->{$path}->{num_entries}++
+			if ($fn_base ne 'index');
 		}
 	    }
 	    else { # others
@@ -1850,14 +1838,14 @@ sub wanted {
 	    }
 	}
     }
-} # wanted
+} # _wanted
 
-=head2 init_caching
+=head2 _init_caching
 
 Initialize the caching stuff used by index_entries
 
 =cut
-sub init_caching {
+sub _init_caching {
     my $self = shift;
 
     return 0 if (!$self->{config}->{use_caching});
@@ -1874,14 +1862,14 @@ sub init_caching {
     }
     $self->debug(1, "using caching");
     return 1;
-} # init_caching
+} # _init_caching
 
-=head2 read_caches
+=head2 _read_caches
 
 Reads the cached information used by index_entries
 
 =cut
-sub read_caches {
+sub _read_caches {
     my $self = shift;
 
     return 0 if (!$self->{config}->{use_caching});
@@ -1900,21 +1888,21 @@ sub read_caches {
     $self->{categories} = {};
     $self->debug(1, "Flushing caches");
     return 0;
-} # read_caches
+} # _read_caches
 
-=head2 save_caches
+=head2 _save_caches
 
 Saved the information gathered by index_entries to caches.
 
 =cut
-sub save_caches {
+sub _save_caches {
     my $self = shift;
     return if (!$self->{config}->{use_caching});
     $self->debug(1, "Saving caches");
     Storable::lock_store($self->{files}, $self->{config}->{files_cachefile});
     Storable::lock_store($self->{others}, $self->{config}->{others_cachefile});
     Storable::lock_store($self->{categories}, $self->{config}->{categories_cachefile});
-} # save_caches
+} # _save_caches
 
 =head2 extract_date
 
@@ -2000,16 +1988,74 @@ sub nice_date_time {
     return %vals;
 } # nice_date_time
 
+=head2 _url
+
+Figure out the full url.
+
+=cut
+sub _url {
+    my $self = shift;
+
+    my $protocol = $self->_protocol();
+    my $url = "$protocol://";
+    my $vh = $ENV{HTTP_HOST};
+    if ($vh) {
+	$url .= $vh;
+    } else {
+	$url .= $self->_server_name();
+	my $port = $self->_server_port;
+	$url .= ":" . $port unless (lc($protocol) eq 'http' && $port == 80)
+	    or (lc($protocol) eq 'https' && $port == 443);
+    }
+    $url .= $self->_script_name();
+
+    $url =~ s/^included:/http:/; # Fix for Server Side Includes (SSI)
+    $url =~ s#/$##;
+    return $url;
+} # url
+
+=head2 _protocol
+
+Figure out the protocol.  (taken from CGI::Simple)
+
+=cut
+sub _protocol {
+    local($^W)=0;
+    my $self = shift;
+
+    return 'https' if uc $ENV{'HTTPS'} eq 'ON';
+    return 'https' if $self->_server_port() == 443;
+    my( $protocol, $version ) = split '/', $self->_server_protocol();
+    return lc $protocol;
+} # protocol
+
+=head2 _script_name
+
+=cut
+sub _script_name      { $ENV{'SCRIPT_NAME'} || "/$0" || '' }
+
+=head2 _server_name
+
+=cut
+sub _server_name      { $ENV{'SERVER_NAME'} || 'localhost' }
+
+=head2 _server_port
+
+=cut
+sub _server_port      { $ENV{'SERVER_PORT'} || 80 }
+
+=head2 _server_protocol
+
+=cut
+sub _server_protocol  { $ENV{'SERVER_PROTOCOL'} || 'HTTP/1.0' }
+
 =head1 REQUIRES
 
     File::Spec
     File::stat
-    FileHandle
 
     File::Find
-    Data::Dumper
     Storable
-    Carp
     CGI
 
     Test::More

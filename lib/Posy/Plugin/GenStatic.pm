@@ -1,6 +1,5 @@
 package Posy::Plugin::GenStatic;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy.
+This describes version B<0.02> of Posy.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -44,8 +43,6 @@ The type of pages to generate.  There are three types: 'entry',
 =cut
 
 use File::Spec;
-use File::stat;
-use FileHandle;
 
 =head1 CLASS METHODS
 

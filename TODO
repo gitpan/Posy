@@ -1,21 +1,12 @@
 TODO list for Posy
 ==================
- 13. Posy::Plugin::Categories
-    Added:21/11/04, 19:58  Priority: medium
-
-      1. Full category tree for Site Map
-        Added:07/12/04, 18:12  Priority: medium
-
-      2. Category breadcrumbs in two styles (line and list)
-        Added:07/12/04, 18:12  Priority: medium
-
- 14. Posy::Plugin::PrettyCategory
+ 17. Posy::Plugin::PrettyCategory
     Added:21/11/04, 20:00  Priority: medium
 
- 15. Posy::Plugin::LinkSized
+ 18. Posy::Plugin::LinkSized
     Added:21/11/04, 20:01  Priority: medium
 
- 16. Posy::Plugin::Pod
+ 19. Posy::Plugin::Pod
     Added:21/11/04, 20:02  Priority: medium
 
       1. add .pod and .pm types (override file_extensions and parse_entry)
@@ -24,17 +15,8 @@ TODO list for Posy
       2. POD-to-HTML conversion, probably using Pod::HtmlEasy
         Added:21/11/04, 20:03  Priority: medium
 
- 17. email obfusctation plugin (including redirect CGI)
+ 20. email obfusctation plugin (including redirect CGI)
     Added:21/11/04, 20:06  Priority: medium
-
- 18. Posy::Plugin::Toc
-    Added:21/11/04, 20:09  Priority: medium
-
- 19. Posy::Plugin::LinkList, which checks if the current page is in the list
-    Added:25/11/04, 14:20  Priority: medium
-
- 20. Posy::Plugin::NearLinks (like headlines) (list and non-list)
-    Added:25/11/04, 21:59  Priority: medium
 
  21. Posy::Plugin::Find
     Added:25/11/04, 22:02  Priority: medium
@@ -50,5 +32,11 @@ TODO list for Posy
 
  25. Posy::Plugin::EmptyMessage
     Added:12/12/04, 10:19  Priority: medium
+
+ 26. Posy::Plugin::RandQuote
+    Added:13/12/04, 20:32  Priority: medium
+
+ 27. Posy::Plugin::Cannonical
+    Added:16/12/04, 08:36  Priority: medium
 
 

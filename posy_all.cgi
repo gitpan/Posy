@@ -2,7 +2,6 @@
 # vim:ts=8 sw=4 sts=4 ai
 require v5.6.1;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -10,11 +9,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.01> of posy.cgi.
+This describes version B<0.02> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -95,7 +94,7 @@ automatic)
 
 =cut
 
-our $url;
+our $url = '';
 
 =item flavour_dir
 
@@ -140,10 +139,16 @@ our @plugins = qw(Posy::Core
     Posy::Plugin::TextTemplate
     Posy::Plugin::TextToHTML
     Posy::Plugin::YamlConfig
+    Posy::Plugin::EntryTitles
     Posy::Plugin::DynamicCss
     Posy::Plugin::ThemeCss
     Posy::Plugin::FlavourMenu
-    Posy::Plugin::ShortBody);
+    Posy::Plugin::LinkList
+    Posy::Plugin::Categories
+    Posy::Plugin::ShortBody
+    Posy::Plugin::Toc
+    Posy::Plugin::NearLinks
+    );
 
 =item file_extensions
 
@@ -169,6 +174,7 @@ our @actions = qw(init_params
 	    stop_if_not_found
 	    set_config
 	    index_entries
+	    index_titles
 	    select_by_path
 	    filter_by_date
 	    sort_entries
@@ -182,7 +188,6 @@ our @actions = qw(init_params
 	    foot_template
 	    foot_render
 	    render_page
-	    dump
 	);
 
 =item entry_actions
@@ -198,9 +203,9 @@ our @entry_actions = qw(
 	    read_entry
 	    parse_entry
 	    short_body
+	    make_toc
 	    render_entry
 	    append_entry
-	    dump
 	);
 
 =item DayWeek2Name
@@ -281,7 +286,7 @@ my %run_args = (
 		state_dir=>$state_dir,
 		DayWeek2Name=>\%DayWeek2Name,
 		MonthNum2Name=>\%MonthNum2Name,
-		debug_level=>1,
+		debug_level=>0,
 	       );
 # set the other options, if they exist
 $run_args{url} = $url if defined $url;

@@ -1,6 +1,5 @@
 package Posy::Plugin::DynamicCss;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Plugin::DynamicCss - Posy plugin to load different CSS styles based on the
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy::Plugin::DynamicCss.
+This describes version B<0.02> of Posy::Plugin::DynamicCss.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -122,7 +121,7 @@ sub dynamic_css_set {
     my $self = shift;
     my $flow_state = shift;
 
-    my $user = $self->{cgi}->user_agent();
+    my $user = $ENV{HTTP_USER_AGENT};
     my $included = 0;
     my $fullpath = $self->{url};
     $fullpath =~ s/\/index.cgi//;

@@ -46,7 +46,6 @@ my @entry_actions = qw(
 	    short_body
 	    render_entry
 	    append_entry
-	    dump
 	);
 my $res = Posy->run(params=>{path=>$path},
 		    data_dir=>$data_dir,

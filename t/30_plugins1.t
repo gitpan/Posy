@@ -17,8 +17,12 @@ BEGIN {
 }
 
 use File::Spec;
-require Posy;
 require 't/compare.pl';
+use Posy qw(Posy::Core
+    Posy::Plugin::TextTemplate
+    Posy::Plugin::TextToHTML
+    Posy::Plugin::YamlConfig
+    Posy::Plugin::EntryTitles);
 
 my $test = '30_plugins1';
 my $debug_level = 0;
@@ -29,10 +33,6 @@ my $config_dir = File::Spec->catdir(File::Spec->rel2abs('data'), 'yconfig');
 my $path = "welcome.html";
 my $outfile = $path;
 
-Posy->import(qw(Posy::Core
-    Posy::Plugin::TextTemplate
-    Posy::Plugin::TextToHTML
-    Posy::Plugin::YamlConfig));
 my $res = Posy->run(params=>{path=>$path},
 		    data_dir=>$data_dir,
 		    flavour_dir=>$flavour_dir,

@@ -2,7 +2,6 @@
 # vim:ts=8 sw=4 sts=4 ai
 require v5.6.1;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -10,11 +9,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.01> of posy.cgi.
+This describes version B<0.02> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 

@@ -10,16 +10,13 @@ my $builder = Module::Build->new(
 	requires            => {
 	'File::Spec' => 0,
 	'File::stat' => 0,
-	'FileHandle' => 0,
 	'File::Find' => 0,
 	'Data::Dumper' => 0,
 	'Storable' => 0,
-	'Carp' => 0,
-	'CGI' => 0,
+	'CGI::Minimal' => 0,
 	'Getopt::Long' => 2.34,
 	'Pod::Usage' => 0,
 	'Getopt::ArgvFile' => 1.09,
-
 	},
     build_requires => {
         'Test::More' => 0,

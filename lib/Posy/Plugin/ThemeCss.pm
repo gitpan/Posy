@@ -1,6 +1,5 @@
 package Posy::Plugin::ThemeCss;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Plugin::ThemeCss - Posy plugin to give the start of an entry body
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy::Plugin::ThemeCss.
+This describes version B<0.02> of Posy::Plugin::ThemeCss.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 

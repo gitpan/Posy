@@ -1,6 +1,5 @@
 package Posy::Plugin::ShortBody;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Plugin::ShortBody - Posy plugin to give the start of an entry body
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy::Plugin::ShortBody.
+This describes version B<0.02> of Posy::Plugin::ShortBody.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -50,6 +49,15 @@ If true, removes the first header it encounters in the body, and
 uses the first sentence after that. (1 is true, 0 is false)
 (default: true)
 
+=item B<short_body_replace_body>
+
+If the short_body_replace_body option is true, then this I<replaces>
+$entry_body with the short body contents.  This is useful when
+one wishes to speed processing when one knows that only the short
+body is going to be used (such as in chrono/category index pages).
+This needs to be done with care, naturally.
+(default: false)
+
 =back
 
 =cut
@@ -70,6 +78,8 @@ sub init {
     # set defaults
     $self->{config}->{short_body_remove_header} = 1
 	if (!defined $self->{config}->{short_body_remove_header});
+    $self->{config}->{short_body_replace_body} = 0
+	if (!defined $self->{config}->{short_body_replace_body});
 } # init
 
 =head1 Entry Action Methods
@@ -101,6 +111,8 @@ sub short_body {
     # get the first sentence
     $body =~ s/([\.\!\?]).+$/$1/s;
     $current_entry->{short_body} = $body;
+    $current_entry->{body} = $body
+	if ($self->{config}->{short_body_replace_body});
     1;
 } # short_body
 

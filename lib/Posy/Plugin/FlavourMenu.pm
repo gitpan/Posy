@@ -1,6 +1,5 @@
 package Posy::Plugin::FlavourMenu;
 use strict;
-use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Plugin::FlavourMenu - Posy plugin to make a menu of flavours
 
 =head1 VERSION
 
-This describes version B<0.01> of Posy::Plugin::FlavourMenu.
+This describes version B<0.02> of Posy::Plugin::FlavourMenu.
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 

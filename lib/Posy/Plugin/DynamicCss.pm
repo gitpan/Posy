@@ -7,11 +7,11 @@ Posy::Plugin::DynamicCss - Posy plugin to load different CSS styles based on the
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::DynamicCss.
+This describes version B<0.21> of Posy::Plugin::DynamicCss.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 

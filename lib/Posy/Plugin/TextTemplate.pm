@@ -7,11 +7,11 @@ Posy::Plugin::TextTemplate - Posy plugin for interpolating with Text::Template
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::TextTemplate.
+This describes version B<0.21> of Posy::Plugin::TextTemplate.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 

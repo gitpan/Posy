@@ -7,11 +7,11 @@ Posy::Plugin::BinFile - Posy plugin to serve (binary) non-entry files
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::BinFile.
+This describes version B<0.21> of Posy::Plugin::BinFile.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 

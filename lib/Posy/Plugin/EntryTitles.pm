@@ -7,11 +7,11 @@ Posy::Plugin::EntryTitles - Posy plugin to cache entry titles
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::EntryTitles.
+This describes version B<0.21> of Posy::Plugin::EntryTitles.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ Methods implementing actions.
 Find the titles of the entry files.
 This uses caching by default.
 
-Expects $self->{path} and $self->{config}
+Expects $self->{config}
 and $self->{files} to be set.
 
 =cut

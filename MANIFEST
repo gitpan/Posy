@@ -36,6 +36,7 @@ data/yconfig/config
 data/yconfig/plugins/category.config
 lib/Posy.pm
 lib/Posy/Core.pm
+lib/Posy/Plugin/AntiSpambot.pm
 lib/Posy/Plugin/BinFile.pm
 lib/Posy/Plugin/Canonical.pm
 lib/Posy/Plugin/Categories.pm

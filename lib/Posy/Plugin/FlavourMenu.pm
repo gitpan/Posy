@@ -7,11 +7,11 @@ Posy::Plugin::FlavourMenu - Posy plugin to make a menu of flavours
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::FlavourMenu.
+This describes version B<0.21> of Posy::Plugin::FlavourMenu.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -153,7 +153,7 @@ sub flavour_menu_links {
     my $item   = qq{<li class="flavour_menu_item">};
     my $url = $self->{url};
     my $path_and_filebase;
-    if ($self->{path}->{type} eq 'top')
+    if ($self->{path}->{type} eq 'top_category')
     {
 	$path_and_filebase = '';
     }

@@ -7,11 +7,11 @@ Posy::Plugin::YamlConfig - Posy plugin to read config files in YAML format
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::YamlConfig.
+This describes version B<0.21> of Posy::Plugin::YamlConfig.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 

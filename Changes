@@ -1,6 +1,56 @@
 Revision history for Posy
 =========================
 
+0.21 Fri 07 January 2005
+------------------------
+
+  * (7 Jan 2005) twitch
+  	Forgot to change Posy::Plugin::AntiSpambot's version.  Drat.
+
+
+0.20 Fri 07 January 2005
+------------------------
+
+  * (7 Jan 2005) you were here
+  	Posy::Plugin::Categories category_tree how uses
+  HTTP_REFERER to figure out what category you came from, and
+  adds a pointer string (default "<-- you were here").
+  	This from a suggestion on Nielson's column on how to
+  improve Site Maps.  I thought it was a cool idea, so I did it.
+
+  * (7 Jan 2005) tweaked path-type and config
+  	Changed the 'top' path-type to 'top_category' to make it clearer.
+  Also enhanced the config system so that one can have basename config
+  files too; only really useful for entries I guess, but being able to
+  set a variable on a per-entry basis can still solve a number of problems.
+
+  * (7 Jan 2005) entry indexing revamp
+  	De-did everything to do with entry indexing and path parsing
+  to hopefully make it more portable.  I realized I had been falling into
+  unixisms with the keys of $self->{files} which meant that the request
+  path (which is always forward-slash-unix-style) couldn't always match
+  the entry file it wanted on systems which don't use forward slash.
+  	There may be other unixisms lurking, but I think I've gotten
+  rid of this one.
+
+  * (6 Jan 2005) Posy::Plugin::AntiSpambot
+  	Plugin to obscure email addresses to hide them from spambots.
+
+  * (6 Jan 2005) a few tweakings
+
+  * (6 Jan 2005) tweaking posy_one
+
+  * (6 Jan 2005) more documentation improvements
+
+  * (6 Jan 2005) path and category fixes
+  	Fixed a bug with path parsing where the path was '/' and there
+  was an index entry for it.  Hadn't triggered it before because I'd set
+  up my redirect/rewrite differently.
+  	Fixed a bug with the category index where the root category
+  had inconsistent data.
+  	Also added more data to a warning.
+
+
 0.11 Wed 05 January 2005
 ------------------------
 

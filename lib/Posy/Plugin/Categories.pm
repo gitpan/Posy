@@ -7,11 +7,11 @@ Posy::Plugin::Categories - Posy plugin to give category links.
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::Categories.
+This describes version B<0.21> of Posy::Plugin::Categories.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -63,6 +63,9 @@ of the list.  The default setup is for a simple UL list, but setting
 the options can enable you to make it something other than a list
 altogether, or add in CSS styles or classes to make it look just
 like you want.
+
+If HTTP_REFERRER exists, this will also flag a "you were here"
+in the list.
 
 Options:
 
@@ -122,6 +125,11 @@ category.
 What label should we give the "root" category?
 (default: home)
 
+=item you_were_here
+
+String which points to the directory we just came from.
+(default: '&lt;-- you were here')
+
 =back
 
 =cut
@@ -139,6 +147,7 @@ sub category_tree {
 		item_sep=>"\n",
 		tree_sep=>"\n",
 		root=>'home',
+		you_were_here=>'&lt;-- you were here',
 		use_count=>1,
 		@_
 	       );
@@ -148,6 +157,36 @@ sub category_tree {
 	depth=>0);
     $args{tree_depth} = 0;
     $args{end_depth} = 0;
+
+    # figure out what the local reference may be by looking at the referrer
+    my $referrer = $ENV{HTTP_REFERER};
+    my $local_ref = '';
+    if ($referrer)
+    {
+	if ($self->{url})
+	{
+	    my $url = $self->{url};
+	    if ($url && $referrer =~ m#${url}(.*)#)
+	    {
+		$local_ref = $1;
+		$local_ref =~ s#[^/]+\.\w+$##;
+		$local_ref =~ s#/$##;
+		$local_ref =~ s#^/##;
+	    }
+	}
+	else # guess from the host
+	{
+	    my $host = $ENV{HTTP_HOST};
+	    if ($host && $referrer =~ m#${host}(.*)#)
+	    {
+		$local_ref = $1;
+		$local_ref =~ s#[^/]+\.\w+$##;
+		$local_ref =~ s#/$##;
+		$local_ref =~ s#^/##;
+	    }
+	}
+    }
+    $args{local_ref} = $local_ref;
     my $list = $self->_traverse_lol(\%args, \@list_of_lists);
     return join('', $args{tree_head}, $list, $args{tree_foot});
 } # category_tree
@@ -310,19 +349,19 @@ sub _build_lol {
     {
 	my $cat = @{$cats_ref}[0];
 	if ($args{match_path}
-	    and $self->{path}->{dir}
+	    and $self->{path}->{cat_id}
 	    and !(
 	     ($self->{categories}->{$cat}->{depth} < $self->{path}->{depth}
-	      and $self->{path}->{dir} =~ /^$cat/)
+	      and $self->{path}->{cat_id} =~ /^$cat/)
 	     or (
 		 $self->{categories}->{$cat}->{depth} ==
 		 $self->{path}->{depth}
-		 and $cat eq $self->{path}->{dir}
+		 and $cat eq $self->{path}->{cat_id}
 		)
 	     or (
 		 $self->{categories}->{$cat}->{depth} >
 		 $self->{path}->{depth} # child
-		 and $cat =~ /^$self->{path}->{dir}/
+		 and $cat =~ /^$self->{path}->{cat_id}/
 		)
 	    )
 	   )
@@ -372,6 +411,7 @@ sub _traverse_lol {
     my $lol_ref = shift;
 
     my $tree_depth = $args->{tree_depth};
+    my $local_ref = $args->{local_ref} || '';
     my @items = ();
     while (@{$lol_ref})
     {
@@ -382,7 +422,7 @@ sub _traverse_lol {
 	    my $item;
 	    if (($self->{path}->{basename} eq 'index'
 		or $self->{path}->{type} !~ /entry$/)
-		and $cat eq $self->{path}->{dir})
+		and $cat eq $self->{path}->{cat_id})
 	    {
 		$item = join('',
 			     $args->{pre_item},
@@ -414,6 +454,10 @@ sub _traverse_lol {
 	    {
 		$item = join('', $item, ' (',
 		    $self->{categories}->{$cat}->{num_entries}, ')');
+	    }
+	    if ($local_ref and $local_ref eq $cat)
+	    {
+		$item = join(' ', $item, $args->{you_were_here});
 	    }
 	    if (ref $lol_ref->[0]) # next one is a list
 	    {

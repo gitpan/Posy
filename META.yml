@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Posy
-version: 0.11
+version: 0.21
 author:
   - Kathryn Andersen
 abstract: a website generator inspired by blosxom
@@ -20,74 +20,77 @@ build_requires:
 provides:
   Posy:
     file: lib/Posy.pm
-    version: 0.11
+    version: 0.21
   Posy::Core:
     file: lib/Posy/Core.pm
-    version: 0.11
+    version: 0.21
+  Posy::Plugin::AntiSpambot:
+    file: lib/Posy/Plugin/AntiSpambot.pm
+    version: 0.21
   Posy::Plugin::BinFile:
     file: lib/Posy/Plugin/BinFile.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::Canonical:
     file: lib/Posy/Plugin/Canonical.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::Categories:
     file: lib/Posy/Plugin/Categories.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::CgiCarp:
     file: lib/Posy/Plugin/CgiCarp.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::Dump:
     file: lib/Posy/Plugin/Dump.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::DynamicCss:
     file: lib/Posy/Plugin/DynamicCss.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::EntryTitles:
     file: lib/Posy/Plugin/EntryTitles.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::FileStats:
     file: lib/Posy/Plugin/FileStats.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::FlavourMenu:
     file: lib/Posy/Plugin/FlavourMenu.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::GenStatic:
     file: lib/Posy/Plugin/GenStatic.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::LinkExtra:
     file: lib/Posy/Plugin/LinkExtra.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::LinkList:
     file: lib/Posy/Plugin/LinkList.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::LocalDepth:
     file: lib/Posy/Plugin/LocalDepth.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::NearLinks:
     file: lib/Posy/Plugin/NearLinks.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::RandQuote:
     file: lib/Posy/Plugin/RandQuote.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::ShortBody:
     file: lib/Posy/Plugin/ShortBody.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::TextTemplate:
     file: lib/Posy/Plugin/TextTemplate.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::TextToHTML:
     file: lib/Posy/Plugin/TextToHTML.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::ThemeCss:
     file: lib/Posy/Plugin/ThemeCss.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::ThisFlavour:
     file: lib/Posy/Plugin/ThisFlavour.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::Toc:
     file: lib/Posy/Plugin/Toc.pm
-    version: 0.11
+    version: 0.21
   Posy::Plugin::YamlConfig:
     file: lib/Posy/Plugin/YamlConfig.pm
-    version: 0.11
-generated_by: Module::Build version 0.2605
+    version: 0.21
+generated_by: Module::Build version 0.2607

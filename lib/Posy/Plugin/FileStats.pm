@@ -7,11 +7,11 @@ Posy::Plugin::FileStats - Posy plugin to cache file statistics
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::FileStats.
+This describes version B<0.21> of Posy::Plugin::FileStats.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -109,7 +109,7 @@ Methods implementing actions.
 
 Find statistics about entry and other files.
 
-Expects $self->{path}, $self->{config}, $self->{files}
+Expects $self->{config}, $self->{files}
 and $self->{others} to be set.
 
 =cut

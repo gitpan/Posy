@@ -1,6 +1,5 @@
 package Posy::Core;
 use strict;
-#use warnings;
 
 =head1 NAME
 
@@ -8,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Core.
+This describes version B<0.21> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -89,104 +88,6 @@ sub run {
 
     $self->do_actions();
 } # run
-
-=head1 TERMS
-
-A few terms:
-
-=over
-
-=item data_dir, data directory
-
-The directory where the input data files are kept.  This need not be the
-same directory as the posy.cgi script or any other script.  This is set up
-with sub-directories in a hierarchical fashion and chiefly contains the
-files holding the web content you wish to display.
-
-=item state_dir, state directory
-
-The directory where "state" files are written.  Thus this needs
-to be a directory writable by the script, which may need special
-care when using Posy with a CGI script, since the user and permissions
-tend to be tricky with CGI scripts.
-
-=item config_dir, config directory
-
-The directory where configuration files are kept, in a hierarchical
-manner which mirrors that of the data directory.
-This defaults to being the same directory as the data_dir.
-
-=item flavour_dir, flavour directory
-
-The directory where flavour files are kept (see L</flavour>), in a
-hierarchical manner which mirrors that of the data directory.
-If not defined, this also defaults to the same directory as the data_dir.
-
-=item full path, full filename
-
-The absolute location of a given file; the absolute pathname.
-
-=item path
-
-(a) the relative location of a file (relative to the data directory
-or to the top of the website, depending on context)
-(b) the current request path (which may or may not be the relative location
-of a file)
-
-=item path-type
-
-The type of request path.  This can be "entry", for an individual file,
-"category", for a sub-directory, "chrono" for a dated request, "top_entry"
-for an entry at the top of the website, "top", for the very root page,
-or "file" for a file which is not an entry.
-(These may change slightly in future).
-
-=item chunk
-
-A given output page is pasted together from several chunks, each of which
-has a template for it.  The chunks are:
-
-=over
-
-=item content_type
-
-The MIME-type of the output page.  Usually this is text/html, but some
-veriations may call for text/plain or something else.
-
-=item head
-
-The "head" part of the page; which usually includes the opening
-<html> tag, the <head> content, and the opening <body> tag and
-any initial content required.
-
-=item header
-
-A header part of a page; something which may or may not be repeated
-over the page, depending on how its contents change.
-
-=item entry
-
-The template for the actual page content; for pages which source multiple
-entry-files per page, this is repeated for each entry file.
-An entry file is just an individual input content file.
-
-=item foot
-
-The "foot" part of the page; usually contains trailing content,
-and the closing </body> and </html> tags.
-
-=back
-
-=item flavour
-
-The Posy system, like the blosxom system, enables use of multiple
-template-sets by giving them a "flavour" extension, which can be
-parsed from the initial request path by either the extension of
-the request path, or by a "flav" paramter.  One can then set up
-a different template-set for each flavour, and customize the look
-of the output pages while keeping the content separate.
-
-=back
 
 =head1 OBJECT METHODS
 
@@ -316,7 +217,7 @@ sub init {
 		'<html><body><p><font color="red">Error: I\'m afraid this is the first I\'ve heard of a "$path_flavour" flavoured Posy.  Try dropping the "/.$path_flavour" bit from the end of the URL.</font>';
     $self->{templates}->{header}->{error} ||= '<h3>$entry_dw, $entry_da $entry_month $entry_year</h3>';
     $self->{templates}->{entry}->{error} ||=
-		'<p><b>$entry_title</b><br />$entry_body <a href="$url/$path_dir/$path_basename.$config_flavour">#</a></p>';
+		'<p><b>$entry_title</b><br />$entry_body <a href="$url/$path_cat_id/$path_basename.$config_flavour">#</a></p>';
     $self->{templates}->{foot}->{error} ||= '</body></html>';
 
     #
@@ -522,11 +423,11 @@ The original PATH_INFO or equivalent.
 
 =item type
 
-The type of the path: entry, top_entry, top, category, chrono, file.
+The type of the path: entry, top_entry, category, top_category chrono, file.
 
 =item file_key
 
-The path without the extension; used as a key in $self->{files}.
+The path in unix style without the extension; used as a key in $self->{files}.
 
 =item ext
 
@@ -540,9 +441,9 @@ The full path of the found file.
 
 The base name of the file without directory or extension.
 
-=item dir
+=item cat_id
 
-The directory part of the path.
+The directory (category) part of the path in unix style.
 
 =item depth
 
@@ -589,8 +490,6 @@ sub parse_path {
     $path_info = $ENV{REDIRECT_URL} if (!defined $path_info);
     $self->{path}->{info} = $path_info;
 
-    my $full_path_info = File::Spec->catfile($data_dir, $path_info);
-    $full_path_info =~ s#//#/#g; # remove any double-slashes
     my ($path_and_filebase, $suffix) = $path_info =~ /^(.*)\.(\w+)$/;
     $path_and_filebase = $path_info if (!$suffix);
     $path_and_filebase =~ s#^\./##; # remove an initial "./"
@@ -598,10 +497,13 @@ sub parse_path {
     $path_and_filebase =~ s#/$##;
     my $flavour = $suffix || $self->param('flav') || $self->{config}->{flavour};
 
+    # note that the PATH will be in the standard this/is/a/dir form
+    # so just use split
+    my @path_split = split(/\//, $path_and_filebase);
+    my $full_no_ext = File::Spec->catdir($data_dir, @path_split);
+    my $full_path_info = ($suffix ? "${full_no_ext}.$suffix" : $full_no_ext);
     # look for a possible filename
-    my ($fullname, $ext) = $self->_find_file_and_ext($path_and_filebase);
-    my @path_split = File::Spec->splitdir($path_and_filebase);
-    my $full_dir = File::Spec->catdir($data_dir, $path_and_filebase);
+    my ($fullname, $ext) = $self->_find_file_and_ext($full_no_ext);
 
     if ($fullname) # is an entry
     {
@@ -610,8 +512,7 @@ sub parse_path {
 	$self->{path}->{ext} = $ext;
 	$self->{path}->{data_file} = $fullname;
 	$self->{path}->{basename} = pop @path_split;
-	$self->{path}->{dir} = (@path_split
-	    ? File::Spec->catfile(@path_split) : '');
+	$self->{path}->{cat_id} = (@path_split ? join('/', @path_split) : '');
 	$self->{path}->{depth} = @path_split;
     }
     elsif (-f $full_path_info) # is a file
@@ -621,30 +522,31 @@ sub parse_path {
 	$self->{path}->{ext} = $suffix;
 	$self->{path}->{data_file} = $full_path_info;
 	$self->{path}->{basename} = pop @path_split;
-	$self->{path}->{dir} = (@path_split
-	    ? File::Spec->catfile(@path_split) : '');
+	$self->{path}->{cat_id} = (@path_split ? join('/', @path_split) : '');
 	$self->{path}->{depth} = @path_split;
     }
-    elsif (-d $full_dir) # is a category
+    elsif (-d $full_no_ext) # is a category
     {
 	# check for an existing "index" entry first
-	my $paf = File::Spec->catfile($path_and_filebase, 'index');
-	($fullname, $ext) = $self->_find_file_and_ext($paf);
+	my $fpaf = File::Spec->catfile($full_no_ext, 'index');
+	($fullname, $ext) = $self->_find_file_and_ext($fpaf);
 	if ($fullname) # is an entry
 	{
 	    $self->{path}->{type} = 'entry';
-	    $self->{path}->{file_key} = $paf;
+	    $self->{path}->{file_key} = 
+		($path_and_filebase ? "${path_and_filebase}/index"
+		    : 'index');
 	    $self->{path}->{ext} = $ext;
 	    $self->{path}->{data_file} = $fullname;
 	    $self->{path}->{basename} = 'index';
-	    $self->{path}->{dir} = $path_and_filebase;
+	    $self->{path}->{cat_id} = $path_and_filebase;
 	    $self->{path}->{depth} = @path_split;
 	}
-	else
+	else # is really a category
 	{
 	    $self->{path}->{type} = 'category';
 	    $self->{path}->{file_key} = $path_and_filebase;
-	    $self->{path}->{dir} = $path_and_filebase;
+	    $self->{path}->{cat_id} = $path_and_filebase;
 	    $self->{path}->{ext} = '';
 	    $self->{path}->{basename} = '';
 	    $self->{path}->{data_file} = '';
@@ -653,9 +555,9 @@ sub parse_path {
     }
     elsif ($path_and_filebase eq 'index') # is the top page
     {
-	$self->{path}->{type} = 'top';
+	$self->{path}->{type} = 'top_category';
 	$self->{path}->{file_key} = '';
-	$self->{path}->{dir} = '';
+	$self->{path}->{cat_id} = '';
 	$self->{path}->{ext} = '';
 	$self->{path}->{basename} = '';
 	$self->{path}->{data_file} = '';
@@ -669,15 +571,15 @@ sub parse_path {
 	# I'm going to be pedantic and say that a year must be
 	# four digits long, and the other date components must be 1 or 2 digits
 	my $last_bit = pop @path_split;
-	my $path_dir = (@path_split ? File::Spec->catfile(@path_split) : '');
-	$full_dir = File::Spec->catdir($data_dir, $path_dir);
-	if (-d $full_dir)
+	$full_no_ext = (@path_split ? $data_dir
+	    : File::Spec->catdir($data_dir, @path_split));
+	if (-d $full_no_ext)
 	{
 	    if ($last_bit eq 'index') # is a category index
 	    {
 		$self->{path}->{type} = 'category';
-		$self->{path}->{file_key} = $path_dir;
-		$self->{path}->{dir} = $path_dir;
+		$self->{path}->{file_key} = join('/', @path_split);
+		$self->{path}->{cat_id} = $self->{path}->{file_key};
 		$self->{path}->{ext} = '';
 		$self->{path}->{basename} = '';
 		$self->{path}->{data_file} = '';
@@ -690,7 +592,7 @@ sub parse_path {
 		    $self->{path}->{type} = 'chrono';
 		    $self->{path}->{year} = $last_bit;
 		    $self->{path}->{file_key} = '';
-		    $self->{path}->{dir} = $path_dir;
+		    $self->{path}->{cat_id} = join('/', @path_split);
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
@@ -712,7 +614,7 @@ sub parse_path {
 			$self->{path}->{month} = $last_bit;
 		    }
 		    $self->{path}->{file_key} = '';
-		    $self->{path}->{dir} = $path_dir;
+		    $self->{path}->{cat_id} = join('/', @path_split);
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
@@ -735,9 +637,8 @@ sub parse_path {
 	else # no category yet
 	{
 	    my $second_last_bit = pop @path_split;
-	    $path_dir = (@path_split ? File::Spec->catfile(@path_split) : '');
-	    $full_dir = File::Spec->catdir($data_dir, $path_dir);
-	    if (-d $full_dir) # yay, it exists!
+	    $full_no_ext = File::Spec->catdir($data_dir, @path_split);
+	    if (-d $full_no_ext) # yay, it exists!
 	    {
 		if ($second_last_bit =~ /^\d{4}$/) # a year + a month
 		{
@@ -745,7 +646,7 @@ sub parse_path {
 		    $self->{path}->{year} = $second_last_bit;
 		    $self->{path}->{month} = $last_bit;
 		    $self->{path}->{file_key} = '';
-		    $self->{path}->{dir} = $path_dir;
+		    $self->{path}->{cat_id} = join('/', @path_split);
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
@@ -759,7 +660,7 @@ sub parse_path {
 		    $self->{path}->{month} = $second_last_bit;
 		    $self->{path}->{day} = $last_bit;
 		    $self->{path}->{file_key} = '';
-		    $self->{path}->{dir} = $path_dir;
+		    $self->{path}->{cat_id} = join('/', @path_split);
 		    $self->{path}->{ext} = '';
 		    $self->{path}->{basename} = '';
 		    $self->{path}->{data_file} = '';
@@ -775,9 +676,8 @@ sub parse_path {
 	    else # keep looking
 	    {
 		my $third_last_bit = pop @path_split;
-		$path_dir = (@path_split ? File::Spec->catfile(@path_split) : '');
-		$full_dir = File::Spec->catdir($data_dir, $path_dir);
-		if (-d $full_dir) # yay, it exists!
+		$full_no_ext = File::Spec->catdir($data_dir, @path_split);
+		if (-d $full_no_ext) # yay, it exists!
 		{
 		    if ($third_last_bit =~ /^\d{4}$/) # a year + a month + day
 		    {
@@ -786,7 +686,7 @@ sub parse_path {
 			$self->{path}->{month} = $second_last_bit;
 			$self->{path}->{day} = $last_bit;
 			$self->{path}->{file_key} = '';
-			$self->{path}->{dir} = $path_dir;
+			$self->{path}->{cat_id} = join('/', @path_split);
 			$self->{path}->{ext} = '';
 			$self->{path}->{basename} = '';
 			$self->{path}->{data_file} = '';
@@ -808,7 +708,7 @@ sub parse_path {
 			$self->{path}->{month} = $second_last_bit;
 			$self->{path}->{day} = $last_bit;
 			$self->{path}->{file_key} = '';
-			$self->{path}->{dir} = $path_dir;
+			$self->{path}->{cat_id} = join('/', @path_split);
 			$self->{path}->{ext} = '';
 			$self->{path}->{basename} = '';
 			$self->{path}->{data_file} = '';
@@ -833,19 +733,19 @@ sub parse_path {
     if (!$self->{path}->{error})
     {
 	if ($self->{path}->{type} eq 'entry'
-	    and $self->{path}->{dir} eq '')
+	    and $self->{path}->{cat_id} eq '')
 	{
 	    $self->{path}->{type} = 'top_entry';
 	}
 	if ($self->{path}->{type} eq 'category'
-	    and $self->{path}->{dir} eq '')
+	    and $self->{path}->{cat_id} eq '')
 	{
-	    $self->{path}->{type} = 'top';
+	    $self->{path}->{type} = 'top_category';
 	}
 
 	$self->{path}->{flavour} = $flavour;
 	# make path_name be the path-dir with underscores
-	$self->{path}->{name} = $self->{path}->{dir};
+	$self->{path}->{name} = $self->{path}->{cat_id};
 	$self->{path}->{name} =~ s#/#_#g;
     }
 
@@ -904,7 +804,7 @@ sub select_by_path {
     {
 	$flow_state->{entries} = [];
     }
-    elsif ($self->{path}->{dir} eq '') 
+    elsif ($self->{path}->{cat_id} eq '') 
     {
 	@{$flow_state->{entries}} = keys %{$self->{files}};
     }
@@ -913,8 +813,8 @@ sub select_by_path {
 	$flow_state->{entries} = [];
 	foreach my $key (keys %{$self->{files}})
 	{
-	    if ($self->{files}->{$key}->{path} 
-		=~/^$self->{path}->{dir}/)
+	    if ($self->{files}->{$key}->{cat_id} 
+		=~/^$self->{path}->{cat_id}/)
 	    {
 		push @{$flow_state->{entries}}, $key;
 	    }
@@ -1145,12 +1045,14 @@ sub do_entry_actions {
 	%current_entry = ();
 	$current_entry{id} = $entry_id;
 	$current_entry{basename} = $self->{files}->{$entry_id}->{basename};
-	$current_entry{path} = $self->{files}->{$entry_id}->{path};
-	$current_entry{path_name} = $self->{files}->{$entry_id}->{path};
+	$current_entry{path} = $self->{files}->{$entry_id}->{cat_id};
+	$current_entry{path_name} = $self->{files}->{$entry_id}->{cat_id};
 	$current_entry{path_name} =~ s#/#_#g;
 	if (!defined $current_entry{path_name}) # oh dear!
 	{
-	    warn "path_name undefined: entry_id=$entry_id, basename=$current_entry{basename}, path=$current_entry{path}, path_info=$self->{path}->{info}";
+	    require Data::Dumper;
+	    warn "path_name undefined: entry_id=$entry_id";
+	    warn "Posy=", Data::Dumper::Dumper($self);
 	}
 
 	%entry_state = ();
@@ -1158,10 +1060,10 @@ sub do_entry_actions {
 	# pop off each action as we go;
 	# that way it's possible for an action to
 	# manipulate the actions array
-	my @entry_actions = @{$self->{entry_actions}};
-	while (@entry_actions)
+	@{$current_entry{entry_actions}} = @{$self->{entry_actions}};
+	while (@{$current_entry{entry_actions}})
 	{
-	    my $action = shift @entry_actions;
+	    my $action = shift @{$current_entry{entry_actions}};
 	    last if $entry_state{stop};
 	    $entry_state{action} = $action;
 	    $self->debug(1, "entry_action: $action");
@@ -1311,7 +1213,7 @@ sub read_entry {
 	}
 	else # error
 	{
-	    warn "Could not open $fullname";
+	    warn "Could not open '$fullname' id='$current_entry->{id}'";
 	    $current_entry->{stop} = 1;
 	    $entry_state->{stop} = 1;
 	}
@@ -1543,7 +1445,7 @@ sub set_vars {
     my $template = $self->get_template($chunk);
 
 Get the template file for this state, taking into account
-$self->{path}->{dir},
+$self->{path}->{cat_id},
 $self->{path}->{type},
 $self->{path}->{flavour},
 and of course $chunk
@@ -1554,152 +1456,64 @@ This is so that the following actions can alter the template as they see fit.
 Possible chunks are "content_type", "head", "header", "entry", "foot".
 The "header" and "entry" chunks are used during entry processing.
 
+Also looks for alternative path-types (minus the 'top_')
+
 The template files are called
+    $chunk.$path_type.$basename.$flavour
+    $chunk.$alt_path_type.$basename.$flavour
     $chunk.$path_type.$flavour
+    $chunk.$alt_path_type.$flavour
 or
     $chunk.$flavour
+
 
 =cut
 sub get_template {
     my $self = shift;
     my $chunk = shift;
 
-    my $path = $self->{path}->{dir};
+    my $cat_id = $self->{path}->{cat_id};
     my $path_type = $self->{path}->{type};
-    my $alt_path_type = ($path_type eq 'top'
-			 ? 'category'
-			 : ($path_type eq 'top_entry'
-			    ? 'entry' : '')
-			);
+    my $alt_path_type = ($path_type =~ /^top_(.*)$/ ? $1 : '');
     my $flavour = $self->{path}->{flavour} || $self->{config}->{flavour};
-    my $pathtype_chunk = ($path_type ? "$chunk.$path_type" : $chunk);
-    my $alt_pathtype_chunk = ($alt_path_type ? "$chunk.$alt_path_type" : $chunk);
 
-    my @path_split = File::Spec->splitdir($path);
+    my @path_split = split(/\//, $cat_id);
     my $base_dir = (defined $self->{flavour_dir} and $self->{flavour_dir}
 	? $self->{flavour_dir} : $self->{data_dir});
     # to save time, cache the templates, but only as we need them
     # (useful for "header" and "story" templates)
     # if we fail to find one, deliberately set it to undefined
 
-    my $fh;
-
     my $template = '';
     my $found = 0;
     do {
-	my $path_dir = (@path_split ? File::Spec->catdir(@path_split) : '');
-	my $look_dir = File::Spec->catdir($base_dir, @path_split);
+	my $path_id = (@path_split ? join('/', @path_split) : '');
+	my $look_dir = ($path_id ?
+	    File::Spec->catdir($base_dir, @path_split) : $base_dir);
 	# chunk, flavour, path, path_type
-	if (exists $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_dir}->{$path_type}
-	    and defined $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_dir}->{$path_type})
-	{
-	    $template = 
-	    $self->{templates}->{$chunk}->
-		{$flavour}->{path}->{$path_dir}->{$path_type};
-	    return $template;
-	}
-	elsif (!exists $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_dir}->{$path_type})
-	{
-	    local $/;
-	    # look for the file
-	    if (-r "$look_dir/$pathtype_chunk.$flavour"
-		and open($fh, "$look_dir/$pathtype_chunk.$flavour"))
-	    {
-		my $data = <$fh>;
-		# taint checking
-		$data =~ m/^([^`]+)$/s;
-		$self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$path_type} = $1;
-		close($fh);
-		$template =
-		    $self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$path_type};
-		return $template;
-	    }
-	    else # not there
-	    {
-		$self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$path_type} = undef;
-	    }
-	}
+	$template = $self->_look_for_template(look_dir=>$look_dir,
+	    chunk=>$chunk,
+	    flavour=>$flavour,
+	    path_id=>$path_id,
+	    path_type=>$path_type);
+	return $template if $template;
 	# chunk, flavour, path, alt_path_type
 	if ($alt_path_type)
 	{
-	    if (exists $self->{templates}->{$chunk}->
-		{$flavour}->{path}->{$path_dir}->{$alt_path_type}
-		and defined $self->{templates}->{$chunk}->
-		{$flavour}->{path}->{$path_dir}->{$alt_path_type})
-	    {
-		$template = 
-		    $self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$alt_path_type};
-		return $template;
-	    }
-	    elsif (!exists $self->{templates}->{$chunk}->
-		   {$flavour}->{path}->{$path_dir}->{$alt_path_type})
-	    {
-		local $/;
-		# look for the file
-		if (-r "$look_dir/$alt_pathtype_chunk.$flavour"
-		    and open($fh, "$look_dir/$alt_pathtype_chunk.$flavour"))
-		{
-		    my $data = <$fh>;
-		    # taint checking
-		    $data =~ m/^([^`]+)$/s;
-		    $self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$alt_path_type} = $1;
-		    close($fh);
-		    $template =
-			$self->{templates}->{$chunk}->
-			{$flavour}->{path}->{$path_dir}->{$alt_path_type};
-		    return $template;
-		}
-		else # not there
-		{
-		    $self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$alt_path_type} = undef;
-		}
-	    }
+	    $template = $self->_look_for_template(look_dir=>$look_dir,
+						  chunk=>$chunk,
+						  flavour=>$flavour,
+						  path_id=>$path_id,
+						  path_type=>$alt_path_type);
+	    return $template if $template;
 	}
 	# chunk, flavour, path
-	if (exists $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_dir}->{''}
-	    and defined $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_dir}->{''})
-	{
-	    $template =
-		$self->{templates}->{$chunk}->
-		{$flavour}->{path}->{$path_dir}->{''};
-	    return $template;
-	}
-	elsif (!exists $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_dir}->{''})
-	{
-	    local $/;
-	    # look for the file
-	    if (-r "$look_dir/$chunk.$flavour"
-		and open($fh, "$look_dir/$chunk.$flavour"))
-	    {
-		my $data = <$fh>;
-		# taint checking
-		$data =~ m/^([^`]+)$/s;
-		$self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{''} = $1;
-		close($fh);
-		$template =
-		    $self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{''};
-		return $template;
-	    }
-	    else # not there
-	    {
-		$self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{''} = undef;
-	    }
-	}
+	$template = $self->_look_for_template(look_dir=>$look_dir,
+	    chunk=>$chunk,
+	    flavour=>$flavour,
+	    path_id=>$path_id,
+	    path_type=>'');
+	return $template if $template;
     } while (pop @path_split);
 
     # if all else fails, use the error flavour
@@ -1712,7 +1526,7 @@ sub get_template {
     my %config = $self->get_config($chunk);
 
 Get the config settings for this state, taking into account
-$self->{path}->{dir},
+$self->{path}->{cat_id},
 $self->{path}->{type}
 and $chunk
 
@@ -1721,6 +1535,9 @@ Possible chunks are nothing, "content_type", "head", "header", "entry",
 
 The config files are called
 
+    $path_type.$chunk.$basename.config
+    $path_type.$basename.config
+    $chunk.$basename.config
     $path_type.$chunk.config
     $path_type.config
     $chunk.config
@@ -1734,15 +1551,18 @@ sub get_config {
     my $self = shift;
     my $chunk = shift;
 
-    my $path = $self->{path}->{dir};
+    my $cat_id = $self->{path}->{cat_id};
+    my $basename = $self->{path}->{basename};
     my $path_type = ($self->{path}->{type} ? $self->{path}->{type} : '');
+    my $alt_path_type = ($path_type =~ /^top_(.*)$/ ? $1 : '');
     my $pathtype_chunk = ($path_type ? "$chunk.$path_type" : $chunk);
+    my $alt_pathtype_chunk = ($alt_path_type ? "$chunk.$alt_path_type" : $chunk);
 
-    my @path_split = File::Spec->splitdir($path);
+    my @path_split = split(/\//, $cat_id);
     my $base_dir = ($self->{config_dir}
 	? $self->{config_dir} : $self->{data_dir});
 
-    $self->debug(2, "get_config: chunk=$chunk, path=$path, path_type=$path_type");
+    $self->debug(2, "get_config: chunk=$chunk, cat_id=$cat_id, path_type=$path_type");
     # to save time, cache the settings, but only as we need them
     # if we fail to find one, deliberately set it to undefined
 
@@ -1753,86 +1573,87 @@ sub get_config {
     # configs will override the shallower ones.
     my @config_hashes = ();
     my $found = 0;
+    my $conf = undef;
     do {
-	my $path_dir = (@path_split ? File::Spec->catdir(@path_split) : '');
+	my $path_id = (@path_split ? join('/', @path_split) : '');
 	my $look_dir = File::Spec->catdir($base_dir, @path_split);
+	if ($basename)
+	{
+	    if ($chunk)
+	    {
+		# basename, path, path_type, chunk
+		$conf = $self->_look_for_config(look_dir=>$look_dir,
+						basename=>$basename,
+						chunk=>$chunk,
+						path_id=>$path_id,
+						path_type=>$path_type);
+		push @config_hashes, $conf if (defined $conf);
+		# basename, path, chunk
+		$conf = $self->_look_for_config(look_dir=>$look_dir,
+						basename=>$basename,
+						chunk=>$chunk,
+						path_id=>$path_id,
+						path_type=>'');
+		push @config_hashes, $conf if (defined $conf);
+	    }
+	    # basename, path, path_type
+	    $conf = $self->_look_for_config(look_dir=>$look_dir,
+					    basename=>$basename,
+					    path_id=>$path_id,
+					    path_type=>$path_type);
+	    push @config_hashes, $conf if (defined $conf);
+	    # basename, path
+	    if ($path_id)
+	    {
+		$conf = $self->_look_for_config(look_dir=>$look_dir,
+						basename=>$basename,
+						path_id=>$path_id,
+						path_type=>'');
+		push @config_hashes, $conf if (defined $conf);
+	    }
+	    else # basename, top dir
+	    {
+		$conf = $self->_look_for_config(look_dir=>$base_dir,
+						basename=>$basename,
+						path_id=>'',
+						path_type=>'');
+		push @config_hashes, $conf if (defined $conf);
+	    }
+	}
 	if ($chunk)
 	{
 	    # path, path_type, chunk
-	    if (exists $self->{configs}->{$path_dir}->{$path_type}->{$chunk}
-		and defined $self->{configs}->{$path_dir}->{$path_type}->{$chunk})
-	    {
-		push @config_hashes,
-		     $self->{configs}->{$path_dir}->{$path_type}->{$chunk};
-	    }
-	    elsif (!exists $self->{configs}->{$path_dir}->{$path_type}->{$chunk})
-	    {
-		my %cfg = $self->read_config_file("$look_dir/$pathtype_chunk.config");
-		$self->{configs}->{$path_dir}->{$path_type}->{$chunk}
-		    = (%cfg ? \%cfg : undef);
-		push @config_hashes, \%cfg if %cfg;
-	    }
+	    $conf = $self->_look_for_config(look_dir=>$look_dir,
+		chunk=>$chunk,
+		path_id=>$path_id,
+		path_type=>$path_type);
+	    push @config_hashes, $conf if (defined $conf);
 	    # path, chunk
-	    if (exists $self->{configs}->{$path_dir}->{''}->{$chunk}
-		and defined $self->{configs}->{$path_dir}->{''}->{$chunk})
-	    {
-		push @config_hashes,
-		     $self->{configs}->{$path_dir}->{''}->{$chunk};
-	    }
-	    elsif (!exists $self->{configs}->{$path_dir}->{''}->{$chunk})
-	    {
-		my %cfg = $self->read_config_file("$look_dir/$chunk.config");
-		$self->{configs}->{$path_dir}->{''}->{$chunk} =
-		    (%cfg ? \%cfg : undef);
-		push @config_hashes, \%cfg if %cfg;
-	    }
+	    $conf = $self->_look_for_config(look_dir=>$look_dir,
+		chunk=>$chunk,
+		path_id=>$path_id,
+		path_type=>'');
+	    push @config_hashes, $conf if (defined $conf);
 	}
 	# path, path_type
-	if (exists $self->{configs}->{$path_dir}->{$path_type}->{''}
-	    and defined $self->{configs}->{$path_dir}->{$path_type}->{''})
-	{
-	    push @config_hashes,
-		 $self->{configs}->{$path_dir}->{$path_type}->{''};
-	}
-	elsif (!exists $self->{configs}->{$path_dir}->{$path_type}->{''})
-	{
-	    my %cfg = $self->read_config_file("$look_dir/$path_type.config");
-	    $self->{configs}->{$path_dir}->{$path_type}->{''} =
-		    (%cfg ? \%cfg : undef);
-	    push @config_hashes, \%cfg if %cfg;
-	}
+	$conf = $self->_look_for_config(look_dir=>$look_dir,
+					   path_id=>$path_id,
+					   path_type=>$path_type);
+	push @config_hashes, $conf if (defined $conf);
 	# path
-	if ($path_dir)
+	if ($path_id)
 	{
-	    if (exists $self->{configs}->{$path_dir}->{''}->{''}
-		and defined $self->{configs}->{$path_dir}->{''}->{''})
-	    {
-		push @config_hashes,
-		     $self->{configs}->{$path_dir}->{''}->{''};
-	    }
-	    elsif (!exists $self->{configs}->{$path_dir}->{''}->{''})
-	    {
-		my %cfg = $self->read_config_file("$look_dir/config");
-		$self->{configs}->{$path_dir}->{''}->{''} =
-		    (%cfg ? \%cfg : undef);
-		push @config_hashes, \%cfg if %cfg;
-	    }
+	    $conf = $self->_look_for_config(look_dir=>$look_dir,
+					       path_id=>$path_id,
+					       path_type=>'');
+	    push @config_hashes, $conf if (defined $conf);
 	}
 	else # top dir
 	{
-	    if (exists $self->{configs}->{''}->{''}->{''}
-		and defined $self->{configs}->{''}->{''}->{''})
-	    {
-		push @config_hashes,
-		     $self->{configs}->{''}->{''}->{''};
-	    }
-	    elsif (!exists $self->{configs}->{''}->{''}->{''})
-	    {
-		my %cfg = $self->read_config_file("$base_dir/config");
-		$self->{configs}->{''}->{''}->{''} =
-		    (%cfg ? \%cfg : undef);
-		push @config_hashes, \%cfg if %cfg;
-	    }
+	    $conf = $self->_look_for_config(look_dir=>$base_dir,
+					       path_id=>'',
+					       path_type=>'');
+	    push @config_hashes, $conf if (defined $conf);
 	}
     } while (pop @path_split);
 
@@ -2016,7 +1837,7 @@ sub _whowasi { (caller(1))[3] . '()' }
 
 =head2 _find_file_and_ext
 
-($fullname, $ext) = $self->_find_file_and_ext($path_and_filebase);
+($fullname, $ext) = $self->_find_file_and_ext($full_path_and_filebase);
 
 Returns the full path file and the extentsion of the given
 path-plus-basename-of-file; if no matching entry file exists
@@ -2025,14 +1846,13 @@ under the data directory, the returned values are empty strings.
 =cut
 sub _find_file_and_ext {
     my $self = shift;
-    my $path_and_filebase = shift;
+    my $full_path_and_filebase = shift;
 
     my $ext = '';
     my $fullname = '';
     foreach my $aext (@{$self->{file_extensions}})
     {
-	my $pful = $path_and_filebase . '.' . $aext;
-	my $full = File::Spec->catfile($self->{data_dir}, $pful);
+	my $full = $full_path_and_filebase . '.' . $aext;
 	$self->debug(3, "find_file_end_ext: $full");
 	if (-f $full)
 	{
@@ -2043,6 +1863,127 @@ sub _find_file_and_ext {
     }
     return ($fullname, $ext);
 } # _find_file_and_ext
+
+=head2 _look_for_template
+
+Look for the given template with combination of features.
+
+=cut
+sub _look_for_template {
+    my $self = shift;
+    my %args = (
+	chunk=>'',
+	@_
+	);
+    my $look_dir = $args{look_dir};
+    my $chunk = $args{chunk};
+    my $flavour = $args{flavour};
+    my $path_id = $args{path_id};
+    my $path_type = $args{path_type};
+
+    my $pathtype_chunk = ($path_type ? "$chunk.$path_type" : $chunk);
+    my $fh;
+
+    my $template = '';
+    if (exists $self->{templates}->{$chunk}->
+	{$flavour}->{path}->{$path_id}->{$path_type}
+	and defined $self->{templates}->{$chunk}->
+	{$flavour}->{path}->{$path_id}->{$path_type})
+    {
+	$template = 
+	    $self->{templates}->{$chunk}->
+	    {$flavour}->{path}->{$path_id}->{$path_type};
+	return $template;
+    }
+    elsif (!exists $self->{templates}->{$chunk}->
+	   {$flavour}->{path}->{$path_id}->{$path_type})
+    {
+	local $/;
+	# look for the file
+	my $look_file = File::Spec->catfile($look_dir, "$pathtype_chunk.$flavour");
+	if (-r $look_file and open($fh, $look_file))
+	{
+	    my $data = <$fh>;
+	    # taint checking
+	    $data =~ m/^([^`]+)$/s;
+	    $self->{templates}->{$chunk}->
+	    {$flavour}->{path}->{$path_id}->{$path_type} = $1;
+	    close($fh);
+	    $template =
+		$self->{templates}->{$chunk}->
+		{$flavour}->{path}->{$path_id}->{$path_type};
+	    return $template;
+	}
+	else # not there
+	{
+	    $self->{templates}->{$chunk}->
+	    {$flavour}->{path}->{$path_id}->{$path_type} = undef;
+	}
+    }
+    return undef;
+} #_look_for_template
+
+=head2 _look_for_config
+
+Look for the given config with combination of features.
+
+=cut
+sub _look_for_config {
+    my $self = shift;
+    my %args = (
+	chunk=>'',
+	basename=>'',
+	path_type=>'',
+	path_id=>'',
+	path_type=>'',
+	@_
+	);
+    my $look_dir = $args{look_dir};
+    my $chunk = $args{chunk};
+    my $basename = $args{basename};
+    my $path_id = $args{path_id};
+    my $path_type = $args{path_type};
+
+
+    my $conf_file;
+    $conf_file = "${chunk}.${path_type}.${basename}.config"
+	if ($path_type and $chunk and $basename);
+    $conf_file = "${chunk}.${basename}.config"
+	if (!$path_type and $chunk and $basename);
+    $conf_file = "${path_type}.${basename}.config"
+	if ($path_type and !$chunk and $basename);
+    $conf_file = "${chunk}.${path_type}.config"
+	if ($path_type and $chunk and !$basename);
+    $conf_file = "${basename}.config"
+	if (!$path_type and !$chunk and $basename);
+    $conf_file = "${path_type}.config"
+	if ($path_type and !$chunk and !$basename);
+    $conf_file = "${chunk}.config"
+	if (!$path_type and $chunk and !$basename);
+    $conf_file = 'config'
+	if (!$path_type and !$chunk and !$basename);
+
+    my $fh;
+
+    my $config = undef;
+    if (exists $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename}
+	and defined $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename})
+    {
+	$config = 
+	    $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename};
+	return $config;
+    }
+    elsif (!exists $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename})
+    {
+	# look for the file
+	my $look_file = File::Spec->catfile($look_dir, $conf_file);
+	my %cfg = $self->read_config_file($look_file);
+	$self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename} =
+	    (%cfg ? \%cfg : undef);
+	return \%cfg if %cfg;
+    }
+    return undef;
+} #_look_for_config
 
 =head2 _wanted
 
@@ -2068,13 +2009,14 @@ sub _wanted {
 		my $path = File::Spec->abs2rel($File::Find::name,
 					       $self->{data_dir});
 		my @path_split = File::Spec->splitdir($path);
-		$self->{categories}->{$path}->{id} = $path;
-		$self->{categories}->{$path}->{fullname} = $File::Find::name;
-		$self->{categories}->{$path}->{depth} = 
+		my $cat_id = join('/', @path_split);
+		$self->{categories}->{$cat_id}->{id} = $cat_id;
+		$self->{categories}->{$cat_id}->{fullname} = $File::Find::name;
+		$self->{categories}->{$cat_id}->{depth} = 
 		    (@path_split ? @path_split : 0);
-		$self->{categories}->{$path}->{basename} =
+		$self->{categories}->{$cat_id}->{basename} =
 		    $path_split[$#path_split];
-		$self->{categories}->{$path}->{num_entries} = 0;
+		$self->{categories}->{$cat_id}->{num_entries} = 0;
 	    }
 	    else
 	    {
@@ -2085,6 +2027,7 @@ sub _wanted {
 	else {
 	    my $path = File::Spec->abs2rel($File::Find::dir, $self->{data_dir});
 	    my @path_split = File::Spec->splitdir($path);
+	    my $cat_id = join('/', @path_split);
 	    my $filename = $_;
 	    my $ere = $self->{extensions_re};
 	    if ($filename =~ m#^(.+)\.($ere)$#
@@ -2092,11 +2035,9 @@ sub _wanted {
 	    {
 		my $fn_base = $1;
 		my $ext = $2;
-		my $path_and_filebase = File::Spec->catfile($path,$fn_base);
-		$path_and_filebase =~ s#^\./##; # remove an initial "./"
-		$path_and_filebase =~ s#^/##;
-		$path_and_filebase =~ s#/$##;
-		$self->debug(2, "$path:$fn_base:$ext <=> $fullname\n");
+		my $path_and_filebase = ($cat_id
+		    ? join('/', $cat_id, $fn_base) : $fn_base);
+		$self->debug(2, "$cat_id:$fn_base:$ext <=> $fullname\n");
 
 		# to show or not to show future entries
 		if ($self->{config}->{show_future_entries}
@@ -2104,7 +2045,7 @@ sub _wanted {
 		{
 		    $self->{files}->{$path_and_filebase}->{fullname} =
 			$File::Find::name;
-		    $self->{files}->{$path_and_filebase}->{path} = $path;
+		    $self->{files}->{$path_and_filebase}->{cat_id} = $cat_id;
 		    $self->{files}->{$path_and_filebase}->{basename} = $fn_base;
 		    $self->{files}->{$path_and_filebase}->{ext} = $ext;
 		    ( $self->{files}->{$path_and_filebase}->{mtime} = 
@@ -2112,7 +2053,16 @@ sub _wanted {
 		    @{$self->{files}->{$path_and_filebase}->{date}} =
 			$self->extract_date(
 			    $self->{files}->{$path_and_filebase}->{mtime});
-		    $self->{categories}->{$path}->{num_entries}++
+		    if ($cat_id eq ''
+			and !exists $self->{categories}->{$cat_id}->{id})
+		    {
+			# set data for root
+			$self->{categories}->{$cat_id}->{id} = $cat_id;
+			$self->{categories}->{$cat_id}->{fullname} = $self->{data_dir};
+			$self->{categories}->{$cat_id}->{depth} = 0;
+			$self->{categories}->{$cat_id}->{basename} = '';
+		    }
+		    $self->{categories}->{$cat_id}->{num_entries}++
 			if ($fn_base ne 'index');
 		}
 	    }

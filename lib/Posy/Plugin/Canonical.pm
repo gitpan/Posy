@@ -7,11 +7,11 @@ Posy::Plugin::Canonical - Posy plugin to force redirect to canonical URL.
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::Canonical.
+This describes version B<0.21> of Posy::Plugin::Canonical.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -57,7 +57,7 @@ sub parse_path {
 		and $self->{path}->{basename} eq 'index'))
 	{
 	    # canonical: dir with slash
-	    $can_path = '/' . $self->{path}->{dir} . '/';
+	    $can_path = '/' . $self->{path}->{cat_id} . '/';
 	    # if this is not the default flavour, put index.foo at end
 	    if ($self->{path}->{flavour} ne $self->{config}->{flavour})
 	    {
@@ -67,7 +67,7 @@ sub parse_path {
 	# because the top index page has often to be treated specially,
 	# only redirect for this if enabled.
 	elsif ($self->{redirect_top}
-	       and ($self->{path}->{type} eq 'top'
+	       and ($self->{path}->{type} eq 'top_category'
 		    or ($self->{path}->{type} eq 'top_entry'
 			and $self->{path}->{basename} eq 'index')
 		   )
@@ -85,7 +85,7 @@ sub parse_path {
 	    and $self->{path}->{basename} ne 'index')
 	{
 	    # canonical: dir with slash then entry.foo
-	    $can_path = '/' . $self->{path}->{dir} . '/'
+	    $can_path = '/' . $self->{path}->{cat_id} . '/'
 		. $self->{path}->{basename}
 		. '.'
 		. $self->{path}->{flavour};
@@ -103,7 +103,7 @@ sub parse_path {
 	{
 	    # Chronological selection is expected to be at the end of the path
 	    # and can be year, year/month or year/month/day
-	    $can_path = '/' . $self->{path}->{dir} . '/'
+	    $can_path = '/' . $self->{path}->{cat_id} . '/'
 		. $self->{path}->{year} . '/';
 	    $can_path .= $self->{path}->{month} . '/'
 		if $self->{path}->{month};

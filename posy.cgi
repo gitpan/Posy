@@ -9,11 +9,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.11> of posy.cgi.
+This describes version B<0.21> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -73,6 +73,8 @@ BEGIN {
 
 Where are this site's entries kept?
 
+$data_dir = '/files/www/posy/docs';
+
 =cut
 
 our $data_dir = '/files/www/posy/data';
@@ -88,7 +90,7 @@ Optional:
 What is my preferred base URL for this site/blog?  (leave unset for
 automatic)
 
-    my $url = 'http://www.example.com/blog/'';
+    my $url = 'http://www.example.com/blog/';
 
 =cut
 
@@ -96,10 +98,10 @@ our $url;
 
 =item flavour_dir
 
-If you want your "flavour" template files to be in a different
-directory to the data directory, then change this value.
+The directory where "flavour" template files are put.
+The default value is ".flavours" under the data directory.
 
-$flavour_dir = "/files/www/posy/data/flavours";
+$flavour_dir = "/files/www/posy/flavours";
 
 =cut
 our $flavour_dir;
@@ -161,7 +163,7 @@ our @actions;
 =item entry_actions
 
 The list of actions which Posy will perform on each entry.  Only alter this if
-you're using a plugin which requires adding a new action.
+you're using a plugin which requires adding a new entry action.
 
 =cut
 
@@ -171,7 +173,7 @@ our @entry_actions;
 
 This is a hash which sets how a day-of-the-week number will be
 converted into a name.  Change this if you want, for example,
-all weekdays to be truncated.
+all weekdays to be truncated, or in another language.
 
 =cut
 our %DayWeek2Name = ( 0 => 'Sunday',
@@ -186,7 +188,7 @@ our %DayWeek2Name = ( 0 => 'Sunday',
 
 This is a hash which sets how a month-number will be
 converted into a name.  Change this if you want, for example,
-all month-names to be truncated.
+all month-names to be truncated, or in another language.
 
 =cut
 our %MonthNum2Name = (1=>'January',
@@ -266,7 +268,7 @@ Please report any bugs or feature requests to the author.
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (c) 2004 by Kathryn Andersen
+Copyright (c) 2004-2005 by Kathryn Andersen
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

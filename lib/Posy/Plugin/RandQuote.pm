@@ -7,11 +7,11 @@ Posy::Plugin::RandQuote - Posy plugin to give a random quote from a file
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::RandQuote.
+This describes version B<0.21> of Posy::Plugin::RandQuote.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -130,8 +130,9 @@ sub _get_random_quote {
 
     my $delim = $self->{config}->{rand_quote_delim};
     # look in the local data directory first
+    my @path_split = split(/\//, $self->{path}->{cat_id});
     my $rand_file = File::Spec->catfile($self->{data_dir},
-					$self->{path}->{dir}, $filename);
+					@path_split, $filename);
     if (!open(FILE, $rand_file))
     {
 	# look relative to the top data directory
@@ -139,7 +140,7 @@ sub _get_random_quote {
 	if (!open(FILE, $rand_file))
 	{
 	    # look in local HTML directory
-	    $rand_file = File::Spec->catfile($self->{path}->{dir}, $filename);
+	    $rand_file = File::Spec->catfile(@path_split, $filename);
 	    if (!open(FILE, $rand_file))
 	    {
 		# look with no alteration

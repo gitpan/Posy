@@ -10,11 +10,11 @@ posy_one - Script which uses the Posy engine to generate one file from an input 
 
 =head1 VERSION
 
-This describes version B<0.11> of posy_one.
+This describes version B<0.21> of posy_one.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -30,11 +30,16 @@ infile outfile
 
 =head1 DESCRIPTION
 
-This is a script which uses the Posy engine to generate one output file from
-one input file -- where the input file is I<not> under the data directory, it
-is relative to the current directory.  This can be used to generate template
-files for other CGI scripts, where you want them to keep the same look-and-feel
-as the other pages in your site.
+This is a script which uses the Posy engine to generate one output file
+from one input file -- where the input file doesn't have to be under
+your usual data directory.
+
+Instead, you can give another data directory; and if you give none,
+it defaults to the current directory.
+
+This can be used to generate template files for other CGI scripts, where
+you want them to keep the same look-and-feel as the other pages in your
+site.
 
 =head1 OPTIONS
 
@@ -59,6 +64,13 @@ actions are not being used, they must be replaced completely.
 The directory where the config files are.  (This could be the same
 as your normal data directory, but remember, this script is not using
 the normal data directory, so one must set the config_dir explicitly).
+
+=item --data_dir I<dirname>
+
+The directory you wish to use as your input data directory.  This
+is not supposed to be the same as your normal data directory, but
+I suppose it could be.  If not given, it defaults to the current
+directory.
 
 =item --DayWeek2Name I<num>=I<name>
 
@@ -170,7 +182,7 @@ Note that this will always use the Posy::Core plugin.
 =item --state_dir I<dirname>
 
 The directory where "state" information is put.  The default value is
-".state" under the data directory).
+"/tmp/posy_state".
 
 =item --url I<url>
 
@@ -208,6 +220,7 @@ Pod::Usage
 use Getopt::Long 2.34;
 use Getopt::ArgvFile qw(argvFile);
 use Pod::Usage;
+use File::Spec;
 use Cwd;
 
 #========================================================
@@ -218,6 +231,12 @@ sub init_data ($) {
 
     $data_ref->{manpage} = 0;
     $data_ref->{verbose} = 0;
+    # default state_dir
+    $data_ref->{state_dir} =
+	File::Spec->catdir(File::Spec->tmpdir(),
+			   'posy_state');
+    # set the data_dir
+    $data_ref->{data_dir} = getcwd;
 } # init_data
 
 sub process_args ($) {
@@ -236,6 +255,7 @@ sub process_args ($) {
 	       'manpage',
 	       'actions=s@',
 	       'config_dir=s',
+	       'data_dir=s',
 	       'DayWeek2Name=s%',
 	       'entry_actions=s@',
 	       'file_extensions=s@',
@@ -282,8 +302,6 @@ MAIN: {
 
     $class->import(@plugins);
 
-    # set the data_dir to be the current directory
-    $data{data_dir} = getcwd;
     # which flavour?
     my $flavour = $data{flavour};
     $data{params}->{flav} = $flavour;

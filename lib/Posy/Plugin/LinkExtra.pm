@@ -7,11 +7,11 @@ Posy::Plugin::LinkExtra - Posy plugin to add extras to local links
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::LinkExtra.
+This describes version B<0.21> of Posy::Plugin::LinkExtra.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -116,28 +116,29 @@ sub _link_extra_do {
     my $label = shift;
 
     # find the file
-    my $id;
+    my $fullname;
     # look in the local data directory
-    $id = File::Spec->catfile($self->{data_dir}, $self->{path}->{dir}, $link);
-    if (exists $self->{file_stats}->{$id})
+    my @path_split = split(/\//, $self->{path}->{cat_id});
+    $fullname = File::Spec->catfile($self->{data_dir}, @path_split, $link);
+    if (exists $self->{file_stats}->{$fullname})
     {
 	my $extras;
 	if ($args =~ /size/)
 	{
-	    $extras = $self->{file_stats}->{$id}->{size_string};
+	    $extras = $self->{file_stats}->{$fullname}->{size_string};
 	}
 	if ($args =~ /words/
-	    && $self->{file_stats}->{$id}->{word_count})
+	    && $self->{file_stats}->{$fullname}->{word_count})
 	{
 	    $extras = join(' ', $extras,
-		$self->{file_stats}->{$id}->{word_count},
+		$self->{file_stats}->{$fullname}->{word_count},
 		'words');
 	}
 	$extras = join('', '(', $extras, ')') if $extras;
 	if ($args =~ /mod/)
 	{
 	    my %date_time =
-		$self->nice_date_time($self->{file_stats}->{$id}->{mtime});
+		$self->nice_date_time($self->{file_stats}->{$fullname}->{mtime});
 	    $extras = join('', $extras,
 		' ',
 		$date_time{year}, '-',
@@ -182,9 +183,6 @@ Please report any bugs or feature requests to the author.
 =head1 COPYRIGHT AND LICENCE
 
 Copyright (c) 2005 by Kathryn Andersen
-
-Based on the blosxom 'toc' plugin by Gregor Rayman (copyright 2003)
-<rayman <at> grayman <dot> de>
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

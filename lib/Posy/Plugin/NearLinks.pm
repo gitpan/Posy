@@ -7,11 +7,11 @@ Posy::Plugin::NearLinks - Posy plugin to give links of articles in the current c
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy::Plugin::NearLinks.
+This describes version B<0.21> of Posy::Plugin::NearLinks.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -108,8 +108,8 @@ sub near_links {
     # go through all the files in the titles index
     while (my ($file_id, $title) =  each(%{$self->{titles}}))
     {
-	if (($self->{files}->{$file_id}->{path}
-	     eq $self->{path}->{dir}) # category matches
+	if (($self->{files}->{$file_id}->{cat_id}
+	     eq $self->{path}->{cat_id}) # category matches
 	    and ($self->{files}->{$file_id}->{basename}
 		 ne 'index') # don't include index entry-files
 	   )

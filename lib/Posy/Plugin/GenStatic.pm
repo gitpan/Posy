@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.11> of Posy.
+This describes version B<0.21> of Posy.
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 =head1 SYNOPSIS
 
@@ -77,18 +77,22 @@ sub run {
 	# go through every entry in $self->{files}
 	foreach my $key (keys %{$static_posy->{files}})
 	{
-	    my $fullpath = File::Spec->catfile($static_posy->{static_dir},
-		$static_posy->{files}->{$key}->{path});
-	    mkdir $fullpath if (!-e $fullpath);
-	    my $path = File::Spec->catfile($static_posy->{files}->{$key}->{path},
-					   $static_posy->{files}->{$key}->{basename});
+	    my @cat_split =
+		split(/\//, $static_posy->{files}->{$key}->{cat_id});
+	    my $fullcat = File::Spec->catfile($static_posy->{static_dir},
+		@cat_split);
+	    mkdir $fullcat if (!-e $fullcat);
+	    my $path = $key;
 	    $path .= '.' . $flavour;
 	    my $self = $class->new(@_);
 	    $self->init();
 	    $self->{params}->{path} = $path;
 	    print STDERR "$path\n" if $static_posy->{verbose};
-	    $self->{outfile} = File::Spec->catfile($static_posy->{static_dir},
-						   $path);
+	    $self->{outfile} =
+		File::Spec->catfile($static_posy->{static_dir},
+				    @cat_split,
+				    $static_posy->{files}->{$key}->{basename});
+	    $self->{outfile} .= '.' . $flavour;
 	    $self->do_actions();
 	}
     }
@@ -97,17 +101,20 @@ sub run {
 	# go through every category in $self->{categories}
 	foreach my $category (keys %{$static_posy->{categories}})
 	{
-	    my $fullpath = File::Spec->catfile($static_posy->{static_dir},
-					       $category);
-	    mkdir $fullpath if (!-e $fullpath);
-	    my $path = File::Spec->catfile($category, 'index');
+	    my @cat_split = split(/\//, $category);
+	    my $fullcat = File::Spec->catfile($static_posy->{static_dir},
+		@cat_split);
+	    mkdir $fullcat if (!-e $fullcat);
+	    my $path = join('/', $category, 'index');
 	    $path .= '.' . $flavour;
 	    my $self = $class->new(@_);
 	    $self->init();
 	    $self->{params}->{path} = $path;
 	    print STDERR "$path\n" if $static_posy->{verbose};
-	    $self->{outfile} = File::Spec->catfile($static_posy->{static_dir},
-						   $path);
+	    $self->{outfile} =
+		File::Spec->catfile($static_posy->{static_dir},
+				    @cat_split, 'index');
+	    $self->{outfile} .= '.' . $flavour;
 	    $self->do_actions();
 	}
     }
@@ -127,12 +134,12 @@ sub run {
 	foreach my $date (keys %dates)
 	{
 	    # make the date directories
-	    my $dpath = '';
+	    my @dparts = ();
 	    foreach my $dpart (@{$dates{$date}})
 	    {
-		$dpath .= $dpart . "/";
-		my $fullpath = File::Spec->catfile($static_posy->{static_dir},
-						   $dpath);
+		push @dparts, $dpart;
+		my $fullpath = File::Spec->catdir($static_posy->{static_dir},
+						  @dparts);
 		if (!-e $fullpath)
 		{
 		    print STDERR "DIR: $fullpath\n" if $static_posy->{verbose};
@@ -146,7 +153,8 @@ sub run {
 	    $self->{params}->{flav} = $flavour;
 	    print STDERR "$path\n" if $static_posy->{verbose};
 	    $self->{outfile} = File::Spec->catfile($static_posy->{static_dir},
-						   $path, "index.$flavour");
+						   @{$dates{date}},
+						   "index.$flavour");
 	    $self->do_actions();
 	}
     }

@@ -1,6 +1,18 @@
 Revision history for Posy
 =========================
 
+0.60 Mon 17 January 2005
+------------------------
+
+  * (17 Jan 2005) sole entry improvements
+  	Improvements to parse_entry, head_render and foot_render, and
+  an alteration of the default entry_actions so that when the path-type
+  is an entry (that is, there is just one entry) then the head and
+  foot rendering will be able to use entry-specific data (such as the
+  entry title).  One can also stick meta (or other) tags into ones HTML
+  entries and have them preserved -- so long as one sticks the appropriate
+  variables in ones flavour templates.
+
 0.50 Sun 16 January 2005
 ------------------------
 

@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.50> of Posy::Core.
+This describes version B<0.60> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.50';
+our $VERSION = '0.60';
 
 =head1 SYNOPSIS
 
@@ -135,9 +135,9 @@ sub init {
 	    sort_entries
 	    content_type
 	    head_template
+	    foot_template
 	    head_render
 	    do_entry_actions
-	    foot_template
 	    foot_render
 	    render_page
 	)];
@@ -146,12 +146,14 @@ sub init {
     {
 	$self->{entry_actions} = [qw(
 	    count_or_stop
-	    header
-	    entry_template
 	    read_entry
 	    parse_entry
+	    head_render
+	    header
+	    entry_template
 	    render_entry
 	    append_entry
+	    foot_render
 	)];
     }
     if (!defined $self->{DayWeek2Name})
@@ -942,7 +944,7 @@ sub content_type {
 
 =head2 head_template
 
-$self->head_template($flow_state);
+$self->head_template($flow_state, $current_entry, $entry_state);
 
 Set the head template in $flow_state->{head_template}
 This also sets the $self->{config} for head.
@@ -965,18 +967,38 @@ sub head_template {
 
 $self->head_render($flow_state);
 
+$self->head_render($flow_state, $current_entry, $entry_state);
+
 Interpolate the head template into the head content;
 Set the head content in $flow_state->{head}
+
+If called as an entry action, will do nothing unless the current
+path type ($self->{path}->{type}) is an entry; if it is an entry,
+this will set the entry variables and override the previous
+call to head_render -- this can be used to enable entry-specific
+head stuff.
 
 =cut
 sub head_render {
     my $self = shift;
     my $flow_state = shift;
+    my $current_entry = (@_ ? shift : undef);
+    my $entry_state = (@_ ? shift : undef);
 
-    my %vars = $self->set_vars($flow_state);
-    my $template = $flow_state->{head_template};
-    $flow_state->{head} = $self->interpolate('head', $template, \%vars);
-    $flow_state->{page_body} = [];
+    if (!$current_entry)
+    {
+	my %vars = $self->set_vars($flow_state);
+	my $template = $flow_state->{head_template};
+	$flow_state->{head} = $self->interpolate('head', $template, \%vars);
+	$flow_state->{page_body} = [];
+    }
+    elsif ($current_entry && $self->{path}->{type} =~ /entry$/)
+    {
+	my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
+	my $template = $flow_state->{head_template};
+	$flow_state->{head} = $self->interpolate('head', $template, \%vars);
+	$flow_state->{page_body} = [];
+    }
     1;	
 } # head_render
 
@@ -1008,14 +1030,32 @@ $self->foot_render($flow_state);
 Interpolate the foot template into the foot content;
 Set the foot content in $flow_state->{foot}
 
+If called as an entry action, will do nothing unless the current
+path type ($self->{path}->{type}) is an entry; if it is an entry,
+this will set the entry variables and set $flow_state->{foot}.
+If not called as an entry action, will not set $flow_state->{foot}
+if the path type is an entry and the foot has already been set.
+
 =cut
 sub foot_render {
     my $self = shift;
     my $flow_state = shift;
+    my $current_entry = (@_ ? shift : undef);
+    my $entry_state = (@_ ? shift : undef);
 
-    my %vars = $self->set_vars($flow_state);
-    my $template = $flow_state->{foot_template};
-    $flow_state->{foot} = $self->interpolate('foot', $template, \%vars);
+    if ($self->{path}->{type} =~ /entry$/ and $current_entry)
+    {
+	my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
+	my $template = $flow_state->{foot_template};
+	$flow_state->{foot} = $self->interpolate('foot', $template, \%vars);
+    }
+    elsif ($self->{path}->{type} !~ /entry$/
+	|| (!$current_entry && !$flow_state->{foot}))
+    {
+	my %vars = $self->set_vars($flow_state);
+	my $template = $flow_state->{foot_template};
+	$flow_state->{foot} = $self->interpolate('foot', $template, \%vars);
+    }
     1;	
 } # foot
 
@@ -1177,7 +1217,6 @@ sub header {
     while (my ($key, $val) = each %date_time)
     {
 	$current_entry->{$key} = $val;
-	$flow_state->{$key} = $val;
     }
     my %config = $self->get_config('header');
     while (my ($key, $val) = each %config)
@@ -1235,7 +1274,35 @@ sub read_entry {
 $self->parse_entry($flow_state, $current_entry, $entry_state)
 
 Parses $current_entry->{raw} into $current_entry->{title}
-and $current_entry->{body}
+and $current_entry->{body}.  For HTML entries, it also sets
+$current_entry->{body_attrib} and $current_entry->{html_head}.
+
+The template variables set are therefore:
+
+=over
+
+=item entry_raw
+
+The unaltered entry text.
+
+=item entry_title
+
+The entry title.
+
+=item entry_body
+
+The "body" content of the entry.
+
+=item entry_html_head
+
+The contents of the <head> tag of a HTML entry, minus the <title> tag.
+
+=item entry_body_attrib
+
+The attributes of the body tag, or $self->{config}->{body_attrib}
+if no attributes were in the body.
+
+=back
 
 =cut
 sub parse_entry {
@@ -1249,6 +1316,9 @@ sub parse_entry {
     if ($file_type eq 'html')
     {
 	$self->debug(2, "$id is html");
+	$current_entry->{raw} =~ m#<head>(.*)</head>#si;
+	$current_entry->{html_head} = $1;
+	$current_entry->{html_head} =~ s#<title>(.*)</title>##si;
 	$current_entry->{raw} =~ m#<title>(.*)</title>#si;
 	$current_entry->{title} = $1;
 	$current_entry->{raw} =~ m#<body([^>]*)>(.*)</body>#is;
@@ -1260,9 +1330,11 @@ sub parse_entry {
 	$self->debug(2, "$id is txt");
 	$current_entry->{raw} =~ m/^(.*)$/mi;
 	$current_entry->{title} = $1;
+	$current_entry->{html_head} = '';
 	# very primitive text HTML-isation
 	$current_entry->{body} =
 	    join('', "\n<pre>\n", $current_entry->{raw}, "\n</pre>\n");
+	$current_entry->{body_attrib} = '';
     }
     # blosxom format
     elsif ($file_type eq 'blosxom')
@@ -1271,15 +1343,20 @@ sub parse_entry {
 	# title on first line, body in the rest
 	$current_entry->{raw} =~ m/^(.*)$/mi;
 	$current_entry->{title} = $1;
+	$current_entry->{html_head} = '';
 	$current_entry->{body} = $current_entry->{raw};
 	$current_entry->{body} =~ s/^(.*)$//mi;
+	$current_entry->{body_attrib} = '';
     }
     else # something else
     {
 	$self->debug(2, "$id is something else");
 	$current_entry->{title} = '';
+	$current_entry->{html_head} = '';
+	$current_entry->{body_attrib} = '';
 	$current_entry->{body} = $current_entry->{raw};
     }
+    $current_entry->{body_attrib} ||= $self->{config}->{body_attrib};
     1;
 } # parse_entry
 

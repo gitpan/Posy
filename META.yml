@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Posy
-version: 0.50
+version: 0.60
 author:
   - Kathryn Andersen
 abstract: a website generator inspired by blosxom
@@ -19,11 +19,11 @@ build_requires:
 provides:
   Posy:
     file: lib/Posy.pm
-    version: 0.50
+    version: 0.60
   Posy::Core:
     file: lib/Posy/Core.pm
-    version: 0.50
+    version: 0.60
   Posy::Plugin::GenStatic:
     file: lib/Posy/Plugin/GenStatic.pm
-    version: 0.50
-generated_by: Module::Build version 0.2607
+    version: 0.60
+generated_by: Module::Build version 0.2605

@@ -1,0 +1,342 @@
+<html><head>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://localhost/t/21_run_index.t/index.rss"/>
+<title>Posy Demo Site : </title>
+</head>
+<body>
+<h2>Saturday, 4 December 2004</h2>
+<h3 id="howto">Plugins HOWTO</h3>
+
+<pre>
+Plugins HOWTO
+=============
+
+Plugins in Posy use the full power of object-oriented Perl.  Rather than
+providing a rigid API where a plugin is only allowed to provide a
+pre-defined set of methods, each plugin is a child (or grandchild, or
+g-g-g-g-g-grandchild) of the Posy class.  Therefore, *any* method can
+be overridden by a plugin.  This provides great power, but with great
+power comes great responsibility -- in other words, be careful.
+
+There are two things which determine the course of the Posy engine: the
+list of plugins, and the list of actions.  Each is ordered, but each is
+independent.  The order of the plugin list determines which methods will be
+overridden; for any given method, the last plugin to implement that method
+is the one whose version of that method will be used.
+
+But plugins don't *have* to override existing methods; they can also
+implement new ones.  That's where the list of actions comes in.  If
+one wishes to insert a new action into the sequence of actions, then
+one can make plugin with a new method which does this action, and
+insert its name into the list of actions.
+
+Where one is making a new method, one probably doesn't wish it to
+be overridden, so in order to reduce the likelihood of it accidentally
+(rather than deliberately) being overridden, try to give the method
+a unique name.  Prefixing it with the name of the plugin is probably a good
+idea.
+
+So, for example, you make a "Dazzle" plugin, which does dazzling things
+to the head of a page.  Instead of calling its head processing "head",
+call it "dazzle_head".  And then add "dazzle_head" to the list of
+actions after the "head" action.
+
+</pre>
+
+<p>[<a href="http://localhost/t/21_run_index.t/plugins/howto.html">plugins/howto</a>]</p>
+<h3 id="0intro">Plugins</h3>
+
+<pre>
+Plugins
+=======
+
+This is the "Plugins" category.
+
+</pre>
+
+<p>[<a href="http://localhost/t/21_run_index.t/plugins/0intro.html">plugins/0intro</a>]</p>
+<h3 id="content">Content</h3>
+
+<pre>
+Content
+=======
+
+The current Posy distribution is set up as a standard Perl module
+distribution, with modules under the "lib" directory, tests under
+the "t" directory, Build.PL (this uses the Module::Build module
+for building) MANIFEST, README, and so on.
+
+In addition this contains:
+
+- data directory, with test data and documentation files
+- posy.cgi; a CGI script which uses the Posy.pm module
+- posy_one; a script to generate one output file from one input file
+  using just the default settings and flavours
+- posy_static; a script to generate "static" pages from the same
+  data as used by posy.cgi
+
+</pre>
+
+<p>[<a href="http://localhost/t/21_run_index.t//content.html">/content</a>]</p>
+<h3 id="feedback">Feedback</h3>
+
+<p>Please direct any feedback to the author
+<a href="mailto::perlkat@katspace.com>Kathryn Andersen</a>.
+
+
+<p>[<a href="http://localhost/t/21_run_index.t//feedback.html">/feedback</a>]</p>
+<h3 id="license">License</h3>
+
+<p>Posy is Free Software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+<p>[<a href="http://localhost/t/21_run_index.t//license.html">/license</a>]</p>
+<h3 id="alpha">Alpha</h3>
+
+<pre>
+Alpha
+=====
+
+Posy is alpha software.  Not yet ready to roll.
+
+</pre>
+
+<p>[<a href="http://localhost/t/21_run_index.t//alpha.html">/alpha</a>]</p>
+<h3 id="welcome">Posy : Welcome</h3>
+
+<h1>Welcome to Posy</h1>
+<p>Posy is a web-content manager and blog inspired by
+<a href="http://www.blosxom.com">blosxom</a>.
+</p>
+
+<p>[<a href="http://localhost/t/21_run_index.t//welcome.html">/welcome</a>]</p>
+<h2>Friday, 26 November 2004</h2>
+<h3 id="index">VR.5: The Wind of the Mind</h3>
+
+<h1>VR.5: The Wind of the Mind</h1>
+
+<h2>Welcome To The Game</h2>
+
+<p><em>Virtual Reality is real.</em> Really? No, not really. But once
+upon a time, that was the tag-line of a most excellent TV show,
+<strong><em>VR.5</em></strong>. It was hyped to the computer geek set,
+and completely turned off the anal-retentive portion of same, because
+of technical handwaving, such as the 300-baud acoustic modem through
+which this VR was apparently piped.</p>
+
+<p>But <em>VR.5</em> wasn't about Virtual Reality. It was about seeing
+into the subconscious; the VR stuff was just the lever with which they
+moved the world. Toss in recurring nightmares, angst, love, danger, and
+a ruthless secret society, and you sort of get <em>Alfred
+Hitchcock</em> meets <em>Dreamscape</em> (only better).</p>
+
+<p>The original reason I watched VR.5 was because I was a fan of David
+McCallum, (ever since I saw him as Steel in <em>Sapphire &amp;
+Steel</em>) and I had heard he played the part of Sydney's dead father.
+(see here for <a href="../events/runfywif.html">play review</a>)
+I figured it couldn't be much of a part, seeing as he was dead, but I
+watched it anyway. Boy, was I blown away!</p>
+
+<p>And then Oliver Sampson came along... Played by Anthony Steward Head
+(who then went on to play Rupert Giles in Buffy: The Vampire Slayer)
+here was just the kind of character that I really like. Ambiguous,
+dark, brooding, handsome (Englishman), <a href=
+"../b7/avon_oliv.html">he reminds me of Kerr Avon...</a></p>
+
+<p>To whet your appetite, here are selected <a href=
+"../quotes/vr5quotes">quotes</a> from the series. They are in
+Fortune format.</p>
+
+<pre>
+<?php $out = `../cgi-bin/rand_text.cgi $(relTopDir)/quotes/vr5quotes`;
+echo $out;
+?>
+</pre>
+
+<h2>It's Not What You Think</h2>
+
+<p>Obsessive details about episodes of VR.5, thanks to a good
+freeze-frame on my VCR. No point in looking at any of these unless
+you've already seen the episodes in question - they won't mean anything
+to you. First, <a href="mfile.html">the file</a> that Morgan sent to
+Sydney in "Love and Death". Also, <a href="confr.html">extra
+evidence</a> about the crash of flight 503 mentioned in "Control
+Freak".</p>
+
+<h2>Links and Rings</h2>
+
+<ul>
+<li><a href="$(relTopDir)/links.html#VR.5">VR.5 links</a></li>
+</ul>
+
+<script type="text/javascript"
+src="http://ss.webring.com/navbar?f=j&amp;y=rubykat3&amp;u=99779774610071578">
+</script>
+<noscript>
+<div class="center">
+<table width="75%" cellpadding="2" cellspacing="0">
+<tr valign="bottom"><td>
+<table style="bgcolor=#990066;" border="0" width="75%">
+<tr><td>
+<table style="bgcolor=#eeeeee;" cellpadding="6" cellspacing="0" border="0" width="100%">
+<tr>
+<td style=
+"text-align: center; font-face: verdana, arial, helvetica, sans-serif; font-size: x-small">
+This site is a member of WebRing. To browse visit<br />
+<a href="http://ss.webring.com/navbar?f=l&amp;y=rubykat3&amp;u=99779774610071578">
+http://ss.webring.com/navbar?f=l&amp;y=rubykat3&amp;u=99779774610071578</a>
+</td></tr></table>
+</td></tr></table></td></tr></table></div></noscript>
+
+<p>[<a href="http://localhost/t/21_run_index.t/vr5/index.html">vr5/index</a>]</p>
+<h2>Sunday, 23 March 2003</h2>
+<h3 id="mfile">Morgan's File</h3>
+
+<h1>The File Morgan Sent in "Love and Death"</h1>
+
+<p>In the VR.5 episode "Love and Death", Doctor Morgan found a
+Committee file about Sydney's father, Dr. Bloom, and he told Sydney
+that he had modemed it to her computer. When she went to look at it,
+the file started vanishing before her eyes. This is all that she
+managed to see.</p>
+
+<pre>
+[Picture of Dr. Bloom]
+DR. JOSEPH BLOOM
+
+SOCIAL SECURITY [too blurred]
+D.O.B: [too blurred, I think this is Date Of Birth, I think the last
+number is 34]
+HEIGHT: [too blurred]
+WEIGHT: [too blurred]
+EYES: BLUE
+HAIR: BLOND
+MARITAL STATUS
+WIFE: HELEN BLOOM [huh?  I thought her name was Nora?]
+CHILDREN: SYDNEY BLOOM SAMANTHA BLOOM
+
+[Picture of Mrs Nora Bloom]
+WIFE: HELEN BLOOM
+
+[Picture of Syd and Sam as kids]
+CHILDREN: SYDNEY &amp; SAMANTHA
+
+             CYBER HELIX
+            RECOMBINATION
+                 BY
+              DR. JOSEPH BLOOM
+
+INTRODUCTION
+
+    THIS CYBER HELIX RECOMBINATION DATA WAS COLLECTED BY DR. BLOOM
+OVER A PERIOD OF FIVE YEARS. HIS EXTENSIVE RESEARCH HAS GIVEN THE
+SCIENTIFIC COMMUNITY A PLETHORA OF INFORMATION FORMALLY [sic.
+'formerly'] UNKNOWN AND UNEXPLORED. DR. BLOOM LEADS HIS FIELD IN THIS
+TYPE OF RESEARCH.  HIS CYBER HELIX RECOMBINATION WAS AN UNKNOWN
+PHENOMENON UNTIL FIVE YEARS AGO AND NOW HIS HEADWAY IN THIS FIELD HAS
+BREATHED NEW LIFE INTO THE SCIENCE OF RECOMBINATION WITHIN THE MODERN
+WORLD.
+
+    DUE TO HIS GROUNDBREAKING RESEARCH, THE GAINS WITHIN THE VR
+FIELD HAVE BEEN ADVANCING BY LEAPS AND BOUNDS.  ALREADY THERE HAVE BEEN
+DISCOVERIES WHICH HAVE ADDED TO AND AND VERIFIED THOSE OF DR. BLOOM.
+THE TECHNOLOGY OF RESEARCH HAD ALSO BEEN ADVANCING WITH BREAKTHROUGHS
+APPEARING ALL THE TIME.
+
+    IT SEEMS AS IF IT WON'T BE LONG BEFORE THE
+
+[this is as far as it gets before the screen goes completely blank.
+I pieced together these paragraphs despite the fact that in some
+frames Syd's hand was in the way, and in later frames, random words
+were missing.]
+</pre>
+
+
+<p>[<a href="http://localhost/t/21_run_index.t/vr5/mfile.html">vr5/mfile</a>]</p>
+<h2>Wednesday, 30 October 2002</h2>
+<h3 id="confr">Control Freak</h3>
+
+<h1>CONTROL FREAK: The Dating of the Death of Flight 503</h1>
+
+<p>When exactly did the crash happen?</p>
+
+<p>In the VR sequence when Sydney first takes Jarvis into VR, there is
+a calendar on the desk. We don't see the whole of it, just "1990"
+clearly, because his hand is in the way, but there is <em>one</em>
+frame where we see the end of the month-name, and it is "EMBER". That
+means it could be September, November, or December. However, the
+calendar itself is actually not an accurate calendar for any of those
+months, since it gives the first of the month as a Sunday, and the only
+months in 1990 that started on a Sunday were April and July. September
+and December in 1990 started on a Saturday, and November started on a
+Thursday. Oh well, the props department fluffed it.</p>
+
+<p>Going on further in the episode, what do I see? The report that
+Oliver is looking at, entitled "Kyle Jarvis Investigation". It's pretty
+blurry, and parts of it are obscured, but this is what I could make out
+on the freeze-frame...</p>
+
+<pre>
+THIS FEDERAL REPORT SUGGESTS COCKPIT MORALE WAS THE PROBLEM WITH THE
+BELOW MENTIONED FliGHT.
+
+This report makes official the findings resulting from the collision
+of two... at the Los Angeles International Airport (LAX), flight
+numbers 503 ... on September 13, 1990 at 14:03.  The controller ... in
+this ... Jarvis at fault, having consumed alcohol previous to his
+shift as controller... the code of traffic controllers ... 885B.  The
+final fatality ... is 232.  The following pages list the facts and
+c... which ... case numbered 1755 LAX (C).
+</pre>
+
+<p>So the crash occurred on September 13, 1990! That was a Thursday, if
+anyone's interested.</p>
+
+<p>And there were <em>two</em> planes involved, according to this! The
+other flight doesn't get mentioned at all in the episode (and I
+couldn't make out the flight number, it was too blurry). Maybe that was
+part of the fiction. Or maybe the other flight got hit by some of the
+debry.</p>
+
+<p>Oh, it also seems that Oliver has <em>two</em> copies of this report
+on his desk. One that he's looking at, and another which we see the
+corner of, and it looks like the same report. How's that for
+trivia?</p>
+
+<h2>More obsessive detail about Control Freak</h2>
+
+<p>I talked to a friend of mine (a guy I work with, he's got more than
+twenty years experience in the airline industry) trying to figure out
+what kind of an aircraft flight 503 could have be with the evidence of
+the capacity, 232 fatalities, and the one aisle (rather than two) and
+that it was in 1990.</p>
+
+<p>If there were <em>two</em> aircraft involved then a couple of
+737-300 series would fit - capacity of about 116 each.</p>
+
+<p>If it was one aircraft, it might have been a 707 or a DC8, since
+both have 200+ capacity and one aisle, and would have been used around
+that era. It wouldn't be necessary that the aircraft was full to
+capacity, after all. There could well have been other empty seats
+besides Oliver's.</p>
+
+<p>Also, it seems unlikely that 25D was a window seat in a large
+aircraft. The way they number their seats, if 25D were a window seat,
+then there would not be any rows wider than four across down the length
+of the whole aircraft. This is because they number the seats so that
+the same kind of seat gets the same kind of number, like so: If the
+widest row in the aircraft is six seats wide (say, three on one side,
+three on the other) then the seats in that row would be labelled
+A-B-C-D-E-F. If the rows in first class only had four seats per row,
+they would <em>not</em> be labelled A-B-C-D but rather A-B-E-F, missing
+out the middle letters, not the end letters. That way, if one got 2F or
+25F, you would have a window seat either way.</p>
+
+<p>But of course that is such a fiddly detail that most people wouldn't
+be aware of it. On the other hand, it could be that that airline got
+the seats reconfigured in a non-standard way, but I don't see why they
+would.</p>
+
+<p>KJA.</p>
+
+<p>[<a href="http://localhost/t/21_run_index.t/vr5/confr.html">vr5/confr</a>]</p>
+</body></html>

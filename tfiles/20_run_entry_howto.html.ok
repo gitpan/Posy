@@ -1,0 +1,46 @@
+<html><head>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://localhost/t/20_run_entry.t/index.rss"/>
+<title>Posy Demo Site : plugins</title>
+</head>
+<body>
+<h2>Saturday, 4 December 2004</h2>
+<h3 id="howto">Plugins HOWTO</h3>
+
+<pre>
+Plugins HOWTO
+=============
+
+Plugins in Posy use the full power of object-oriented Perl.  Rather than
+providing a rigid API where a plugin is only allowed to provide a
+pre-defined set of methods, each plugin is a child (or grandchild, or
+g-g-g-g-g-grandchild) of the Posy class.  Therefore, *any* method can
+be overridden by a plugin.  This provides great power, but with great
+power comes great responsibility -- in other words, be careful.
+
+There are two things which determine the course of the Posy engine: the
+list of plugins, and the list of actions.  Each is ordered, but each is
+independent.  The order of the plugin list determines which methods will be
+overridden; for any given method, the last plugin to implement that method
+is the one whose version of that method will be used.
+
+But plugins don't *have* to override existing methods; they can also
+implement new ones.  That's where the list of actions comes in.  If
+one wishes to insert a new action into the sequence of actions, then
+one can make plugin with a new method which does this action, and
+insert its name into the list of actions.
+
+Where one is making a new method, one probably doesn't wish it to
+be overridden, so in order to reduce the likelihood of it accidentally
+(rather than deliberately) being overridden, try to give the method
+a unique name.  Prefixing it with the name of the plugin is probably a good
+idea.
+
+So, for example, you make a "Dazzle" plugin, which does dazzling things
+to the head of a page.  Instead of calling its head processing "head",
+call it "dazzle_head".  And then add "dazzle_head" to the list of
+actions after the "head" action.
+
+</pre>
+
+<p>[<a href="http://localhost/t/20_run_entry.t/plugins/howto.html">plugins/howto</a>]</p>
+</body></html>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!-- name="generator" content="Posy/$Posy::VERSION" -->
+<!DOCTYPE rss PUBLIC "-//Netscape Communications//DTD RSS 0.91//EN" "http://my.netscape.com/publish/formats/rss-0.91.dtd">
+<rss version="0.91">
+  <channel>
+  <title>[==$config_site_title==] [==$path_day==] [==$path_month==] [==$path_year==]</title>
+  <link>[==$url==]</link>
+  <description>[==$config_description==]</description>
+  <language>[==$config_language==]</language>

@@ -1,0 +1,85 @@
+<html><head>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://localhost/t/21_run_index.t/index.rss"/>
+<title>Posy Demo Site : vr5</title>
+</head>
+<body>
+<h2>Friday, 26 November 2004</h2>
+<h3 id="index">VR.5: The Wind of the Mind</h3>
+
+<h1>VR.5: The Wind of the Mind</h1>
+
+<h2>Welcome To The Game</h2>
+
+<p><em>Virtual Reality is real.</em> Really? No, not really. But once
+upon a time, that was the tag-line of a most excellent TV show,
+<strong><em>VR.5</em></strong>. It was hyped to the computer geek set,
+and completely turned off the anal-retentive portion of same, because
+of technical handwaving, such as the 300-baud acoustic modem through
+which this VR was apparently piped.</p>
+
+<p>But <em>VR.5</em> wasn't about Virtual Reality. It was about seeing
+into the subconscious; the VR stuff was just the lever with which they
+moved the world. Toss in recurring nightmares, angst, love, danger, and
+a ruthless secret society, and you sort of get <em>Alfred
+Hitchcock</em> meets <em>Dreamscape</em> (only better).</p>
+
+<p>The original reason I watched VR.5 was because I was a fan of David
+McCallum, (ever since I saw him as Steel in <em>Sapphire &amp;
+Steel</em>) and I had heard he played the part of Sydney's dead father.
+(see here for <a href="../events/runfywif.html">play review</a>)
+I figured it couldn't be much of a part, seeing as he was dead, but I
+watched it anyway. Boy, was I blown away!</p>
+
+<p>And then Oliver Sampson came along... Played by Anthony Steward Head
+(who then went on to play Rupert Giles in Buffy: The Vampire Slayer)
+here was just the kind of character that I really like. Ambiguous,
+dark, brooding, handsome (Englishman), <a href=
+"../b7/avon_oliv.html">he reminds me of Kerr Avon...</a></p>
+
+<p>To whet your appetite, here are selected <a href=
+"../quotes/vr5quotes">quotes</a> from the series. They are in
+Fortune format.</p>
+
+<pre>
+<?php $out = `../cgi-bin/rand_text.cgi $(relTopDir)/quotes/vr5quotes`;
+echo $out;
+?>
+</pre>
+
+<h2>It's Not What You Think</h2>
+
+<p>Obsessive details about episodes of VR.5, thanks to a good
+freeze-frame on my VCR. No point in looking at any of these unless
+you've already seen the episodes in question - they won't mean anything
+to you. First, <a href="mfile.html">the file</a> that Morgan sent to
+Sydney in "Love and Death". Also, <a href="confr.html">extra
+evidence</a> about the crash of flight 503 mentioned in "Control
+Freak".</p>
+
+<h2>Links and Rings</h2>
+
+<ul>
+<li><a href="$(relTopDir)/links.html#VR.5">VR.5 links</a></li>
+</ul>
+
+<script type="text/javascript"
+src="http://ss.webring.com/navbar?f=j&amp;y=rubykat3&amp;u=99779774610071578">
+</script>
+<noscript>
+<div class="center">
+<table width="75%" cellpadding="2" cellspacing="0">
+<tr valign="bottom"><td>
+<table style="bgcolor=#990066;" border="0" width="75%">
+<tr><td>
+<table style="bgcolor=#eeeeee;" cellpadding="6" cellspacing="0" border="0" width="100%">
+<tr>
+<td style=
+"text-align: center; font-face: verdana, arial, helvetica, sans-serif; font-size: x-small">
+This site is a member of WebRing. To browse visit<br />
+<a href="http://ss.webring.com/navbar?f=l&amp;y=rubykat3&amp;u=99779774610071578">
+http://ss.webring.com/navbar?f=l&amp;y=rubykat3&amp;u=99779774610071578</a>
+</td></tr></table>
+</td></tr></table></td></tr></table></div></noscript>
+
+<p>[<a href="http://localhost/t/21_run_index.t/vr5/index.html">vr5/index</a>]</p>
+</body></html>

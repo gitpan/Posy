@@ -1,0 +1,47 @@
+<html><head>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://localhost/t/31_plugins_index.t/index.rss"/>
+<title>Posy Demo Site : </title>
+</head>
+<body>
+<h2>Saturday, 4 December 2004</h2>
+<h3 id="plugins_howto">Plugins HOWTO</h3>
+<p>Plugins in Posy use the full power of object-oriented Perl.
+(<a href="http://localhost/t/31_plugins_index.t/plugins/howto.html">see more...</a>)</p>
+<h3 id="plugins_0intro">Plugins</h3>
+<p>This is the "Plugins" category.
+(<a href="http://localhost/t/31_plugins_index.t/plugins/0intro.html">see more...</a>)</p>
+<h3 id="_content">Content</h3>
+<p>The current Posy distribution is set up as a standard Perl module
+distribution, with modules under the "lib" directory, tests under
+the "t" directory, Build.
+(<a href="http://localhost/t/31_plugins_index.t//content.html">see more...</a>)</p>
+<h3 id="_feedback">Feedback</h3>
+<p>Please direct any feedback to the author
+Kathryn Andersen.
+(<a href="http://localhost/t/31_plugins_index.t//feedback.html">see more...</a>)</p>
+<h3 id="_license">License</h3>
+<p>Posy is Free Software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+(<a href="http://localhost/t/31_plugins_index.t//license.html">see more...</a>)</p>
+<h3 id="_alpha">Alpha</h3>
+<p>Posy is alpha software.
+(<a href="http://localhost/t/31_plugins_index.t//alpha.html">see more...</a>)</p>
+<h3 id="_welcome">Posy : Welcome</h3>
+<p>Posy is a web-content manager and blog inspired by
+blosxom.
+(<a href="http://localhost/t/31_plugins_index.t//welcome.html">see more...</a>)</p>
+<h2>Friday, 26 November 2004</h2>
+<h3 id="vr5_index">VR.5: The Wind of the Mind</h3>
+<p>Welcome To The Game
+
+Virtual Reality is real.
+(<a href="http://localhost/t/31_plugins_index.t/vr5/index.html">see more...</a>)</p>
+<h2>Sunday, 23 March 2003</h2>
+<h3 id="vr5_mfile">Morgan's File</h3>
+<p>In the VR.
+(<a href="http://localhost/t/31_plugins_index.t/vr5/mfile.html">see more...</a>)</p>
+<h2>Wednesday, 30 October 2002</h2>
+<h3 id="vr5_confr">Control Freak</h3>
+<p>When exactly did the crash happen?
+(<a href="http://localhost/t/31_plugins_index.t/vr5/confr.html">see more...</a>)</p>
+</body></html>

@@ -1,0 +1,130 @@
+Revision history for Posy
+=========================
+
+0.01 Sun 12 December 2004
+-------------------------
+
+  * (12 Dec 2004) posy_one
+  	Generate one file (not inside the data dir) using Posy.
+  It's a hack, and probably needs to be done as a proper overriding
+  plugin, but it sort of works.
+
+  * (12 Dec 2004) posy_static and Posy::Plugin::GenStatic
+  	Posy::Plugin::GenStatic replaces the "run" method, and
+  then runs around in a lot of loops.
+
+  * (12 Dec 2004) changes to posy.cgi
+  	Moved posy.cgi out of the scripts directory, since it shouldn't
+  be installed like a script.  Also made two versions of it; a vanilla
+  version (posy.cgi) which has no plugins, and a full version (posy_all.cgi)
+  which has all the plugins, and has debugging enabled.
+
+  * (12 Dec 2004) Posy::Plugin::FlavourMenu
+
+  * (11 Dec 2004) Posy::Plugin::DynamicCss
+
+  * (11 Dec 2004) Posy::Plugin::ThemeCss
+  	This sets variables in $flow_state which can then be used
+  in flavour templates.
+
+  * (11 Dec 2004) removing redundancies
+  	Changed some comments and removed unneeded methods
+
+  * (11 Dec 2004) split append_entry
+  	Split the append_entry method into two parts, so that
+  future plugins (such as this_flavour) could alter the entry
+  after it had been rendered, but before it had been added to the page data.
+
+  * (11 Dec 2004) Posy::Plugin::YamlConfig
+  	This was an easy way of enabling configuration values to be hashes,
+  which is needed for things like ThemeCss and FlavourMenu.
+  	The downside is that it requires one to install YAML, but I'd rather
+  have that than have to reinvent the wheel.  And besides, if one uses
+  Module::Build one has probably installed YAML anyway.
+
+  * (11 Dec 2004) tweaking documentation
+
+  * (11 Dec 2004) optional testing of dist + plugins
+  	Since certain plugins use extra modules (for example, Text::Template
+  is used by Posy::Plugin::TextTemplate) then both the Test::Distribution
+  test and the plugins tests would fail if those modules weren't installed.
+  Therefore these tests now check if those modules are installed, and
+  skip themselves if they aren't.
+  	This is good because the whole idea of putting certain functionality
+  into "standard" plugins is so that the plugins can be optional, and thus
+  their dependencies can be optional.
+
+  * (11 Dec 2004) added Posy::Plugin::ShortBody
+
+  * (11 Dec 2004) improved flavour template search
+  	Now it looks for an alternative path-type before it looks
+  for a template with no path-type.  Alternative path-types are:
+  top_entry -> entry, top -> category.
+
+  * (11 Dec 2004) improved reindexing
+  	index_entries was always reading the cache even when reindex was
+  forced.  Which seemed a bit silly to me.
+
+  * (11 Dec 2004) fix CGI param problem
+  	It wasn't reading CGI parameters properly because I'd given
+  it keywords and that was all it found.  Probably some subtlety with
+  when the "use CGI" command was done.  No matter.  I didn't really
+  need those keywords anyway.
+
+  * (11 Dec 2004) added Posy::Plugin::TextToHTML
+  	Which uses HTML::TextToHTML module.
+
+  * (10 Dec 2004) a few more tweaks
+  	- make select_by_path include anything below the path
+  	- made actions and entry_actions explicit in posy.cgi
+  	- removed dump from the default actions
+
+  * (10 Dec 2004) added TODO to manifest
+
+  * (10 Dec 2004) more tweaking
+
+  * (10 Dec 2004) tweaking to get tests right
+
+  * (10 Dec 2004) testing TextTemplate plugin
+  	Wrote proper tests for TextTemplate plugin.
+  Also added some extra stuff to path parsing.
+
+  * (10 Dec 2004) first plugin TextTemplate
+  	Had to split Posy into Posy and Posy::Core to get the plugins
+  to work; this was because I wasn't really paying attention to the
+  plugin implementation of Module::Starter and why Module::Starter itself
+  only implemented the "import" method.
+
+  * (9 Dec 2004) fixing up flavours
+  	Now the only default flavour is the error flavour.  The problem
+  with how it was before, it meant that one couldn't override the default
+  'html' flavour with a flavour file.  Much simpler to just have a default
+  error flavour; and it isn't really a problem for the user because
+  it isn't as if the distro isn't providing a default 'html' flavour,
+  it just isn't providing it inside the Posy module itself, it's in
+  the flavours directory.
+  	Also slightly altered the way the page body data is built up.
+
+  * (9 Dec 2004) getting posy.cgi to work
+  	This involved first actually writing posy.cgi, then fixing
+  a number of problems, such as with "use lib" and with "content_type"
+  and with not finding files, and with various warnings.
+
+  * (9 Dec 2004) changing debug_level from param to init
+  	The debug_level is now set at run/new, not while parsing params;
+  this is because it is less messy this way, and if you're debugging,
+  you would be altering code anyway, so you might as well alter the init code.
+
+  * (9 Dec 2004) updating todo
+
+  * (8 Dec 2004) fix url var
+  	Use the CGI url() by default, to pass to templates.
+
+  * (8 Dec 2004) improved config stuff
+
+  * (8 Dec 2004) initial checkin
+  	This is a website content manager (and blog) inspired by blosxom.
+  I decided to roll my own because there were certain fundamental problems
+  with blosxom, and different fundamental problems with Blosxom3.
+  This is written for my needs, but others may find it useful.
+

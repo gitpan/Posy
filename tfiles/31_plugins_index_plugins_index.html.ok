@@ -1,0 +1,13 @@
+<html><head>
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://localhost/t/31_plugins_index.t/index.rss"/>
+<title>Posy Demo Site : plugins</title>
+</head>
+<body>
+<h2>Saturday, 4 December 2004</h2>
+<h3 id="plugins_0intro">Plugins</h3>
+<p>This is the "Plugins" category.
+(<a href="http://localhost/t/31_plugins_index.t/plugins/0intro.html">see more...</a>)</p>
+<h3 id="plugins_howto">Plugins HOWTO</h3>
+<p>Plugins in Posy use the full power of object-oriented Perl.
+(<a href="http://localhost/t/31_plugins_index.t/plugins/howto.html">see more...</a>)</p>
+</body></html>

@@ -1,0 +1,16 @@
+Content
+=======
+
+The current Posy distribution is set up as a standard Perl module
+distribution, with modules under the "lib" directory, tests under
+the "t" directory, Build.PL (this uses the Module::Build module
+for building) MANIFEST, README, and so on.
+
+In addition this contains:
+
+- data directory, with test data and documentation files
+- posy.cgi; a CGI script which uses the Posy.pm module
+- posy_one; a script to generate one output file from one input file
+  using just the default settings and flavours
+- posy_static; a script to generate "static" pages from the same
+  data as used by posy.cgi

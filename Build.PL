@@ -1,0 +1,39 @@
+use strict;
+use warnings;
+use Module::Build;
+
+my $builder = Module::Build->new(
+    module_name         => 'Posy',
+    license             => 'perl',
+    dist_author         => 'Kathryn Andersen',
+    dist_version_from   => 'lib/Posy.pm',
+	requires            => {
+	'File::Spec' => 0,
+	'File::stat' => 0,
+	'FileHandle' => 0,
+	'File::Find' => 0,
+	'Data::Dumper' => 0,
+	'Storable' => 0,
+	'Carp' => 0,
+	'CGI' => 0,
+	'Getopt::Long' => 2.34,
+	'Pod::Usage' => 0,
+	'Getopt::ArgvFile' => 1.09,
+
+	},
+    build_requires => {
+        'Test::More' => 0,
+    },
+    #add_to_cleanup      => [ 'Posy-*' ],
+    script_files => [qw(scripts/posy_one scripts/posy_static)],
+
+);
+
+$builder->create_build_script();
+# create the Makefile.PL if need be
+if (! -f 'Makefile.PL')
+{
+    use Module::Build::Compat;
+    print "creating Makefile.PL\n";
+    Module::Build::Compat->create_makefile_pl('passthrough', $builder);
+}

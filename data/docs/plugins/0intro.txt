@@ -1,0 +1,4 @@
+Plugins
+=======
+
+This is the "Plugins" category.

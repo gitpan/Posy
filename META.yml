@@ -1,0 +1,53 @@
+--- #YAML:1.0
+name: Posy
+version: 0.01
+author:
+  - Kathryn Andersen
+abstract: a website generator inspired by blosxom
+license: perl
+requires:
+  CGI: 0
+  Carp: 0
+  Data::Dumper: 0
+  File::Find: 0
+  File::Spec: 0
+  File::stat: 0
+  FileHandle: 0
+  Getopt::ArgvFile: 1.09
+  Getopt::Long: 2.34
+  Pod::Usage: 0
+  Storable: 0
+build_requires:
+  Test::More: 0
+provides:
+  Posy:
+    file: lib/Posy.pm
+    version: 0.01
+  Posy::Core:
+    file: lib/Posy/Core.pm
+    version: 0.01
+  Posy::Plugin::DynamicCss:
+    file: lib/Posy/Plugin/DynamicCss.pm
+    version: 0.01
+  Posy::Plugin::FlavourMenu:
+    file: lib/Posy/Plugin/FlavourMenu.pm
+    version: 0.01
+  Posy::Plugin::GenStatic:
+    file: lib/Posy/Plugin/GenStatic.pm
+    version: 0.01
+  Posy::Plugin::ShortBody:
+    file: lib/Posy/Plugin/ShortBody.pm
+    version: 0.01
+  Posy::Plugin::TextTemplate:
+    file: lib/Posy/Plugin/TextTemplate.pm
+    version: 0.01
+  Posy::Plugin::TextToHTML:
+    file: lib/Posy/Plugin/TextToHTML.pm
+    version: 0.01
+  Posy::Plugin::ThemeCss:
+    file: lib/Posy/Plugin/ThemeCss.pm
+    version: 0.01
+  Posy::Plugin::YamlConfig:
+    file: lib/Posy/Plugin/YamlConfig.pm
+    version: 0.01
+generated_by: Module::Build version 0.2605

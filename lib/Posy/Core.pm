@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.71> of Posy::Core.
+This describes version B<0.72> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.71';
+our $VERSION = '0.72';
 
 =head1 SYNOPSIS
 
@@ -484,6 +484,7 @@ sub parse_path {
     $path_info = $ENV{DOCUMENT_URI} if (!defined $path_info);
     $path_info = $ENV{REDIRECT_URL} if (!defined $path_info);
     $self->{path}->{info} = $path_info;
+    $self->debug(2, "parse_path: path_info=$path_info");
 
     my ($path_and_filebase, $suffix) = $path_info =~ /^(.*)\.(\w+)$/;
     $path_and_filebase = $path_info if (!$suffix);
@@ -567,8 +568,9 @@ sub parse_path {
 	# I'm going to be pedantic and say that a year must be
 	# four digits long, and the other date components must be 1 or 2 digits
 	my $last_bit = pop @path_split;
-	$full_no_ext = (@path_split ? $data_dir
-	    : File::Spec->catdir($data_dir, @path_split));
+	$full_no_ext = (@path_split
+	    ?  File::Spec->catdir($data_dir, @path_split)
+	    : $data_dir);
 	if (-d $full_no_ext)
 	{
 	    if ($last_bit eq 'index') # is a category index
@@ -1043,13 +1045,15 @@ sub foot_render {
 
     if ($self->{path}->{type} =~ /entry$/ and $current_entry)
     {
+	$self->debug(2, "foot_render: rendering entry foot");
 	my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
 	my $template = $flow_state->{foot_template};
 	$flow_state->{foot} = $self->interpolate('foot', $template, \%vars);
     }
-    elsif ($self->{path}->{type} !~ /entry$/
-	|| (!$current_entry && !$flow_state->{foot}))
+    elsif ($self->{path}->{type} !~ /entry/
+	and !$current_entry)
     {
+	$self->debug(2, "foot_render: rendering non-entry foot");
 	my %vars = $self->set_vars($flow_state);
 	my $template = $flow_state->{foot_template};
 	$flow_state->{foot} = $self->interpolate('foot', $template, \%vars);

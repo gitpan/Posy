@@ -1,6 +1,18 @@
 Revision history for Posy
 =========================
 
+0.72 Fri 28 January 2005
+------------------------
+
+  * (28 Jan 2005) fix bug in foot_render
+  	Not serious bug, but it was rendering the foot when it
+  didn't need to, and then being overwritten.
+
+  * (28 Jan 2005) fix bug in parse_path
+  	It wasn't parsing 'chrono' paths correctly.
+
+  * (26 Jan 2005) tweaking Changes formatting
+
 0.71 Sat 22 January 2005
 ------------------------
 
@@ -117,7 +129,6 @@ Revision history for Posy
   * (7 Jan 2005) twitch
   	Forgot to change Posy::Plugin::AntiSpambot's version.  Drat.
 
-
 0.20 Fri 07 January 2005
 ------------------------
 
@@ -159,7 +170,6 @@ Revision history for Posy
   	Fixed a bug with the category index where the root category
   had inconsistent data.
   	Also added more data to a warning.
-
 
 0.11 Wed 05 January 2005
 ------------------------
@@ -267,7 +277,6 @@ Revision history for Posy
   	Also, put in code into posy_all.cgi so it calculates the directories
   from DOCUMENT_ROOT.
 
-
 0.05 Fri 24 December 2004
 -------------------------
 
@@ -278,7 +287,6 @@ Revision history for Posy
   things back in.  And it's been failing for someone trying to install
   the system.
 
-
 0.04 Wed 22 December 2004
 -------------------------
 
@@ -287,7 +295,6 @@ Revision history for Posy
 
   * (22 Dec 2004) corrected error in Changes file
 
-
 0.03 Wed 22 December 2004
 -------------------------
 
@@ -295,7 +302,6 @@ Revision history for Posy
   	Got error on CPAN from Win machine in _wanted; not sure exactly
   if this will fix the problem, but the section in question is now less
   unix-centric.
-
 
 0.02 Mon 20 December 2004
 -------------------------

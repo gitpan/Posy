@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.72> of Posy::Core.
+This describes version B<0.80> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.72';
+our $VERSION = '0.80';
 
 =head1 SYNOPSIS
 
@@ -485,6 +485,8 @@ sub parse_path {
     $path_info = $ENV{REDIRECT_URL} if (!defined $path_info);
     $self->{path}->{info} = $path_info;
     $self->debug(2, "parse_path: path_info=$path_info");
+    # set the status to 200 until not found
+    $self->{path}->{status} = 200;
 
     my ($path_and_filebase, $suffix) = $path_info =~ /^(.*)\.(\w+)$/;
     $path_and_filebase = $path_info if (!$suffix);
@@ -772,10 +774,11 @@ sub process_path_error {
 
     if ($self->{path}->{error})
     {
+	$self->{path}->{status} = 404;
 	$flow_state->{stop} = 1;
 	if ($self->{dynamic})
 	{
-	    $self->print_header('text/plain', 'Status: 404');
+	    $self->print_header(content_type=>'text/plain');
 	    print "404 page '", $self->{path}->{info}, "' not found";
 	}
     }
@@ -1154,7 +1157,7 @@ sub render_page {
 	}
     }
     else {
-	$self->print_header($flow_state->{content_type});
+	$self->print_header(content_type=>$flow_state->{content_type});
 	print $flow_state->{head};
 	print @{$flow_state->{page_body}};
 	print $flow_state->{foot};
@@ -1896,20 +1899,33 @@ sub nice_date_time {
 
 =head2 print_header
 
-    $self->print_header($content_type, $extra);
+    $self->print_header(content_type=>$content_type,
+	status=>$status,
+	extra=>$extra);
 
 Print a web-page header, with content-type and any extra things
 required for the header.
+The default status is $self->{path}->{status}, but this can be
+changed by using the 'status' argument if need be.
+
 This is done as a separate method to enable it to be overridden
 by plugins such as Posy::Plugin::CgiCarp.
 
 =cut
 sub print_header {
     my $self = shift;
-    my $content_type = shift;
-    my $extra = (@_ ? shift : '');
+    my %args = (
+	content_type=>'text/html',
+	status=>$self->{path}->{status},
+	extra=>'',
+	@_
+    );
+    my $content_type = $args{content_type};
+    my $status = $args{status};
+    my $extra = $args{extra};
 
     print "Content-Type: $content_type\n";
+    print "Status: $status\n" if $status;
     print $extra, "\n" if $extra;
     print "\n";
 } # print_header

@@ -7,11 +7,11 @@ Posy::Plugin::NearLinks - give links of articles in the current category
 
 =head1 VERSION
 
-This describes version B<0.04> of Posy::Plugin::NearLinks.
+This describes version B<0.05> of Posy::Plugin::NearLinks.
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 

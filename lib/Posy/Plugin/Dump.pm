@@ -8,11 +8,11 @@ Posy::Plugin::Dump - Posy plugin to aid debugging by dumping object contents
 
 =head1 VERSION
 
-This describes version B<0.04> of Posy::Plugin::Dump.
+This describes version B<0.05> of Posy::Plugin::Dump.
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -67,7 +67,7 @@ sub dump {
 
     my $class = ref $self;
     my $oh = \*STDERR;
-    print $oh Data::Dumper->Dump([$self],[$class]);
+    print $oh "Posy=", Dumper($self);
     if (exists $self->{cgi} and defined $self->{cgi})
     {
 	my %params = $self->{cgi}->Vars();
@@ -75,15 +75,15 @@ sub dump {
     }
     if (defined $flow_state)
     {
-	print $oh Data::Dumper->Dump([$flow_state],['flow_state']);
+	print $oh "flow_state=", Dumper($flow_state);
     }
     if (defined $current_entry)
     {
-	print $oh Data::Dumper->Dump([$current_entry],['current_entry']);
+	print $oh "current_entry=", Dumper($current_entry);
     }
     if (defined $entry_state)
     {
-	print $oh Data::Dumper->Dump([$entry_state],['entry_state']);
+	print $oh "entry_state=", Dumper($entry_state);
     }
 } # dump
 

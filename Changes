@@ -1,6 +1,17 @@
 Revision history for Posy
 =========================
 
+0.05 Fri 24 December 2004
+-------------------------
+
+  * (24 Dec 2004) fix in Posy::Plugin::Dump
+  	For backwards compatibility with earlier versions of Data::Dumper,
+  this now uses the "Dumper()" call, not the extended call.  This should
+  be okay, because the dumping is for debugging purposes, not for reading
+  things back in.  And it's been failing for someone trying to install
+  the system.
+
+
 0.04 Wed 22 December 2004
 -------------------------
 

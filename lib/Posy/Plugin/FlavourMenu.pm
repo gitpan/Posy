@@ -7,11 +7,11 @@ Posy::Plugin::FlavourMenu - Posy plugin to make a menu of flavours
 
 =head1 VERSION
 
-This describes version B<0.04> of Posy::Plugin::FlavourMenu.
+This describes version B<0.05> of Posy::Plugin::FlavourMenu.
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 

@@ -10,23 +10,23 @@ posy_one - Script which uses the Posy engine to generate one file from an input 
 
 =head1 VERSION
 
-This describes version B<0.80> of posy_one.
+This describes version B<0.90> of posy_one.
 
 =cut
 
-our $VERSION = '0.80';
+our $VERSION = '0.90';
 
 =head1 SYNOPSIS
 
 posy_one --help | --manpage | --version
 
-posy_one { --actions I<action> } --config_dir I<dirname>
-{ --DayWeek2Name I<num>=I<name> } [ --debug_level I<num> ]
-{ --entry_actions I<action> } { --file_extensions I<extension>=I<type> }
---flavour I<flavour> --flavour_dir I<dirname>
+posy_one { --actions I<action> } ( --base_dir I<dirname> | --config_dir
+I<dirname> --flavour_dir I<dirname> --state_dir I<dirname> )
+[ --data_dir I<dirname> { --DayWeek2Name I<num>=I<name> }
+[ --debug_level I<num> ] { --entry_actions I<action> }
+{ --file_extensions I<extension>=I<type> } --flavour I<flavour>
 [ --libdir I<dirname> ] { --MonthNum2Name I<num>=I<name> }
-{ --plugins I<plugin> } [ --state_dir I<dirname> ] --url I<url>
-infile outfile
+{ --plugins I<plugin> } --url I<url> infile outfile
 
 =head1 DESCRIPTION
 
@@ -52,18 +52,22 @@ a plugin which requires inserting a new action.  Note that if you do,
 you must specify I<every> action to be performed; once the default
 actions are not being used, they must be replaced completely.
 
---actions init_params --actions parse_path --actions stop_if_not_found
---actions set_config --actions index_entries --actions select_by_path
+--actions init_params --actions parse_path --actions process_path_error
+--actions set_config --actions index_entries --actions select_entries
 --actions filter_by_date --actions sort_entries --actions content_type
 --actions head_template --actions dynamic_css_set --actions theme_css_set
 --actions flavour_menu_set --actions head_render --actions do_entry_actions
 --actions foot_template --actions foot_render --actions render_page
 
+=item --base_dir I<dirname>
+
+The base directory to use to set the flavour and config data directories if
+they are not explicitly set.  This does not set the default for the data_dir.
+
 =item --config_dir I<dirname>
 
-The directory where the config files are.  (This could be the same
-as your normal data directory, but remember, this script is not using
-the normal data directory, so one must set the config_dir explicitly).
+The directory where the config files are.  Either set this or
+you can set --base_dir if your config files are in I<base_dir>/config.
 
 =item --data_dir I<dirname>
 
@@ -106,7 +110,9 @@ default actions are not being used, they must be replaced completely.
 If you wish to change the default file extensions, then use this argument.
 Generally one would only do this if one had added a plugin to deal
 with a new kind of file.  Or if one wanted to give a different extension
-to a standard type of file.
+to a standard type of file.  Note that if you use this option, you must
+specify I<every> file extension setting you want to use; the defaults
+are overridden.
  
     --file_extensions txt=text --file_extensions html=html --file_extensions blx=blosxom
 
@@ -116,9 +122,8 @@ What flavour do you want the output to be?
 
 =item --flavour_dir I<dirname>
 
-The directory where the flavour files are.  (This could be the same
-as your normal data directory, but remember, this script is not using
-the normal data directory, so one must set the flavour_dir explicitly).
+The directory where the flavour files are.  Either set this or
+you can set --base_dir if your flavour files are in I<base_dir>/flavours.
 
 --flavour_dir /files/www/posy/data/flavours
 
@@ -128,13 +133,12 @@ Print help message and exit.
 
 =item --libdir I<dirname>
 
-If you installed the Posy module in a non-standard place, then
-you need to tell this script where to look for it.  Set --libdir
-to that directory.
+If you installed the Posy modules in your home directory (or some other
+non-global place), then you need to tell this script where to look for them.
+Set --libdir to that directory.
 
-For example, if the Posy.pm module is in
-/home/fred/perl/lib
-(that is, its full path is /home/fred/perl/lib/Posy.pm)
+For example, if you installed the Posy modules in /home/fred/perl
+(and thus the Posy.pm module file is in /home/fred/perl/lib)
 then
 
     --libdir '/home/fred/perl/lib'
@@ -164,12 +168,8 @@ If you wish to use any plugins, you must put them in the plugins list,
 as well as installing the actual plugin modules.
 
 For example, if you are using the Posy::Plugin::TextTemplate module,
-then the TextTemplate.pm file should either be installed using
-the standard Build method, or you should just put the TextTemplate.pm
-file in the Posy/Plugin directory under Posy.pm
-
-That is, if Posy.pm is in /home/fred/perl/lib/, then
-TextTemplate.pm should be in /home/fred/perl/lib/Posy/Plugin/
+then the TextTemplate module should be installed in the same way
+that you installed the core Posy modules.
 
 Then you add the name of the plugin to this plugins list.
 
@@ -182,8 +182,7 @@ Note that this will always use the Posy::Core plugin.
 
 =item --state_dir I<dirname>
 
-The directory where "state" information is put.  The default value is
-"/tmp/posy_state".
+The directory where "state" information is put.
 
 =item --url I<url>
 
@@ -253,6 +252,7 @@ sub process_args ($) {
 	       'verbose!',
 	       'manpage',
 	       'actions=s@',
+	       'base_dir=s',
 	       'config_dir=s',
 	       'data_dir=s',
 	       'DayWeek2Name=s%',

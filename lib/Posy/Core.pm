@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.80> of Posy::Core.
+This describes version B<0.90> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.80';
+our $VERSION = '0.90';
 
 =head1 SYNOPSIS
 
@@ -41,6 +41,7 @@ functions can be added and overridden by plugin modules.
 
 use File::Spec;
 use File::stat;
+use File::Find;
 
 =head1 CLASS METHODS
 
@@ -68,14 +69,38 @@ are given, then the default sequence will be used.
 The actions which should be performed on each entry.  If none are
 given, then the default sequence will be used.
 
+=item B<base_dir>
+
+The directory to use as a prefix when setting the default locations
+of the data_dir, the flavour_dir, the config_dir and the state_dir.
+This is just for convenience; if those directories are given in the
+arguments, we use those.
+(default: the current directory)
+
 =item B<data_dir>
 
-The directory where the data is.
+The directory where the entry data is.
 
 =item B<state_dir>
 
 The directory where the state-related data is (what used to be "plugins/state"
 in blosxom).
+
+=item B<flavour_dir>
+
+The directory where the flavour template files are.
+
+=item B<config_dir>
+
+The directory where the configuration files are.  Defaults to being
+the same as B<data_dir>.
+
+=item B<debug_level>
+
+Setting the debug_level to something other then 0 will turn on varying
+levels of debugging output.  The higher the number, the more voluminous
+the output (though generally most debugging messages are either level 1
+or level 2).
 
 =back
 
@@ -130,7 +155,7 @@ sub init {
 	    process_path_error
 	    set_config
 	    index_entries
-	    select_by_path
+	    select_entries
 	    filter_by_date
 	    sort_entries
 	    content_type
@@ -200,11 +225,13 @@ sub init {
     $self->{extensions_re} = qr/($extensions_re)/;
     $self->{debug_level} ||= 0;
 
-    $self->{data_dir} ||= File::Spec->catdir(File::Spec->rel2abs('.'), 'data'); 
+    $self->{base_dir} ||= File::Spec->rel2abs('.');
+    $self->{data_dir} ||= File::Spec->catdir($self->{base_dir}, 'data'); 
     $self->{data_dir} =~ s#/$##;
-    $self->{state_dir} ||= File::Spec->catdir($self->{data_dir}, '.state'); 
-    $self->{flavour_dir} ||= File::Spec->catdir($self->{data_dir},
-						'.flavours'); 
+    $self->{config_dir} ||= $self->{data_dir};
+    $self->{state_dir} ||= File::Spec->catdir($self->{base_dir}, 'state'); 
+    $self->{flavour_dir} ||= File::Spec->catdir($self->{base_dir},
+						'flavours'); 
 
     # set the error templates if not already set
     $self->{templates}->{content_type}->{error} ||= 'text/html';
@@ -268,26 +295,6 @@ reference to a flow-state hash, and generally will update
 either that hash or the object itself, or both in the course
 of their running.
 
-=head2 set_config
-
-$self->set_config($flow_state);
-
-Set $self->{config} from the config files.
-Takes into account the path, but does not use chunk information;
-useful for setting global parameters.
-
-=cut
-sub set_config {
-    my $self = shift;
-    my $flow_state = shift;
-
-    my %config = $self->get_config('');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
-} # set_config
-
 =head2 init_params
 
 Parse the global parameters.
@@ -302,10 +309,13 @@ aren't in CGI mode.
 
 Sets $self->{url} if it isn't already set.
 
-When this is not in dynamic mode, the parameters can be set by passing
-them through the $self->{params} hash (by setting params=>{...}
-when calling L</new> or L</run>.  This can be useful for writing
-scripts that aren't CGI scripts.
+When this is not in dynamic mode, the parameters can be set (a) by giving
+them on the command line and (b) by passing them through the
+$self->{params} hash (by setting params=>{...} when calling L</new> or
+L</run>).  This can be useful for writing scripts that aren't CGI scripts.
+Note that the command-line is checked before the $self->{params}
+hash, so it is probably best, if writing a script, to use one method
+or the other but not both.
 
 =cut
 sub init_params {
@@ -350,54 +360,6 @@ sub init_params {
 	$self->{url} = $self->_url();
     }
 } # init_params
-
-=head2 index_entries
-
-Find the entries files, the "other" files, and the categories.
-This uses caching by default.
-
-Expects $self->{path} and $self->{config} to be set.
-
-Sets $self->{reindex} if reindexing has been done.
-
-=cut
-
-sub index_entries {
-    my $self = shift;
-    my $flow_state = shift;
-
-    # set the cache info if not already set
-    $self->{config}->{use_caching} = 1
-	if (!defined $self->{config}->{use_caching});
-    $self->{config}->{files_cachefile} ||=
-	File::Spec->catfile($self->{state_dir}, 'files.dat');
-    $self->{config}->{others_cachefile} ||=
-	File::Spec->catfile($self->{state_dir}, 'others.dat');
-    $self->{config}->{categories_cachefile} ||=
-	File::Spec->catfile($self->{state_dir}, 'categories.dat');
-
-    $self->{reindex} = 1 if ($self->param('reindex'));
-    $self->{reindex} = 1 if (!$self->_init_caching());
-    if (!$self->{reindex})
-    {
-	$self->{reindex} = 1 if (!$self->_read_caches());
-    }
-    # If any files not available, err on side of caution and reindex
-    for my $ffn (keys %{$self->{files}})
-    { -f $self->{files}->{$ffn}->{fullname}
-	or do { $self->{reindex}++; delete $self->{files}->{$ffn} }; }
-
-    if ($self->{reindex}) {
-	use File::Find;
-	$self->debug(1, "reindexing $self->{reindex}");
-	find({wanted=>sub { $self->_wanted() },
-	    untaint=>1,
-	    follow=>$self->{follow_symlinks},
-	    },
-	     $self->{data_dir});
-	$self->_save_caches();
-    }
-} # index_entries
 
 =head2 parse_path
 
@@ -784,9 +746,163 @@ sub process_path_error {
     }
 } # process_path_error
 
-=head2 select_by_path
+=head2 set_config
 
-$self->select_by_path($flow_state);
+$self->set_config($flow_state);
+
+Set $self->{config} from the config files.
+Takes into account the path, but does not use chunk information;
+useful for setting global parameters.
+
+=cut
+sub set_config {
+    my $self = shift;
+    my $flow_state = shift;
+
+    my %config = $self->get_config('');
+    while (my ($key, $val) = each %config)
+    {
+	$self->{config}->{$key} = $val;
+    }
+} # set_config
+
+=head2 index_entries
+
+Find the entries files, the "other" files, and the categories.
+This uses caching by default.
+
+Expects $self->{path} and $self->{config} to be set.
+
+Sets $self->{reindex} if full reindexing has been done.
+
+This will do a full reindex if
+(a) there are no caches existing
+(b) the 'reindex' parameter is true
+
+This will do a partial reindex (one category) if the 'reindex_cat'
+parameter is set to a category id.
+
+This will delete missing files from the indexes if the 'delindex'
+parameter is true.
+
+This will add a single new file to the index is it is not there,
+and it does exist, and it is the current path request.
+
+=cut
+
+sub index_entries {
+    my $self = shift;
+    my $flow_state = shift;
+
+    # set the cache info if not already set
+    $self->{config}->{use_caching} = 1
+	if (!defined $self->{config}->{use_caching});
+    $self->{config}->{files_cachefile} ||=
+	File::Spec->catfile($self->{state_dir}, 'files.dat');
+    $self->{config}->{others_cachefile} ||=
+	File::Spec->catfile($self->{state_dir}, 'others.dat');
+    $self->{config}->{categories_cachefile} ||=
+	File::Spec->catfile($self->{state_dir}, 'categories.dat');
+
+    $self->{reindex} = 1 if ($self->param('reindex'));
+    $self->{reindex} = 1 if (!$self->_init_caching());
+    if (!$self->{reindex})
+    {
+	$self->{reindex} = 1 if (!$self->_read_caches());
+    }
+
+    if ($self->{reindex}) {
+	$self->{files} = {};
+	$self->{others} = {};
+	$self->{categories} = {};
+	$self->debug(1, "reindexing $self->{reindex}");
+	find({wanted=>sub { $self->_wanted() },
+	    untaint=>1,
+	    follow=>$self->{follow_symlinks},
+	    },
+	     $self->{data_dir});
+	$self->_save_caches();
+    }
+    else {
+	# Check for things that just need updating
+	my $reindex_cat = $self->param('reindex_cat');
+	# since this is a category ID, then need to split it on /
+	# to get something which can be turned into a directory path
+	my @rc_split = split('/', $reindex_cat);
+	my $reindex_dir = File::Spec->catdir($self->{data_dir}, @rc_split);
+	if ($reindex_cat and -d $reindex_dir)
+	{
+	    $self->debug(1, "reindexing $reindex_cat = $reindex_dir");
+	    find({wanted=>sub { $self->_wanted() },
+		 untaint=>1,
+		 follow=>$self->{follow_symlinks},
+		 },
+		 $reindex_dir);
+	    $self->_save_caches();
+	}
+
+	# If any files not available, delete them and just save the cache
+	if ($self->param('delindex'))
+	{
+	    $self->debug(1, "checking for deleted files");
+	    my $deletions = 0;
+	    while (my $key = each %{$self->{files}})
+	    { -f $self->{files}->{$key}->{fullname}
+		or do { $deletions++; delete $self->{files}->{$key} };
+	    }
+	    while (my $key = each %{$self->{others}})
+	    { -f $key
+		or do { $deletions++; delete $self->{others}->{$key} };
+	    }
+	    while (my $key = each %{$self->{categories}})
+	    { -d $self->{categories}->{$key}->{fullname}
+		or do { $deletions++; delete $self->{categories}->{$key} };
+	    }
+	    $self->_save_caches() if $deletions;
+	}
+
+	# if the current path entry exists, but is not indexed,
+	# set the data for it
+	if (!$self->{path}->{error}
+	    && !exists $self->{files}->{$self->{path}->{file_key}}
+	    && -f $self->{path}->{data_file}
+	    && $self->{path}->{type} =~ /entry$/)
+	{
+	    my $file_id = $self->{path}->{file_key};
+	    my $cat_id = $self->{path}->{cat_id};
+	    $self->{files}->{$file_id}->{ext} = $self->{path}->{ext};
+	    $self->{files}->{$file_id}->{fullname} = $self->{path}->{data_file};
+	    $self->{files}->{$file_id}->{basename} = $self->{path}->{basename};
+	    $self->{files}->{$file_id}->{cat_id} = $cat_id;
+	    $self->{files}->{$file_id}->{mtime} =
+		stat($self->{files}->{$file_id}->{fullname})->mtime;
+	    @{$self->{files}->{$file_id}->{date}} =
+		$self->extract_date($self->{files}->{$file_id}->{mtime});
+	    if (!exists $self->{categories}->{$cat_id})
+	    {
+		my @path_split = split(/\//, $cat_id);
+		$self->{categories}->{$cat_id}->{id} = $cat_id;
+		$self->{categories}->{$cat_id}->{fullname} =
+		    File::Spec->catdir($self->{data_dir}, @path_split);
+		$self->{categories}->{$cat_id}->{depth} = $self->{path}->{depth};
+		$self->{categories}->{$cat_id}->{basename} = pop @path_split;
+		$self->{categories}->{$cat_id}->{num_entries} = 0;
+		$self->{categories}->{$cat_id}->{pretty} =
+		    $self->{categories}->{$cat_id}->{basename};
+		$self->{categories}->{$cat_id}->{pretty} =~ s#_# #g;
+		$self->{categories}->{$cat_id}->{pretty} =~ s/(\w+)/\u\L$1/g;
+	    }
+	    $self->{categories}->{$cat_id}->{num_entries}++
+		if ($self->{files}->{$file_id}->{basename} ne 'index');
+	    $self->debug(1, "added new file $file_id");
+	    $self->_save_caches();
+	}
+    }
+} # index_entries
+
+=head2 select_entries
+
+$self->select_entries($flow_state);
 
 Select entries by looking at the path information.
 Assumes that no entries have been selected before.
@@ -794,7 +910,7 @@ Sets $flow_state->{entries}.  Assumes it hasn't
 already been set.
 
 =cut
-sub select_by_path {
+sub select_entries {
     my $self = shift;
     my $flow_state = shift;
 
@@ -826,13 +942,13 @@ sub select_by_path {
 	    }
 	}
     }
-} # select_by_path
+} # select_entries
 
 =head2 filter_by_date
 
 $self->filter_by_date($flow_state);
 
-Select entries by looking at the date-time information
+Filter entries by looking at the date-time information
 in $self->{path}.
 Assumes that $flow_state->{entries} has already been
 populated; updates it.
@@ -966,6 +1082,27 @@ sub head_template {
     1;	
 } # head_template
 
+=head2 foot_template
+
+$self->foot_template($flow_state);
+
+Set the foot template in $flow_state->{foot_template}
+This also sets the $self->{config} for foot.
+
+=cut
+sub foot_template {
+    my $self = shift;
+    my $flow_state = shift;
+
+    my %config = $self->get_config('foot');
+    while (my ($key, $val) = each %config)
+    {
+	$self->{config}->{$key} = $val;
+    }
+    $flow_state->{foot_template} = $self->get_template('foot');
+    1;	
+} # foot_template
+
 =head2 head_render
 
 $self->head_render($flow_state);
@@ -1004,27 +1141,6 @@ sub head_render {
     }
     1;	
 } # head_render
-
-=head2 foot_template
-
-$self->foot_template($flow_state);
-
-Set the foot template in $flow_state->{foot_template}
-This also sets the $self->{config} for foot.
-
-=cut
-sub foot_template {
-    my $self = shift;
-    my $flow_state = shift;
-
-    my %config = $self->get_config('foot');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
-    $flow_state->{foot_template} = $self->get_template('foot');
-    1;	
-} # foot_template
 
 =head2 foot_render
 
@@ -1095,6 +1211,7 @@ sub do_entry_actions {
 	$current_entry{num} = $i;
 	$current_entry{id} = $entry_id;
 	$current_entry{basename} = $self->{files}->{$entry_id}->{basename};
+	$current_entry{ext} = $self->{files}->{$entry_id}->{ext};
 	$current_entry{path} = $self->{files}->{$entry_id}->{cat_id};
 	$current_entry{path_name} = $self->{files}->{$entry_id}->{cat_id};
 	$current_entry{path_name} =~ s#/#_#g;
@@ -1194,52 +1311,6 @@ sub count_or_stop {
     }
 } # count_or_stop
 
-=head2 header
-
-$self->header($flow_state, $current_entry, $entry_state)
-
-Sets the entry date vars for this entry, in $curent_entry.
-See L</nice_date_time> for details.
-
-Also sets the same variables in $flow_state, so that the values for
-the last-processed entry will be preserved (useful for doing
-entry-specific things in foot templates).
-
-Set the header content in $flow_state->{header}
-and add the header to @{$flow_state->{page_body}}
-if it is different to the previous header.
-
-=cut
-sub header {
-    my $self = shift;
-    my $flow_state = shift;
-    my $current_entry = shift;
-    my $entry_state = shift;
-
-    # get the nice date-time info
-    my %date_time = $self->nice_date_time($self->{files}->
-					  {$current_entry->{id}}->{mtime});
-    while (my ($key, $val) = each %date_time)
-    {
-	$current_entry->{$key} = $val;
-    }
-    my %config = $self->get_config('header');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
-    my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
-    my $template = $self->get_template('header');
-    my $header = $self->interpolate('header', $template, \%vars);
-    if (!defined $flow_state->{header}
-	or ($header ne $flow_state->{header}))
-    {
-	push @{$flow_state->{page_body}},  $header;
-	$flow_state->{header} = $header;
-    }
-    1;	
-} # header
-
 =head2 read_entry
 
 $self->read_entry($flow_state, $current_entry, $entry_state)
@@ -1267,7 +1338,7 @@ sub read_entry {
 	else # error
 	{
 	    warn "Could not open '$fullname' id='$current_entry->{id}'";
-	    $current_entry->{stop} = 1;
+	    # skip this entry, but keep processing the rest.
 	    $entry_state->{stop} = 1;
 	}
     }
@@ -1365,6 +1436,48 @@ sub parse_entry {
     1;
 } # parse_entry
 
+=head2 header
+
+$self->header($flow_state, $current_entry, $entry_state)
+
+Sets the entry date vars for this entry, in $curent_entry.
+See L</nice_date_time> for details.
+
+Set the header content in $flow_state->{header}
+and add the header to @{$flow_state->{page_body}}
+if it is different to the previous header.
+
+=cut
+sub header {
+    my $self = shift;
+    my $flow_state = shift;
+    my $current_entry = shift;
+    my $entry_state = shift;
+
+    # get the nice date-time info
+    my %date_time = $self->nice_date_time($self->{files}->
+					  {$current_entry->{id}}->{mtime});
+    while (my ($key, $val) = each %date_time)
+    {
+	$current_entry->{$key} = $val;
+    }
+    my %config = $self->get_config('header');
+    while (my ($key, $val) = each %config)
+    {
+	$self->{config}->{$key} = $val;
+    }
+    my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
+    my $template = $self->get_template('header');
+    my $header = $self->interpolate('header', $template, \%vars);
+    if (!defined $flow_state->{header}
+	or ($header ne $flow_state->{header}))
+    {
+	push @{$flow_state->{page_body}},  $header;
+	$flow_state->{header} = $header;
+    }
+    1;	
+} # header
+
 =head2 entry_template
 
 $self->entry_template($flow_state, $current_entry, $entry_state)
@@ -1392,7 +1505,7 @@ sub entry_template {
 
 $self->render_entry($flow_state, $current_entry, $entry_state)
 
-Interpolate the current entry, setting $entry_state->{body}.
+Interpolate the current entry, replacing $current_entry->{body}.
 
 =cut
 sub render_entry {
@@ -1403,7 +1516,7 @@ sub render_entry {
 
     my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
     my $template = $entry_state->{entry_template};
-    $entry_state->{body} = $self->interpolate('entry', $template, \%vars);
+    $current_entry->{body} = $self->interpolate('entry', $template, \%vars);
     1;	
 } # render_entry
 
@@ -1411,7 +1524,7 @@ sub render_entry {
 
 $self->append_entry($flow_state, $current_entry, $entry_state)
 
-Add $entry_state->{body} to @{$flow_state->{page_body}}
+Add $current_entry->{body} to @{$flow_state->{page_body}}
 (This is done as a separate step so that plugins can alter
 the entry before it's added to the page).
 
@@ -1422,7 +1535,7 @@ sub append_entry {
     my $current_entry = shift;
     my $entry_state = shift;
 
-    push @{$flow_state->{page_body}}, $entry_state->{body};
+    push @{$flow_state->{page_body}}, $current_entry->{body};
     1;	
 } # append_entry
 
@@ -1464,13 +1577,37 @@ use the given state hashes accordingly.
 
 This sets the variable hash as follows:
 
-    $self->{I<name>} where it is a simple value (eg 'url') -> $I<name>
-    $self->{path}->{I<name>} -> $path_I<name>
-    $self->param('I<name>') -> $param_<name>
-    $self->{config}->{I<name>} -> $config_<name>
-    $flow_state->{I<name>} -> $flow_<name>
-    $current_entry->{I<name>} -> $entry_<name>
-    $entry_state->{I<name>} -> $es_<name>
+=over
+
+=item *
+
+$self->{I<name>} where it is a simple value (eg 'url') -> $I<name>
+
+=item *
+
+$self->{path}->{I<name>} -> $path_I<name>
+
+=item *
+
+$self->param('I<name>') -> $param_<name>
+
+=item *
+
+$self->{config}->{I<name>} -> $config_<name>
+
+=item *
+
+$flow_state->{I<name>} -> $flow_<name>
+
+=item *
+
+$current_entry->{I<name>} -> $entry_<name>
+
+=item *
+
+$entry_state->{I<name>} -> $es_<name>
+
+=back
 
 =cut
 sub set_vars {
@@ -1553,13 +1690,30 @@ The "header" and "entry" chunks are used during entry processing.
 Also looks for alternative path-types (minus the 'top_')
 
 The template files are called
-    $chunk.$path_type.$basename.$flavour
-    $chunk.$alt_path_type.$basename.$flavour
-    $chunk.$path_type.$flavour
-    $chunk.$alt_path_type.$flavour
-or
-    $chunk.$flavour
 
+=over
+
+=item *
+
+I<chunk>.I<path_type>.I<basename>.I<flavour>
+
+=item *
+
+I<chunk>.I<alt_path_type>.I<basename>.I<flavour>
+
+=item *
+
+I<chunk>.I<path_type>.I<flavour>
+
+=item *
+
+I<chunk>.I<alt_path_type>.I<flavour>
+
+=item *
+
+I<chunk>.I<flavour>
+
+=back
 
 =cut
 sub get_template {
@@ -1622,6 +1776,7 @@ sub get_template {
 Get the config settings for this state, taking into account
 $self->{path}->{cat_id},
 $self->{path}->{type}
+$self->{path}->{basename}
 and $chunk
 
 Possible chunks are nothing, "content_type", "head", "header", "entry",
@@ -1629,14 +1784,37 @@ Possible chunks are nothing, "content_type", "head", "header", "entry",
 
 The config files are called
 
-    $path_type.$chunk.$basename.config
-    $path_type.$basename.config
-    $chunk.$basename.config
-    $path_type.$chunk.config
-    $path_type.config
-    $chunk.config
-or
-    config
+=over
+
+=item *
+
+I<path_type>.I<chunk>.I<basename>.config
+
+=item *
+
+I<path_type>.I<basename>.config
+
+=item *
+
+I<chunk>.I<basename>.config
+
+=item *
+
+I<path_type>.I<chunk>.config
+
+=item *
+
+I<path_type>.config
+
+=item *
+
+I<chunk>.config
+
+=item *
+
+config
+
+=back
 
 Returns a hash of cumulative config settings.
 
@@ -1653,8 +1831,7 @@ sub get_config {
     my $alt_pathtype_chunk = ($alt_path_type ? "$chunk.$alt_path_type" : $chunk);
 
     my @path_split = split(/\//, $cat_id);
-    my $base_dir = ($self->{config_dir}
-	? $self->{config_dir} : $self->{data_dir});
+    my $base_dir = $self->{config_dir};
 
     $self->debug(2, "get_config: chunk=$chunk, cat_id=$cat_id, path_type=$path_type");
     # to save time, cache the settings, but only as we need them
@@ -1909,7 +2086,7 @@ The default status is $self->{path}->{status}, but this can be
 changed by using the 'status' argument if need be.
 
 This is done as a separate method to enable it to be overridden
-by plugins such as Posy::Plugin::CgiCarp.
+by plugins such as L<Posy::Plugin::CgiCarp>.
 
 =cut
 sub print_header {
@@ -2131,16 +2308,16 @@ sub _wanted {
 	if (-d $File::Find::name) # a directory
 	{
 	    my $dir_base = $_;
+	    my $path = File::Spec->abs2rel($File::Find::name,
+					   $self->{data_dir});
+	    my @path_split = File::Spec->splitdir($path);
+	    my $cat_id = join('/', @path_split);
 	    if ($dir_base !~ /^\./) # not hidden
 	    {
-		my $path = File::Spec->abs2rel($File::Find::name,
-					       $self->{data_dir});
-		my @path_split = File::Spec->splitdir($path);
-		my $cat_id = join('/', @path_split);
 		$self->{categories}->{$cat_id}->{id} = $cat_id;
 		$self->{categories}->{$cat_id}->{fullname} = $File::Find::name;
 		$self->{categories}->{$cat_id}->{depth} = 
-		    (@path_split ? @path_split : 0);
+		    (@path_split ? scalar(@path_split) : 0);
 		$self->{categories}->{$cat_id}->{basename} =
 		    $path_split[$#path_split];
 		# make a pretty name
@@ -2153,8 +2330,7 @@ sub _wanted {
 	    }
 	    else
 	    {
-		$self->{others}->{$File::Find::name}
-		    = stat($File::Find::name)->mtime
+		$self->{others}->{$File::Find::name} = $cat_id;
 	    }
 	}
 	else {
@@ -2200,8 +2376,7 @@ sub _wanted {
 		}
 	    }
 	    else { # others
-		$self->{others}->{$File::Find::name}
-		    = stat($File::Find::name)->mtime
+		$self->{others}->{$File::Find::name} = $cat_id;
 	    }
 	}
     }

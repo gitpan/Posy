@@ -1,6 +1,47 @@
 Revision history for Posy
 =========================
 
+0.90 Sun 06 February 2005
+-------------------------
+
+  * (6 Feb 2005) more selective reindexing
+    - full reindex is only done (a) if there are no cache data files
+      or (b) if the 'reindex' parameter is true.
+    - new 'reindex_cat' parameter will force a partial reindex; just of
+      the given category.
+    - new 'delindex' parameter will force a check for non-existant files
+      and delete them from the index.
+    - if an entry file is the current request, and it's not in the index
+      but it does exist, then will simply add it to the index.
+
+  * (5 Feb 2005) select_by_path renamed to select_entries
+
+  * (5 Feb 2005) added base_dir to posy_one and posy_static
+
+  * (5 Feb 2005) more documentation improvements
+
+  * (5 Feb 2005) entry body change
+  	Changed entry processing so that 'render_entry' changes
+  $current_entry->{body} rather than making a new $entry_state->{body};
+  that way, entry actions can be called to alter the body either before
+  or after 'render_entry' has been called. This can be useful for something
+  like Posy::Plugin::LinkExtras where one can put "extras" in the links
+  to entries from a category index, for example.
+
+  * (4 Feb 2005) added base_dir arg and changed defaults
+  	It seemed good to me to put the Posy default data setup
+  more in line with the way I was using it myself; that is, having
+  a base data directory, with separate directories for data, flavours
+  and state.  This has advantages for more than one reason: (a) moving
+  directories out of data_dir means they and their contents aren't
+  indexed, which saves time; (b) making the flavours and state directories not
+  hidden makes them easier to find on Unix and less confusing on MS-Windows.
+  So I added a 'base_dir' option and changed the default setup.
+
+  * (4 Feb 2005) improved documentation
+
+  * (4 Feb 2005) tweaks
+
 0.80 Sat 29 January 2005
 ------------------------
 

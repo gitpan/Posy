@@ -1,6 +1,13 @@
 Revision history for Posy
 =========================
 
+0.92 Wed 09 February 2005
+-------------------------
+
+  * (9 Feb 2005) gen_match option for static generation
+  	The 'gen_match' option enables one to only generate a subset of
+  the site; it will generate only what matches the string.
+
 0.91 Tue 08 February 2005
 -------------------------
 

@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.91> of Posy.
+This describes version B<0.92> of Posy.
 
 =cut
 
-our $VERSION = '0.91';
+our $VERSION = '0.92';
 
 =head1 SYNOPSIS
 
@@ -29,11 +29,11 @@ It expects extra parameters:
 
 =over
 
-=item static_dir
+=item static_dir=>I<directory>
 
 The directory where the static pages are to be put.
 
-=item gen_type
+=item gen_type=>I<string>
 
 The type of pages to generate.
 
@@ -62,7 +62,12 @@ Generate all chrono files.
 
 =back
 
-=item verbose
+=item gen_match=>I<regex>
+
+If B<gen_type> is entry,category or chrono, then only generate those
+files which match.
+
+=item verbose=>1
 
 Be verbose?
 
@@ -89,12 +94,10 @@ sub run {
     my $class = shift;
     my %args = (@_);
 
-    my $static_dir = $args{'static_dir'};
-    delete $args{'static_dir'};
-    my $gen_type = $args{'gen_type'};
-    delete $args{'gen_type'};
-    my $verbose = $args{'verbose'};
-
+    my $static_dir = delete $args{static_dir};
+    my $gen_type = delete $args{gen_type};
+    my $gen_match = delete $args{gen_match};
+    my $verbose = $args{verbose};
 
     # First, read in all the file info into a hash.
     # Make a new Posy object, set the actions to read
@@ -146,34 +149,38 @@ sub run {
 	# go through every entry in @files
 	foreach my $key (@files)
 	{
-	    my @cat_split =
-		split(/\//, $self->{files}->{$key}->{cat_id});
-	    my $fullcat = File::Spec->catfile($static_dir, @cat_split);
-	    mkdir $fullcat if (!-e $fullcat);
-	    my $path = $key;
-	    $path .= '.' . $flavour;
-	    @{$self->{actions}} = @actions;
-	    $self->{params}->{path} = $path;
-	    print STDERR "$path\n" if $verbose;
-	    $self->{outfile} =
-		File::Spec->catfile($static_dir,
-				    @cat_split,
-				    $self->{files}->{$key}->{basename});
-	    $self->{outfile} .= '.' . $flavour;
-	    # to side-step memory leaks, fork this
-	    my $child_pid;
-	    if (!defined($child_pid = fork())) {
-		warn "cannot fork: $!";
-		# do the actions anyway
-		$self->do_actions();
-	    } elsif ($child_pid) {
-		# I'm the parent
-		waitpid($child_pid,0);
-	    } else {
-		# I'm the child
-		$self->do_actions();
-		exit;
-	    } 
+	    if (!$gen_match
+		|| ($gen_match && $key =~ /$gen_match/o))
+	    {
+		my @cat_split =
+		    split(/\//, $self->{files}->{$key}->{cat_id});
+		my $fullcat = File::Spec->catfile($static_dir, @cat_split);
+		mkdir $fullcat if (!-e $fullcat);
+		my $path = $key;
+		$path .= '.' . $flavour;
+		@{$self->{actions}} = @actions;
+		$self->{params}->{path} = $path;
+		print STDERR "$path\n" if $verbose;
+		$self->{outfile} =
+		    File::Spec->catfile($static_dir,
+					@cat_split,
+					$self->{files}->{$key}->{basename});
+		$self->{outfile} .= '.' . $flavour;
+		# to side-step memory leaks, fork this
+		my $child_pid;
+		if (!defined($child_pid = fork())) {
+		    warn "cannot fork: $!";
+		    # do the actions anyway
+		    $self->do_actions();
+		} elsif ($child_pid) {
+		    # I'm the parent
+		    waitpid($child_pid,0);
+		} else {
+		    # I'm the child
+		    $self->do_actions();
+		    exit;
+		} 
+	    }
 	}
     }
     elsif ($gen_type eq 'category')
@@ -181,32 +188,36 @@ sub run {
 	# go through every category in $self->{categories}
 	foreach my $category (@categories)
 	{
-	    my @cat_split = split(/\//, $category);
-	    my $fullcat = File::Spec->catfile($static_dir, @cat_split);
-	    mkdir $fullcat if (!-e $fullcat);
-	    my $path = join('/', $category, 'index');
-	    $path .= '.' . $flavour;
-	    @{$self->{actions}} = @actions;
-	    $self->{params}->{path} = $path;
-	    print STDERR "$path\n" if $verbose;
-	    $self->{outfile} =
-		File::Spec->catfile($static_dir,
-				    @cat_split, 'index');
-	    $self->{outfile} .= '.' . $flavour;
-	    # to side-step memory leaks, fork this
-	    my $child_pid;
-	    if (!defined($child_pid = fork())) {
-		warn "cannot fork: $!";
-		# do the actions anyway
-		$self->do_actions();
-	    } elsif ($child_pid) {
-		# I'm the parent
-		waitpid($child_pid,0);
-	    } else {
-		# I'm the child
-		$self->do_actions();
-		exit;
-	    } 
+	    if (!$gen_match
+		|| ($gen_match && $category =~ /$gen_match/o))
+	    {
+		my @cat_split = split(/\//, $category);
+		my $fullcat = File::Spec->catfile($static_dir, @cat_split);
+		mkdir $fullcat if (!-e $fullcat);
+		my $path = join('/', $category, 'index');
+		$path .= '.' . $flavour;
+		@{$self->{actions}} = @actions;
+		$self->{params}->{path} = $path;
+		print STDERR "$path\n" if $verbose;
+		$self->{outfile} =
+		    File::Spec->catfile($static_dir,
+					@cat_split, 'index');
+		$self->{outfile} .= '.' . $flavour;
+		# to side-step memory leaks, fork this
+		my $child_pid;
+		if (!defined($child_pid = fork())) {
+		    warn "cannot fork: $!";
+		    # do the actions anyway
+		    $self->do_actions();
+		} elsif ($child_pid) {
+		    # I'm the parent
+		    waitpid($child_pid,0);
+		} else {
+		    # I'm the child
+		    $self->do_actions();
+		    exit;
+		} 
+	    }
 	}
     }
     elsif ($gen_type eq 'chrono')
@@ -221,43 +232,47 @@ sub run {
 		$self->{files}->{$key}->{date}->[2]); # day
 	    $dates{"$chrono_path"} = $self->{files}->{$key}->{date};
 	}
-	# generate for all dates
+	# generate for dates
 	while (my $date = each %dates)
 	{
-	    # make the date directories
-	    my @dparts = ();
-	    foreach my $dpart (@{$dates{$date}})
+	    if (!$gen_match
+		|| ($gen_match && $date =~ /$gen_match/o))
 	    {
-		push @dparts, $dpart;
-		my $fullpath = File::Spec->catdir($static_dir, @dparts);
-		if (!-e $fullpath)
+		# make the date directories
+		my @dparts = ();
+		foreach my $dpart (@{$dates{$date}})
 		{
-		    print STDERR "DIR: $fullpath\n" if $verbose;
-		    mkdir $fullpath;
+		    push @dparts, $dpart;
+		    my $fullpath = File::Spec->catdir($static_dir, @dparts);
+		    if (!-e $fullpath)
+		    {
+			print STDERR "DIR: $fullpath\n" if $verbose;
+			mkdir $fullpath;
+		    }
 		}
+		my $path = $date;
+		@{$self->{actions}} = @actions;
+		$self->{params}->{path} = $path;
+		$self->{params}->{flav} = $flavour;
+		print STDERR "$path\n" if $verbose;
+		$self->{outfile} = File::Spec->catfile($static_dir,
+						       @{$dates{date}},
+						       "index.$flavour");
+		# to side-step memory leaks, fork this
+		my $child_pid;
+		if (!defined($child_pid = fork())) {
+		    warn "cannot fork: $!";
+		    # do the actions anyway
+		    $self->do_actions();
+		} elsif ($child_pid) {
+		    # I'm the parent
+		    waitpid($child_pid,0);
+		} else {
+		    # I'm the child
+		    $self->do_actions();
+		    exit;
+		} 
 	    }
-	    my $path = $date;
-	    @{$self->{actions}} = @actions;
-	    $self->{params}->{path} = $path;
-	    $self->{params}->{flav} = $flavour;
-	    print STDERR "$path\n" if $verbose;
-	    $self->{outfile} = File::Spec->catfile($static_dir,
-						   @{$dates{date}},
-						   "index.$flavour");
-	    # to side-step memory leaks, fork this
-	    my $child_pid;
-	    if (!defined($child_pid = fork())) {
-		warn "cannot fork: $!";
-		# do the actions anyway
-		$self->do_actions();
-	    } elsif ($child_pid) {
-		# I'm the parent
-		waitpid($child_pid,0);
-	    } else {
-		# I'm the child
-		$self->do_actions();
-		exit;
-	    } 
 	}
     }
 

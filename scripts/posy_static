@@ -10,11 +10,11 @@ posy_static - Script which uses the Posy engine to generate static files.
 
 =head1 VERSION
 
-This describes version B<0.91> of posy_static.
+This describes version B<0.92> of posy_static.
 
 =cut
 
-our $VERSION = '0.91';
+our $VERSION = '0.92';
 
 =head1 SYNOPSIS
 
@@ -24,8 +24,8 @@ posy_static { --actions I<action> } ( --base_dir I<dirname> |
 --config_dir I<dirname> --data_dir I<dirname> --flavour_dir I<dirname>
 --state_dir I<dirname> ) { --DayWeek2Name I<num>=I<name> }
 [ --debug_level I<num> ] { --entry_actions I<action> }
-{ --file_extensions I<extension>=I<type> } --gen_type I<type>
-[ --libdir I<dirname> ] { --MonthNum2Name I<num>=I<name> }
+{ --file_extensions I<extension>=I<type> } [--gen_match I<match> ]
+--gen_type I<type> [ --libdir I<dirname> ] { --MonthNum2Name I<num>=I<name> }
 [ --outfile I<filename> ] { --plugins I<plugin> } --static_dir I<dirname>
 --url I<url> I<parameter>=I<value> ...
 
@@ -117,6 +117,10 @@ If you want your "flavour" template files to be in a different
 directory to the default, then use this argument.
 
 --flavour_dir /files/www/posy/data/flavours
+
+=item --gen_match I<match_string>
+
+Generate only those files which match.
 
 =item --gen_type I<type>
 
@@ -294,6 +298,7 @@ sub process_args ($) {
 	       'outfile=s',
 	       'state_dir=s',
 	       'static_dir=s',
+	       'gen_match=s',
 	       'gen_type=s',
 	       'url=s',
 	      ) or pod2usage(2);

@@ -1,6 +1,15 @@
 Revision history for Posy
 =========================
 
+0.50 Sun 16 January 2005
+------------------------
+
+  * (16 Jan 2005) changing the entry list
+  	Now do_entry_actions doesn't actually destroy the list of
+  entries as it goes, but now iterates through the array by index;
+  this will make it easier for plugins to do things with the entry
+  list, like figuring out previous and next.
+
 0.40 Sat 15 January 2005
 ------------------------
 

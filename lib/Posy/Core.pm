@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.40> of Posy::Core.
+This describes version B<0.50> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.40';
+our $VERSION = '0.50';
 
 =head1 SYNOPSIS
 
@@ -1035,15 +1035,19 @@ sub do_entry_actions {
     my %entry_state = ();
 
     no strict qw(subs refs);
-    # pop off each entry as we go;
+    # Iterate through the entries array by index;
     # that way it's possible for an action to
     # manipulate the entries array
-    while (@{$flow_state->{entries}})
+    for ($current_entry{num}=0;
+	$current_entry{num} < @{$flow_state->{entries}};
+	$current_entry{num}++)
     {
-	my $entry_id = shift @{$flow_state->{entries}};
+	my $entry_id = $flow_state->{entries}->[$current_entry{num}];
 	$self->debug(2, "entry_id=$entry_id");
 	last if $current_entry{stop};
+	my $i = $current_entry{num};
 	%current_entry = ();
+	$current_entry{num} = $i;
 	$current_entry{id} = $entry_id;
 	$current_entry{basename} = $self->{files}->{$entry_id}->{basename};
 	$current_entry{path} = $self->{files}->{$entry_id}->{cat_id};

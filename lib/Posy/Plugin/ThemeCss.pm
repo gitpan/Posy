@@ -7,11 +7,11 @@ Posy::Plugin::ThemeCss - Posy plugin to give the start of an entry body
 
 =head1 VERSION
 
-This describes version B<0.02> of Posy::Plugin::ThemeCss.
+This describes version B<0.04> of Posy::Plugin::ThemeCss.
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 

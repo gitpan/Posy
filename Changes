@@ -1,9 +1,95 @@
 Revision history for Posy
 =========================
 
+0.04 Wed 22 December 2004
+-------------------------
+
+  * (22 Dec 2004) a better fix of indexing entries
+  	Silly, I should have used File::Spec->abs2rel before.  Am using it now.
+
+  * (22 Dec 2004) corrected error in Changes file
+
+
+0.03 Wed 22 December 2004
+-------------------------
+
+  * (22 Dec 2004) bug fix in indexing entries
+  	Got error on CPAN from Win machine in _wanted; not sure exactly
+  if this will fix the problem, but the section in question is now less
+  unix-centric.
+
+
 0.02 Mon 20 December 2004
 -------------------------
 
+  * (20 Dec 2004) support stuff
+  	Forgot to add module names to a config file
+
+  * (16 Dec 2004) action changes
+  	Changed the processing of actions (and entry_actions
+  and entries) so that it's possible to alter the list while
+  actions are running.  Not really sure why this is a good thing,
+  but it doesn't seem to hurt to be flexible in this regard.
+
+  * (16 Dec 2004) Posy::Plugin::EntryTitles + Posy::Plugin::NearLinks
+  	The NearLinks plugin depends on the EntryTitles plugin.
+  I decided to make the EntryTitles a separate plugin because (a)
+  it could be nicely used by other plugins such as a Headlines plugin
+  (b) it isn't really core functionality.
+  	Because EntryTitles has a 'get_title' method, that should
+  make it easier for new-file-type plugins to add their own extra
+  stuff to get titles if they want.
+
+  * (15 Dec 2004) speed freakage
+  	After much profiling, rearranging, adding and deleting,
+  I have made Posy faster.  I moved out the 'dump' method into a separate
+  plugin, so that Data::Dumper isn't loaded all the time.  I changed
+  from using CGI to CGI::Minimal.  This entailed stealing functionality
+  from CG::Simple to generate $self->{url} but it seems to work.
+  	I removed 'use warnings' -- I'll put it back in when debugging, but
+  otherwise it's faster without.
+
+  * (15 Dec 2004) Posy::Plugin::Categories
+  	Because I am Prime, I altered Posy::Core to make this easier;
+  adding to the categories cache the category basename and the entry-count.
+  I'm not doing a cumulative entry-count because (a) I don't want it for
+  myself and (b) it's more work.
+
+  * (15 Dec 2004) Toc bugfix
+  	Problem if the header had attributes; wasn't done properly.
+
+  * (15 Dec 2004) fix to LinkList
+  	It wasn't including the $url in the link, which could mess
+  up some people.
+
+  * (14 Dec 2004) speed tweaks
+  	Various tweaks to make the code more efficient.  As I suspected,
+  Posy::Plugin::Toc was very bad, so I removed the cleverness.  This
+  means that one has to make sure that headers in HTML files that
+  are going to be indexed by Toc DO NOT have anchors in them,
+  because this no longer checks for that.
+  	Also added another option to ShortBody so that it can
+  replace $entry_body -- this makes things faster when one is
+  generating category/chrono indexes which only show the short body,
+  since things like Toc won't wastefully process them.
+  	I found out that the anchor-in-header thing messed up
+  ShortBody's processing of the first header too.
+
+  * (13 Dec 2004) Posy::Plugin::Toc
+  	Based on the blosxom 'toc' plugin, but it actually checks
+  for existing anchors.  This probably slows it down; oh well.
+
+  * (13 Dec 2004) fix reindex bug
+  	This now checks the $self->{path} to see if the current
+  request (which would have been found by parse_path or it wouldn't
+  have gotten this far) is in the files hash, and if it isn't, then
+  it will now reindex (where it didn't before).  Stupid to have to
+  manually reindex every time one adds a file when such a thing is
+  easily detected.
+
+  * (13 Dec 2004) Posy::Plugin::LinkList
+  	This provides a method only; no actions, no replacements.
+  Can be called from within flavour files if using Posy::Plugin::TextTemplate.
 
 0.01 Sun 12 December 2004
 -------------------------

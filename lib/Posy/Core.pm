@@ -8,11 +8,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.02> of Posy.
+This describes version B<0.04> of Posy.
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -1776,34 +1776,27 @@ This does all the work in indexing the entries.
 sub _wanted {
     my $self = shift;
 
-    my $d; 
-    my $curr_depth = $File::Find::dir =~ tr[/][]; 
     my $fullname = ($self->{follow_symlinks} ? $File::Find::fullname
 	: $File::Find::name);
 
     if (-r $File::Find::name) {
 	if (-d $File::Find::name) # a directory
 	{
-	    my ($path) = $File::Find::name =~ m#^$self->{data_dir}(.*)$#;;
-	    # strip extraneous slashes
-	    $path =~ s#^/##;
-	    $path =~ s#/$##;
+	    my $path = File::Spec->abs2rel($File::Find::name, $self->{data_dir});
+	    my @path_split = File::Spec->splitdir($path);
 	    $self->{categories}->{$path}->{id} = $path;
 	    $self->{categories}->{$path}->{fullname} = $File::Find::name;
-	    my @path_split = File::Spec->splitdir($path);
 	    $self->{categories}->{$path}->{depth} = 
 		(@path_split ? @path_split : 0);
 	    $self->{categories}->{$path}->{basename} = $path_split[$#path_split];
 	    $self->{categories}->{$path}->{num_entries} = 0;
 	}
 	else {
-	    my ($path) = $File::Find::dir =~ m#^$self->{data_dir}(.*)$#;;
-	    # strip extraneous slashes
-	    $path =~ s#^/##;
-	    $path =~ s#/$##;
+	    my $path = File::Spec->abs2rel($File::Find::dir, $self->{data_dir});
+	    my @path_split = File::Spec->splitdir($path);
 	    my $filename = $_;
 	    my $ere = $self->{extensions_re};
-	    if ($filename =~ m#^(.*)\.($ere)$#
+	    if ($filename =~ m#^(.+)\.($ere)$#
 		and $1 !~ /^\./) # an entry file
 	    {
 		my $fn_base = $1;

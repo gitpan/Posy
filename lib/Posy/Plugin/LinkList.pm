@@ -7,11 +7,11 @@ Posy::Plugin::LinkList - Posy plugin to give a dynamic list of links
 
 =head1 VERSION
 
-This describes version B<0.02> of Posy::Plugin::LinkList.
+This describes version B<0.04> of Posy::Plugin::LinkList.
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 

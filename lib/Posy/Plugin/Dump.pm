@@ -8,11 +8,11 @@ Posy::Plugin::Dump - Posy plugin to aid debugging by dumping object contents
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy::Plugin::Dump.
+This describes version B<0.10> of Posy::Plugin::Dump.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -70,8 +70,12 @@ sub dump {
     print $oh "Posy=", Dumper($self);
     if (exists $self->{cgi} and defined $self->{cgi})
     {
-	my %params = $self->{cgi}->Vars();
-	print $oh "params: ", join(' ', %params), "\n";
+	print $oh "params:\n";
+	my @params = $self->{cgi}->param();
+	foreach my $param (@params)
+	{
+	    print $oh "$param=", $self->{cgi}->param($param), "\n";
+	}
     }
     if (defined $flow_state)
     {

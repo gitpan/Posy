@@ -1,12 +1,12 @@
 TODO list for Posy
 ==================
- 17. Posy::Plugin::PrettyCategory
+ 24. Posy::Plugin::AntiSpambot (including redirect CGI)
+    Added:21/11/04, 20:06  Priority: high
+
+ 25. Posy::Plugin::PrettyCategory
     Added:21/11/04, 20:00  Priority: medium
 
- 18. Posy::Plugin::LinkSized
-    Added:21/11/04, 20:01  Priority: medium
-
- 19. Posy::Plugin::Pod
+ 26. Posy::Plugin::Pod
     Added:21/11/04, 20:02  Priority: medium
 
       1. add .pod and .pm types (override file_extensions and parse_entry)
@@ -15,28 +15,19 @@ TODO list for Posy
       2. POD-to-HTML conversion, probably using Pod::HtmlEasy
         Added:21/11/04, 20:03  Priority: medium
 
- 20. email obfusctation plugin (including redirect CGI)
-    Added:21/11/04, 20:06  Priority: medium
-
- 21. Posy::Plugin::Find
+ 27. Posy::Plugin::Find
     Added:25/11/04, 22:02  Priority: medium
 
- 22. Posy::Plugin::StaticFile
-    Added:07/12/04, 18:33  Priority: medium
-
- 23. Posy::Plugin::ThisFlavour
-    Added:07/12/04, 18:34  Priority: medium
-
- 24. Posy::Plugin::LocalDepth
-    Added:07/12/04, 18:36  Priority: medium
-
- 25. Posy::Plugin::EmptyMessage
+ 28. Posy::Plugin::EmptyMessage
     Added:12/12/04, 10:19  Priority: medium
 
- 26. Posy::Plugin::RandQuote
-    Added:13/12/04, 20:32  Priority: medium
+ 29. NearLinks optional label, shown only if near links exist
+    Added:30/12/04, 11:37  Priority: medium
 
- 27. Posy::Plugin::Cannonical
-    Added:16/12/04, 08:36  Priority: medium
+ 30. Posy::Plugin::NotFound
+    Added:30/12/04, 12:00  Priority: medium
+
+ 31. plugin to preserve HTML Head stuff and body attributes
+    Added:30/12/04, 12:57  Priority: medium
 
 

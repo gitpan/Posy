@@ -7,11 +7,11 @@ Posy::Plugin::TextTemplate - Posy plugin for interpolating with Text::Template
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy::Plugin::TextTemplate.
+This describes version B<0.10> of Posy::Plugin::TextTemplate.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ file in the data directory.
 
 Do you want me to recursively interpolate into the entry $title
 and $body?  Consider carefully before turning this on, since if
-anyone other than you has the ability to post stories, there is
+anyone other than you has the ability to post entries, there is
 a chance of foolishness or malice, exposing variables and
 calling actions/subroutines you might not want called.
 (0 = No, 1 = Yes)
@@ -48,6 +48,15 @@ calling actions/subroutines you might not want called.
 The delimiters to use for Text::Template; for the sake of speed,
 it is best not to use the original '{' '}' delimiters.
 (default: tt_left_delim='[==', tt_right_delim='==]')
+
+=item B<tt_entry_left_delim> B<tt_entry_right_delim>
+
+The delimiters to use for Text::Template inside an entry
+(if tt_recurse_into_entry is true)
+(default: tt_entry_left_delim='<?perl' tt_entry_right_delim='perl?>')
+
+I used these defaults because they look like XML directives, and for
+compatibility with L<teperl>.
 
 =back
 
@@ -75,6 +84,10 @@ sub init {
 	if (!defined $self->{config}->{tt_left_delim});
     $self->{config}->{tt_right_delim} = '==]'
 	if (!defined $self->{config}->{tt_right_delim});
+    $self->{config}->{tt_entry_left_delim} = '<?perl'
+	if (!defined $self->{config}->{tt_entry_left_delim});
+    $self->{config}->{tt_entry_right_delim} = 'perl?>'
+	if (!defined $self->{config}->{tt_entry_right_delim});
 } # init
 
 =head1 Helper Methods
@@ -116,33 +129,44 @@ sub interpolate {
     my $template = shift;
     my $vars_ref = shift;
 
+    warn "$chunk template empty" if (!$template);
     # recurse into entry if we are processing an entry
     if ($chunk eq 'entry'
 	and $self->{config}->{tt_recurse_into_entry})
     {
 	if ($vars_ref->{entry_title}) {
-	    my $title = $vars_ref->{entry_title};
-	    my $ob1 = new Text::Template(
-					 TYPE=>'STRING',
-					 SOURCE => $title,
-					 DELIMITERS =>
-					 [$self->{config}->{tt_left_delim},
-					 $self->{config}->{tt_right_delim}],
-					);
-	    $vars_ref->{entry_title} = $ob1->fill_in(HASH=>$vars_ref);
-	    undef $ob1;
+	    # taint check
+	    $vars_ref->{entry_title} =~ /^([^`]*)$/s;
+	    my $title = $1;
+	    if ($title && $title !~ /system\(/)
+	    {
+		my $ob1 = new Text::Template(
+					     TYPE=>'STRING',
+					     SOURCE => $title,
+					     DELIMITERS =>
+					     [$self->{config}->{tt_entry_left_delim},
+					     $self->{config}->{tt_entry_right_delim}],
+					    );
+		$vars_ref->{entry_title} = $ob1->fill_in(HASH=>$vars_ref);
+		undef $ob1;
+	    }
 	}
 	if ($vars_ref->{entry_body}) {
-	    my $body = $vars_ref->{entry_body};
-	    my $ob2 = new Text::Template(
-					 TYPE=>'STRING',
-					 SOURCE => $body,
-					 DELIMITERS =>
-					 [$self->{config}->{tt_left_delim},
-					 $self->{config}->{tt_right_delim}],
-					);
-	    $vars_ref->{entry_body} = $ob2->fill_in(HASH=>$vars_ref);
-	    undef $ob2;
+	    # taint check
+	    $vars_ref->{entry_body} =~ /^([^`]*)$/s;
+	    my $body = $1;
+	    if ($body && $body !~ /system\(/)
+	    {
+		my $ob2 = new Text::Template(
+					     TYPE=>'STRING',
+					     SOURCE => $body,
+					     DELIMITERS =>
+					     [$self->{config}->{tt_entry_left_delim},
+					     $self->{config}->{tt_entry_right_delim}],
+					    );
+		$vars_ref->{entry_body} = $ob2->fill_in(HASH=>$vars_ref);
+		undef $ob2;
+	    }
 	}
     }
     my $content = $template;
@@ -160,6 +184,8 @@ sub interpolate {
 
 =head1 REQUIRES
 
+    Posy
+    Posy::Core
     Text::Template
 
     Test::More

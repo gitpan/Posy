@@ -8,6 +8,7 @@ BEGIN {
 	require Text::Template;
 	require HTML::TextToHTML;
 	require YAML;
+	require File::MMagic;
     };
     if ($@) {
 	plan skip_all => "modules needed for certain plugin modules not installed";

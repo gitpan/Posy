@@ -1,6 +1,91 @@
 Revision history for Posy
 =========================
 
+0.10 Mon 03 January 2005
+------------------------
+
+  * (3 Jan 2005) another little tweak
+
+  * (3 Jan 2005) some tweaking
+  	For some reason I can't fathom, it started reindexing every
+  time it ran, and I really noticed the slowdown because I'm trying
+  to set up my own site, and I'd converted over enough files that it
+  was feeling the pinch (I have a large site).
+  	So I've reduced the number of checks in index_entries; the
+  fallout will be that manual indexing will be required more often,
+  but that's a lot better than it erroniously reindexing every time.
+
+  * (3 Jan 2005) code tweaking
+  	Now index_entries sets $self->{reindex}.
+
+  * (3 Jan 2005) fix to Posy::Plugin::BinFile
+  	Needed better guestimate of some file types.
+
+  * (3 Jan 2005) Posy::Plugin::LocalDepth
+
+  * (3 Jan 2005) tweaking depth on breadcrumbs
+
+  * (3 Jan 2005) fix problem with entry titles
+  	Needed to change EntryTitles and NearLinks for situations where
+  the HTML file has an empty title.  Though the obvious answer is to say
+  Thou Shalt Not Have Entries Without Titles, the files in question were
+  automatically generated ones where I had no control over the titles.
+
+  * (2 Jan 2005) various fixes
+     - directories starting with dots should be "other" files, not categories
+     - turned on the num_entries limitation
+     - other tweaks
+
+  * (1 Jan 2005) Posy::Plugin::LinkExtra and friends
+  	LinkExtra is a plugin to add extra info to a link, mainly
+  the size of the file linked to.  Added Posy::Plugin::FileStats to
+  support this, and altered BinFile to use the FileStats plugin.
+  	Also did some more taint stuff and minor fixes.
+
+  * (30 Dec 2004) Posy::Plugin::ThisFlavour
+  	Plugin to change relative links to the current flavour.
+
+  * (30 Dec 2004) Text::Template and taint checking
+  	Turned on taint checking in the CGI script.  And had to
+  fix problems engendered by same.  Not sure if it won't complain
+  with the default interpolation, but it works okay with TextTemplate
+  now.
+  	And while I was altering Text::Template, I made the entry
+  delimiters different to the template ones.
+
+  * (30 Dec 2004) Posy::Plugin::BinFile
+  	Renders binary files from the data directory.
+  Needs File::MMagic module to determine the MIME type of the file.
+
+  * (29 Dec 2004) minor fixes
+
+  * (29 Dec 2004) fixed bug in Posy::Plugin::Dump
+  	It was depending on some CGI module stuff that didn't exist
+  in CGI::Minimal.
+
+  * (29 Dec 2004) Posy::Plugin::RandQuote
+  	Now I have the funky random quotes back!
+
+  * (29 Dec 2004) Posy::Plugin::Canonical
+  	This basically corrects non-standard URLs, but it gets confused if it's
+  been redirected to.
+
+  * (29 Dec 2004) documentation tweaks
+
+  * (28 Dec 2004) Posy::Plugin::CgiCarp
+  	To help with debugging when one can't look at the logs.
+
+  * (28 Dec 2004) workarounds
+  	Because I couldn't get Zeus rewrite rules to work, I put in stuff
+  to enable posy.cgi to be used as an ErrorDocument 404 (so that all missing
+  file requests would be processed by Posy).  This entailed checking for
+  an undefined PATH_INFO and using other environment variables instead.
+  Not sure if it will work with Zeus yet, but I did get it to work with
+  Apache after checking REDIRECT_QUERY_STRING also.
+  	Also, put in code into posy_all.cgi so it calculates the directories
+  from DOCUMENT_ROOT.
+
+
 0.05 Fri 24 December 2004
 -------------------------
 

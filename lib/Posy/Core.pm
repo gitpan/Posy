@@ -8,11 +8,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy.
+This describes version B<0.10> of Posy.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -135,6 +135,7 @@ sub init {
     if (!defined $self->{entry_actions})
     {
 	$self->{entry_actions} = [qw(
+	    count_or_stop
 	    header
 	    entry_template
 	    read_entry
@@ -305,6 +306,11 @@ sub init_params {
     if ($ENV{GATEWAY_INTERFACE}) {
 	$self->{dynamic} = 1;
 	$self->{static} = 0;
+	# if we were redirected in a non-standard way, check query string
+	if (!$ENV{QUERY_STRING} and $ENV{REDIRECT_QUERY_STRING})
+	{
+	    $ENV{QUERY_STRING} = $ENV{REDIRECT_QUERY_STRING};
+	}
 	$self->{cgi} = new CGI::Minimal;
     }
     else
@@ -341,6 +347,8 @@ This uses caching by default.
 
 Expects $self->{path} and $self->{config} to be set.
 
+Sets $self->{reindex} if reindexing has been done.
+
 =cut
 
 sub index_entries {
@@ -357,32 +365,22 @@ sub index_entries {
     $self->{config}->{categories_cachefile} ||=
 	File::Spec->catfile($self->{state_dir}, 'categories.dat');
 
-    my $reindex = $self->param('reindex');
-    $reindex = 1 if (!$self->_init_caching());
-    if (!$reindex)
+    $self->{reindex} = 1 if ($self->param('reindex'));
+    $self->{reindex} = 1 if (!$self->_init_caching());
+    if (!$self->{reindex})
     {
-	$reindex = 1 if (!$self->_read_caches());
+	$self->{reindex} = 1 if (!$self->_read_caches());
     }
     # If any files not available, err on side of caution and reindex
     for my $ffn (keys %{$self->{files}})
     { -f $self->{files}->{$ffn}->{fullname}
-	or do { $reindex++; delete $self->{files}->{$ffn} }; }
-    for my $other (keys %{$self->{others}})
-    { -f $other or do { $reindex++; delete $self->{others}->{$other} }; }
-    for my $cat (keys %{$self->{categories}})
-    { -d $self->{categories}->{$cat}->{fullname}
-	or do { $reindex++; delete $self->{categories}->{$cat} }; }
-    # if the current path points to a file not in the cache,
-    # then reindex
-    $reindex++ if (!exists $self->{categories}->{$self->{path}->{dir}});
-    $reindex++ if ($self->{path}->{type} eq 'entry'
-	and !exists $self->{files}->{$self->{path}->{file_key}});
+	or do { $self->{reindex}++; delete $self->{files}->{$ffn} }; }
 
-    if ($reindex) {
+    if ($self->{reindex}) {
 	use File::Find;
-	no warnings 'File::Find';
-	$self->debug(1, "reindexing $reindex");
+	$self->debug(1, "reindexing $self->{reindex}");
 	find({wanted=>sub { $self->_wanted() },
+	    untaint=>1,
 	    follow=>$self->{follow_symlinks},
 	    },
 	     $self->{data_dir});
@@ -394,6 +392,7 @@ sub index_entries {
 
 Parse the PATH_INFO (or 'path' parameter) to get the parts of the path
 and figure out what the path-type is, and the flavour.
+If the path is undefined, uses DOCUMENT_URI or REDIRECT_URL.
 
 The path-type can be one of: entry, top_entry (an entry which is
 in the top directory), file (a file which is not
@@ -415,9 +414,12 @@ sub parse_path {
     my $data_dir = $self->{data_dir};
     my $path_type = '';
     my $path_info = $ENV{PATH_INFO} || $self->param('path');
+    $path_info = $ENV{DOCUMENT_URI} if (!defined $path_info);
+    $path_info = $ENV{REDIRECT_URL} if (!defined $path_info);
     $self->{path}->{info} = $path_info;
 
     my $full_path_info = File::Spec->catfile($data_dir, $path_info);
+    $full_path_info =~ s#//#/#g; # remove any double-slashes
     my ($path_and_filebase, $suffix) = $path_info =~ /^(.*)\.(\w+)$/;
     $path_and_filebase = $path_info if (!$suffix);
     $path_and_filebase =~ s#^\./##; # remove an initial "./"
@@ -727,6 +729,10 @@ sub select_by_path {
     {
 	$flow_state->{entries} = [$self->{path}->{file_key}];
     }
+    elsif ($self->{path}->{type} eq 'file')
+    {
+	$flow_state->{entries} = [];
+    }
     elsif ($self->{path}->{dir} eq '') 
     {
 	@{$flow_state->{entries}} = keys %{$self->{files}};
@@ -898,6 +904,7 @@ sub head_render {
     my %vars = $self->set_vars($flow_state);
     my $template = $flow_state->{head_template};
     $flow_state->{head} = $self->interpolate('head', $template, \%vars);
+    $flow_state->{page_body} = [];
     1;	
 } # head_render
 
@@ -1079,6 +1086,7 @@ sub header {
     while (my ($key, $val) = each %date_time)
     {
 	$current_entry->{$key} = $val;
+	$flow_state->{$key} = $val;
     }
     my %config = $self->get_config('header');
     while (my ($key, $val) = each %config)
@@ -1091,7 +1099,6 @@ sub header {
     if (!defined $flow_state->{header}
 	or ($header ne $flow_state->{header}))
     {
-	$flow_state->{page_body} = [] if (!$flow_state->{page_body});
 	push @{$flow_state->{page_body}},  $header;
 	$flow_state->{header} = $header;
     }
@@ -1164,7 +1171,8 @@ sub parse_entry {
 	$current_entry->{body} =
 	    join('', "\n<pre>\n", $current_entry->{raw}, "\n</pre>\n");
     }
-    else # blosxom format
+    # blosxom format
+    elsif ($self->{files}->{$id}->{ext} =~ /^blx$/)
     {
 	$self->debug(2, "$id is something else");
 	# title on first line, body in the rest
@@ -1172,6 +1180,11 @@ sub parse_entry {
 	$current_entry->{title} = $1;
 	$current_entry->{body} = $current_entry->{raw};
 	$current_entry->{body} =~ s/^(.*)$//mi;
+    }
+    else # something else
+    {
+	$current_entry->{title} = '';
+	$current_entry->{body} = $current_entry->{raw};
     }
     1;
 } # parse_entry
@@ -1233,7 +1246,6 @@ sub append_entry {
     my $current_entry = shift;
     my $entry_state = shift;
 
-    $flow_state->{page_body} = [] if (!$flow_state->{page_body});
     push @{$flow_state->{page_body}}, $entry_state->{body};
     1;	
 } # append_entry
@@ -1409,8 +1421,11 @@ sub get_template {
 	    if (-r "$look_dir/$pathtype_chunk.$flavour"
 		and open($fh, "$look_dir/$pathtype_chunk.$flavour"))
 	    {
+		my $data = <$fh>;
+		# taint checking
+		$data =~ m/^([^`]+)$/s;
 		$self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$path_type} = <$fh>;
+		    {$flavour}->{path}->{$path_dir}->{$path_type} = $1;
 		close($fh);
 		$template =
 		    $self->{templates}->{$chunk}->
@@ -1444,8 +1459,11 @@ sub get_template {
 		if (-r "$look_dir/$alt_pathtype_chunk.$flavour"
 		    and open($fh, "$look_dir/$alt_pathtype_chunk.$flavour"))
 		{
+		    my $data = <$fh>;
+		    # taint checking
+		    $data =~ m/^([^`]+)$/s;
 		    $self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{$alt_path_type} = <$fh>;
+		    {$flavour}->{path}->{$path_dir}->{$alt_path_type} = $1;
 		    close($fh);
 		    $template =
 			$self->{templates}->{$chunk}->
@@ -1478,8 +1496,11 @@ sub get_template {
 	    if (-r "$look_dir/$chunk.$flavour"
 		and open($fh, "$look_dir/$chunk.$flavour"))
 	    {
+		my $data = <$fh>;
+		# taint checking
+		$data =~ m/^([^`]+)$/s;
 		$self->{templates}->{$chunk}->
-		    {$flavour}->{path}->{$path_dir}->{''} = <$fh>;
+		    {$flavour}->{path}->{$path_dir}->{''} = $1;
 		close($fh);
 		$template =
 		    $self->{templates}->{$chunk}->
@@ -1782,14 +1803,25 @@ sub _wanted {
     if (-r $File::Find::name) {
 	if (-d $File::Find::name) # a directory
 	{
-	    my $path = File::Spec->abs2rel($File::Find::name, $self->{data_dir});
-	    my @path_split = File::Spec->splitdir($path);
-	    $self->{categories}->{$path}->{id} = $path;
-	    $self->{categories}->{$path}->{fullname} = $File::Find::name;
-	    $self->{categories}->{$path}->{depth} = 
-		(@path_split ? @path_split : 0);
-	    $self->{categories}->{$path}->{basename} = $path_split[$#path_split];
-	    $self->{categories}->{$path}->{num_entries} = 0;
+	    my $dir_base = $_;
+	    if ($dir_base !~ /^\./) # not hidden
+	    {
+		my $path = File::Spec->abs2rel($File::Find::name,
+					       $self->{data_dir});
+		my @path_split = File::Spec->splitdir($path);
+		$self->{categories}->{$path}->{id} = $path;
+		$self->{categories}->{$path}->{fullname} = $File::Find::name;
+		$self->{categories}->{$path}->{depth} = 
+		    (@path_split ? @path_split : 0);
+		$self->{categories}->{$path}->{basename} =
+		    $path_split[$#path_split];
+		$self->{categories}->{$path}->{num_entries} = 0;
+	    }
+	    else
+	    {
+		$self->{others}->{$File::Find::name}
+		    = stat($File::Find::name)->mtime
+	    }
 	}
 	else {
 	    my $path = File::Spec->abs2rel($File::Find::dir, $self->{data_dir});

@@ -10,11 +10,11 @@ posy_one - Script which uses the Posy engine to generate one file from an input 
 
 =head1 VERSION
 
-This describes version B<0.05> of posy_one.
+This describes version B<0.10> of posy_one.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -108,11 +108,6 @@ as your normal data directory, but remember, this script is not using
 the normal data directory, so one must set the flavour_dir explicitly).
 
 --flavour_dir /files/www/posy/data/flavours
-
-=item --gen_type I<type>
-
-The type of pages to generate.  The possible types are 'entry',
-'category' or 'chrono'.
 
 =item --help
 

@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy.
+This describes version B<0.10> of Posy.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -158,6 +158,7 @@ sub run {
 =head1 REQUIRES
 
     Posy
+    Posy::Core
 
     Test::More
 

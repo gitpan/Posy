@@ -7,11 +7,11 @@ Posy::Plugin::NearLinks - give links of articles in the current category
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy::Plugin::NearLinks.
+This describes version B<0.10> of Posy::Plugin::NearLinks.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -91,41 +91,6 @@ sub near_links {
 	links=>\%links,
 	%args);
 } # near_links
-
-=head2 get_title
-
-    $title = $self->get_title($file_id);
-
-Get the title of the given entry file (by reading the file).
-
-=cut
-sub get_title {
-    my $self = shift;
-    my $file_id = shift;
-
-    my $fullname = $self->{files}->{$file_id}->{fullname};
-    my $ext = $self->{files}->{$file_id}->{ext};
-    my $title = '';
-    my $fh;
-    if ($ext =~ /^htm[l]?/) # HTML
-    {
-	local $/;
-	open($fh, $fullname) or return "Could not open $fullname";
-	my $html = <$fh>;
-	if ($html =~ m#<title>([^>]+)</title>#sio)
-	{
-	    $title = $1;
-	}
-	close($fh);
-    }
-    else # Text or BLX -- use the first line
-    {
-	open($fh, $fullname) or return "Could not open $fullname";
-	$title = <$fh>;
-	close($fh);
-    }
-    return $title;
-} # get_title
 
 =head1 REQUIRES
 

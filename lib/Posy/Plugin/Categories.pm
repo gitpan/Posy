@@ -7,11 +7,11 @@ Posy::Plugin::Categories - Posy plugin to give category links.
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy::Plugin::Categories.
+This describes version B<0.10> of Posy::Plugin::Categories.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -115,6 +115,7 @@ sub breadcrumb {
 		item_sep=>"\n",
 		tree_sep=>"\n",
 		root=>'home',
+		start_depth=>0,
 		end_depth=>$self->{path}->{depth} + 1,
 		@_
 	       );
@@ -122,6 +123,7 @@ sub breadcrumb {
     my @categories = sort keys %{$self->{categories}};
     my @list_of_lists = $self->_build_lol(categories=>\@categories,
 	depth=>0, match_path=>1,
+	start_depth=>$args{start_depth},
 	end_depth=>$args{end_depth});
     $args{tree_depth} = 0;
     my $list = $self->_traverse_lol(\%args, \@list_of_lists);

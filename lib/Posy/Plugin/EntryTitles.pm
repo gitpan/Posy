@@ -7,11 +7,11 @@ Posy::Plugin::EntryTitles - caches entry titles
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy::Plugin::EntryTitles.
+This describes version B<0.10> of Posy::Plugin::EntryTitles.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -146,6 +146,8 @@ sub get_title {
 	$title = <$fh>;
 	close($fh);
     }
+    $title = $self->{files}->{$file_id}->{basename} if (!$title);
+    $self->debug(2, "title=$title");
     return $title;
 } # get_title
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 # vim:ts=8 sw=4 sts=4 ai
 require v5.6.1;
 use strict;
@@ -9,11 +9,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.05> of posy.cgi.
+This describes version B<0.10> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -22,8 +22,9 @@ posy.cgi?path=/
 =head1 DESCRIPTION
 
 CGI script using the Posy web content manager.
-This version right here is set up to use all the core plugins,
-and has debugging turned on.
+
+This version right here is set up to use all the core plugins, and has a more
+complicated (and more portable) way of setting the directory variables.
 
 =head1 INSTALLATION
 
@@ -66,9 +67,18 @@ This assumes that any Posy plugins are also under the same directory.
 
 =cut
 
+our $basedir;
 our $libdir;
 BEGIN {
-    $libdir = '/files/www/posy/data/lib';
+    use File::Spec;
+    # untaint DOCUMENT_ROOT
+    $ENV{DOCUMENT_ROOT} =~ m#^([/\w]+)$#;
+    my $doc_root = $1;
+    my @dd = File::Spec->splitdir($doc_root);
+    pop @dd;
+    push @dd, 'data';
+    $basedir = File::Spec->catdir(@dd);
+    $libdir = "$basedir/lib";
 }
 
 =item data_dir
@@ -77,7 +87,7 @@ Where are this site's entries kept?
 
 =cut
 
-our $data_dir = '/files/www/posy/data/docs';
+our $data_dir = "$basedir/docs";
 
 =back
 
@@ -102,7 +112,7 @@ If you want your "flavour" template files to be in a different
 directory to the data directory, then change this value.
 
 =cut
-our $flavour_dir = "/files/www/posy/data/flavours";
+our $flavour_dir = "$basedir/flavours";
 
 =item config_dir
 
@@ -139,15 +149,22 @@ our @plugins = qw(Posy::Core
     Posy::Plugin::TextTemplate
     Posy::Plugin::TextToHTML
     Posy::Plugin::YamlConfig
+    Posy::Plugin::Canonical
     Posy::Plugin::EntryTitles
+    Posy::Plugin::FileStats
     Posy::Plugin::DynamicCss
     Posy::Plugin::ThemeCss
     Posy::Plugin::FlavourMenu
     Posy::Plugin::LinkList
     Posy::Plugin::Categories
+    Posy::Plugin::LocalDepth
     Posy::Plugin::ShortBody
+    Posy::Plugin::RandQuote
+    Posy::Plugin::ThisFlavour
+    Posy::Plugin::LinkExtra
     Posy::Plugin::Toc
     Posy::Plugin::NearLinks
+    Posy::Plugin::BinFile
     );
 
 =item file_extensions
@@ -174,9 +191,11 @@ our @actions = qw(init_params
 	    stop_if_not_found
 	    set_config
 	    index_entries
+	    index_file_stats
 	    index_titles
 	    select_by_path
 	    filter_by_date
+	    filter_by_localdepth
 	    sort_entries
 	    content_type
 	    head_template
@@ -198,11 +217,15 @@ you're using a plugin which requires adding a new action.
 =cut
 
 our @entry_actions = qw(
+	    count_or_stop
 	    header
 	    entry_template
 	    read_entry
 	    parse_entry
 	    short_body
+	    rand_quote
+	    link_extra
+	    this_flavour
 	    make_toc
 	    render_entry
 	    append_entry
@@ -251,7 +274,7 @@ The directory where "state" information is put.  The default value is
 
 =cut
 
-our $state_dir = "/files/www/posy/data/state";
+our $state_dir = "$basedir/state";
 
 =back
 

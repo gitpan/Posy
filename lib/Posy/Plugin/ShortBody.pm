@@ -7,11 +7,11 @@ Posy::Plugin::ShortBody - Posy plugin to give the start of an entry body
 
 =head1 VERSION
 
-This describes version B<0.05> of Posy::Plugin::ShortBody.
+This describes version B<0.10> of Posy::Plugin::ShortBody.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -118,7 +118,8 @@ sub short_body {
 
 =head1 REQUIRES
 
-    HTML::ShortBody
+    Posy
+    Posy::Core
 
     Test::More
 

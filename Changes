@@ -1,6 +1,13 @@
 Revision history for Posy
 =========================
 
+0.71 Sat 22 January 2005
+------------------------
+
+  * (22 Jan 2005) always set flavour
+  	For niceness, for alternative 'process_path_error', always
+  set the $self->{path}->{flavour} in 'parse_path'.
+
 0.70 Sat 22 January 2005
 ------------------------
 

@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.70> of Posy::Core.
+This describes version B<0.71> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.70';
+our $VERSION = '0.71';
 
 =head1 SYNOPSIS
 
@@ -491,6 +491,7 @@ sub parse_path {
     $path_and_filebase =~ s#^/##;
     $path_and_filebase =~ s#/$##;
     my $flavour = $suffix || $self->param('flav') || $self->{config}->{flavour};
+    $self->{path}->{flavour} = $flavour;
 
     # note that the PATH will be in the standard this/is/a/dir form
     # so just use split
@@ -738,7 +739,6 @@ sub parse_path {
 	    $self->{path}->{type} = 'top_category';
 	}
 
-	$self->{path}->{flavour} = $flavour;
 	# make path_name be the path-dir with underscores
 	$self->{path}->{name} = $self->{path}->{cat_id};
 	$self->{path}->{name} =~ s#/#_#g;

@@ -24,7 +24,6 @@ data/flavours/header.html
 lib/Posy.pm
 lib/Posy/Core.pm
 lib/Posy/Plugin/GenStatic.pm
-Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 META.yml			# Will be created by "make dist"

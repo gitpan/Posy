@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.60> of Posy::Core.
+This describes version B<0.70> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.60';
+our $VERSION = '0.70';
 
 =head1 SYNOPSIS
 
@@ -127,7 +127,7 @@ sub init {
     {
 	$self->{actions} = [qw(init_params
 	    parse_path
-	    stop_if_not_found
+	    process_path_error
 	    set_config
 	    index_entries
 	    select_by_path
@@ -471,7 +471,7 @@ $self->param('path') as well as PATH_INFO).
 
 If it fails to parse the path, sets $self->{path}->{error} to true,
 and $self->{path}->{info} will be the only other part set.
-This can be used by later actions, such as L</stop_if_not_found>.
+This can be used by later actions, such as L</process_path_error>.
 
 =cut
 sub parse_path {
@@ -752,7 +752,7 @@ sub parse_path {
     1;
 } # parse_path
 
-=head2 stop_if_not_found
+=head2 process_path_error
 
 If there was an error parsing the path ($self->{path}->{error} is true)
 then flag the actions to stop.
@@ -764,7 +764,7 @@ This is done as a separate action method so that it makes it easier
 to change this behaviour.
 
 =cut
-sub stop_if_not_found {
+sub process_path_error {
     my $self = shift;
     my $flow_state = shift;
 
@@ -773,13 +773,11 @@ sub stop_if_not_found {
 	$flow_state->{stop} = 1;
 	if ($self->{dynamic})
 	{
-	    print "Content-Type: text/plain\n";
-	    print "Status: 404\n";
-	    print "\n";
+	    $self->print_header('text/plain', 'Status: 404');
 	    print "404 page '", $self->{path}->{info}, "' not found";
 	}
     }
-} # stop_if_not_found
+} # process_path_error
 
 =head2 select_by_path
 
@@ -1152,7 +1150,7 @@ sub render_page {
 	}
     }
     else {
-	print 'Content-Type: ', $flow_state->{content_type}, "\n\n";
+	$self->print_header($flow_state->{content_type});
 	print $flow_state->{head};
 	print @{$flow_state->{page_body}};
 	print $flow_state->{foot};
@@ -1891,6 +1889,26 @@ sub nice_date_time {
     );
     return %vals;
 } # nice_date_time
+
+=head2 print_header
+
+    $self->print_header($content_type, $extra);
+
+Print a web-page header, with content-type and any extra things
+required for the header.
+This is done as a separate method to enable it to be overridden
+by plugins such as Posy::Plugin::CgiCarp.
+
+=cut
+sub print_header {
+    my $self = shift;
+    my $content_type = shift;
+    my $extra = (@_ ? shift : '');
+
+    print "Content-Type: $content_type\n";
+    print $extra, "\n" if $extra;
+    print "\n";
+} # print_header
 
 =head2 debug
 

@@ -1,6 +1,23 @@
 Revision history for Posy
 =========================
 
+0.70 Sat 22 January 2005
+------------------------
+
+  * (21 Jan 2005) renamed stop_if_not_found
+  	Renamed it to 'process_path_error' since if one is overriding
+  it, one might not wish to stop.
+
+  * (21 Jan 2005) removed Makefile.PL
+
+  * (21 Jan 2005) added print_header method
+  	The evils of CgiCarp is that it overrides 'render_page' and
+  'stop_if_not_found' ungracefully, which means that it can mess up
+  other plugins.  Since the reason for it having to override said methods
+  is that it has to change the way the web-header is printed (it has
+  to turn on warnings) the cleaner way is to make a separate print_header
+  method which CgiCarp can override safely.
+
 0.60 Mon 17 January 2005
 ------------------------
 

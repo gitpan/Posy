@@ -1,5 +1,0 @@
-<item>
-   <title>[==$entry_title==]</title>
-   <link>[==$url==]/[==$entry_year==]/[==$entry_mo==]/[==$entry_da==]#[==$entry_path_name==]_[==$entry_basename==]</link>
-   <description>[==$entry_body==]</description>
-</item>

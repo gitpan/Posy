@@ -16,7 +16,6 @@ my $builder = Module::Build->new(
 	'Getopt::Long' => 2.34,
 	'Pod::Usage' => 0,
 	'Getopt::ArgvFile' => 1.09,
-	'Data::Dumper' => 0,
 	},
     build_requires => {
         'Test::More' => 0,

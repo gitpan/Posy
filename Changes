@@ -1,6 +1,14 @@
 Revision history for Posy
 =========================
 
+0.40 Sat 15 January 2005
+------------------------
+
+  * (15 Jan 2005) unbundling the plugins
+  	Have moved out all the plugins (except GenStatic) to be in separate
+  distributions, to make it easy for folk to pick and choose, and to enable
+  proper prerequisites for those plugins that need them.
+
 0.30 Wed 12 January 2005
 ------------------------
 

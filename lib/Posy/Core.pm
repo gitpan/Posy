@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.30> of Posy::Core.
+This describes version B<0.40> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.30';
+our $VERSION = '0.40';
 
 =head1 SYNOPSIS
 

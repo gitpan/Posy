@@ -7,11 +7,11 @@ Posy::Plugin::Canonical - Posy plugin to force redirect to canonical URL.
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::Canonical.
+This describes version B<0.30> of Posy::Plugin::Canonical.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 

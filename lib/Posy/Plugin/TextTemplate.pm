@@ -7,11 +7,11 @@ Posy::Plugin::TextTemplate - Posy plugin for interpolating with Text::Template
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::TextTemplate.
+This describes version B<0.30> of Posy::Plugin::TextTemplate.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -90,6 +90,15 @@ sub init {
 	if (!defined $self->{config}->{tt_entry_left_delim});
     $self->{config}->{tt_entry_right_delim} = 'perl?>'
 	if (!defined $self->{config}->{tt_entry_right_delim});
+    # override the error templates
+    $self->{templates}->{content_type}->{error} = 'text/html';
+    $self->{templates}->{head}->{error} =
+		'<html><body><p><font color="red">Error: I\'m afraid this is the first I\'ve heard of a "[==$path_flavour==]" flavoured Posy.  Try dropping the ".[==$path_flavour==]" bit from the end of the URL.</font>';
+    $self->{templates}->{header}->{error} = '<h3>[==$entry_dw==], [==$entry_da==] [==$entry_month==] [==$entry_year==]</h3>';
+    $self->{templates}->{entry}->{error} =
+		'<p><b>[==$entry_title==]</b><br />[==$entry_body==] <a href="[==$url==]/[==$path_cat_id==]/[==$path_basename==].[==$config_flavour==]">#</a></p>';
+    $self->{templates}->{foot}->{error} = '</body></html>';
+
 } # init
 
 =head1 Helper Methods

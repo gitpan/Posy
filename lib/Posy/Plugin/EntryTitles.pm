@@ -7,11 +7,11 @@ Posy::Plugin::EntryTitles - Posy plugin to cache entry titles
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::EntryTitles.
+This describes version B<0.30> of Posy::Plugin::EntryTitles.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -136,9 +136,10 @@ sub get_title {
 
     my $fullname = $self->{files}->{$file_id}->{fullname};
     my $ext = $self->{files}->{$file_id}->{ext};
+    my $file_type = $self->{file_extensions}->{$ext};
     my $title = '';
     my $fh;
-    if ($ext =~ /^htm[l]?/) # HTML
+    if ($file_type eq 'html')
     {
 	local $/;
 	open($fh, $fullname) or return "Could not open $fullname";
@@ -156,7 +157,7 @@ sub get_title {
 	close($fh);
     }
     $title = $self->{files}->{$file_id}->{basename} if (!$title);
-    $self->debug(2, "title=$title");
+    $self->debug(2, "$file_id title=$title");
     return $title;
 } # get_title
 

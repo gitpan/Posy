@@ -1,33 +1,21 @@
 TODO list for Posy
 ==================
- 27. Posy::Plugin::Pod
-    Added:21/11/04, 20:02  Priority: high
+ 30. plugin to preserve HTML Head stuff and body attributes
+    Added:30/12/04, 12:57  Priority: high
 
-      1. add .pod and .pm types (override file_extensions and parse_entry)
-        Added:21/11/04, 20:02  Priority: medium
-
-      2. POD-to-HTML conversion, probably using Pod::HtmlEasy
-        Added:21/11/04, 20:03  Priority: medium
-
- 28. Posy::Plugin::EntryCgi
+ 31. Posy::Plugin::EntryCgi
     Added:07/01/05, 12:53  Priority: high
 
- 29. Posy::Plugin::PrettyCategory
-    Added:21/11/04, 20:00  Priority: medium
-
- 30. Posy::Plugin::Find
+ 32. Posy::Plugin::Find
     Added:25/11/04, 22:02  Priority: medium
 
- 31. Posy::Plugin::EmptyMessage
+ 33. Posy::Plugin::EmptyMessage
     Added:12/12/04, 10:19  Priority: medium
 
- 32. NearLinks optional label, shown only if near links exist
-    Added:30/12/04, 11:37  Priority: medium
-
- 33. Posy::Plugin::NotFound
+ 34. Posy::Plugin::NotFound
     Added:30/12/04, 12:00  Priority: medium
 
- 34. plugin to preserve HTML Head stuff and body attributes
-    Added:30/12/04, 12:57  Priority: medium
+ 35. Toc plugin toc_after option
+    Added:09/01/05, 13:46  Priority: medium
 
 

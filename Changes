@@ -1,6 +1,63 @@
 Revision history for Posy
 =========================
 
+0.30 Wed 12 January 2005
+------------------------
+
+  * (11 Jan 2005) template fix
+  	Fix to enable empty templates (it was interpreting that as an
+  error and giving the error template instead.
+
+  * (11 Jan 2005) Posy::Plugin::Pod
+  	New file type: pod; uses Pod::Simple::HTML.
+
+  * (11 Jan 2005) file-extensions addendum
+  	Forgot to put the file_extensions change in EntryTitles.
+
+  * (11 Jan 2005) body attributes
+  	Remember the <body> attributes in parse_entry even though
+  we don't do anything with them yet.
+
+  * (9 Jan 2005) fix to select_by_path
+  	It ran into trouble if there were subdirectories which had
+  names which started with the same thing, such as "books" and "bookshelf".
+  Now it does a proper equals-or-subdirectory check.
+
+  * (9 Jan 2005) pretty names
+  	Added "pretty" names to $self->{path} and $self->{categories}.
+  Yes, I couldn't be bothered making it a separate plugin.
+
+  * (9 Jan 2005) file_extensions is hash
+  	I changed the file_extensions array to a hash, to make it easier
+  for people to have different extensions if they wanted to.  The keys of
+  the hash are the extensions, and the values are the "type" of the file.
+  The standard types are 'text', 'html' and 'blosxom'.
+  	The main problem previously was the collision between .html entry
+  file and .html flavour; this would be a problem in cases where there wasn't
+  a separate flavour directory; also it was a problem with posy_one if one
+  wanted to generate a .html file from a .html file -- much nicer to generate
+  a .html file from a .htm or a .my_html file or something of the sort.
+  	This is also nicer because people can change extensions without
+  having to alter 'parse_entry' -- they could make blosxom files have a .blosxom
+  extension, for example.
+
+  * (9 Jan 2005) posy_all tweaks and fixes
+  	The untaint stuff for DOCUMENT_ROOT was too restrictive.
+  	Also tweaked a bit of documentation.
+
+  * (9 Jan 2005) disabling caching for posy_one
+  	Having caching for posy_one only causes trouble (leaving .state
+  directories lying around all over the place, reading old .state directories
+  and getting wrong data -- a mess).  So I explicitly disable it there,
+  and postpone the creation of the state directory until just before
+  it's written to.
+  	Note that this relies on caching NOT being explicitly enabled
+  in the config files.  Since it is enabled by default, there shouldn't
+  be any need to explicitly enable it.
+
+  * (8 Jan 2005) LinkList fix
+  	Now only give the pre_list/post_list if the list is not empty.
+
 0.21 Fri 07 January 2005
 ------------------------
 

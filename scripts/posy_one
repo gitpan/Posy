@@ -10,11 +10,11 @@ posy_one - Script which uses the Posy engine to generate one file from an input 
 
 =head1 VERSION
 
-This describes version B<0.21> of posy_one.
+This describes version B<0.30> of posy_one.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -22,7 +22,7 @@ posy_one --help | --manpage | --version
 
 posy_one { --actions I<action> } --config_dir I<dirname>
 { --DayWeek2Name I<num>=I<name> } [ --debug_level I<num> ]
-{ --entry_actions I<action> } { --file_extensions I<extension> }
+{ --entry_actions I<action> } { --file_extensions I<extension>=I<type> }
 --flavour I<flavour> --flavour_dir I<dirname>
 [ --libdir I<dirname> ] { --MonthNum2Name I<num>=I<name> }
 { --plugins I<plugin> } [ --state_dir I<dirname> ] --url I<url>
@@ -101,13 +101,14 @@ default actions are not being used, they must be replaced completely.
 --entry_actions short_body --entry_actions render_entry
 --entry_actions append_entry
 
-=item --file_extensions I<ext>
+=item --file_extensions I<ext>=I<type>
 
 If you wish to change the default file extensions, then use this argument.
 Generally one would only do this if one had added a plugin to deal
-with a new kind of file.
+with a new kind of file.  Or if one wanted to give a different extension
+to a standard type of file.
  
-    --file_extensions txt --file_extensions html --file_extensions blx
+    --file_extensions txt=text --file_extensions html=html --file_extensions blx=blosxom
 
 =item --flavour I<flavour>
 
@@ -231,10 +232,8 @@ sub init_data ($) {
 
     $data_ref->{manpage} = 0;
     $data_ref->{verbose} = 0;
-    # default state_dir
-    $data_ref->{state_dir} =
-	File::Spec->catdir(File::Spec->tmpdir(),
-			   'posy_state');
+    # disable caching
+    $data_ref->{config}->{use_caching} = 0;
     # set the data_dir
     $data_ref->{data_dir} = getcwd;
 } # init_data
@@ -258,7 +257,7 @@ sub process_args ($) {
 	       'data_dir=s',
 	       'DayWeek2Name=s%',
 	       'entry_actions=s@',
-	       'file_extensions=s@',
+	       'file_extensions=s%',
 	       'flavour=s',
 	       'flavour_dir=s',
 	       'debug_level=n',

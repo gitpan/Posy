@@ -51,6 +51,7 @@ lib/Posy/Plugin/LinkExtra.pm
 lib/Posy/Plugin/LinkList.pm
 lib/Posy/Plugin/LocalDepth.pm
 lib/Posy/Plugin/NearLinks.pm
+lib/Posy/Plugin/Pod.pm
 lib/Posy/Plugin/RandQuote.pm
 lib/Posy/Plugin/ShortBody.pm
 lib/Posy/Plugin/TextTemplate.pm

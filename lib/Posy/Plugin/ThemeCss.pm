@@ -7,11 +7,11 @@ Posy::Plugin::ThemeCss - Posy plugin for Cascading Style Sheet themes
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::ThemeCss.
+This describes version B<0.30> of Posy::Plugin::ThemeCss.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 

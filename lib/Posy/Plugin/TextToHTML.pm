@@ -7,11 +7,11 @@ Posy::Plugin::TextToHTML - Posy plugin to convert plain text files to HTML
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::TextToHTML.
+This describes version B<0.30> of Posy::Plugin::TextToHTML.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -95,7 +95,8 @@ sub parse_entry {
     my $entry_state = shift;
 
     my $id = $current_entry->{id};
-    if ($self->{files}->{$id}->{ext} =~ /^t[e]?xt$/)
+    my $file_type = $self->{file_extensions}->{$self->{files}->{$id}->{ext}};
+    if ($file_type eq 'text')
     {
 	require HTML::TextToHTML;
 

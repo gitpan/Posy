@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Core.
+This describes version B<0.30> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -121,7 +121,7 @@ sub init {
 
     if (!defined $self->{file_extensions})
     {
-	$self->{file_extensions} = [qw(txt html blx)];
+	$self->{file_extensions} = { txt=>'text', html=>'html', blx=>'blosxom'};
     }
     if (!defined $self->{actions})
     {
@@ -192,22 +192,15 @@ sub init {
     }
     if (! ref $self->{file_extensions}) # is a string
     {
-	$self->{file_extensions} = [split(/(?:\s*,\s*|\s+)/, $self->{file_extensions})];
+	$self->{file_extensions} = {split(/(?:\s*,\s*|\s+)/, $self->{file_extensions})};
     }
-    my $extensions_re = join('|', @{$self->{file_extensions}});
+    my $extensions_re = join('|', keys %{$self->{file_extensions}});
     $self->{extensions_re} = qr/($extensions_re)/;
     $self->{debug_level} ||= 0;
 
     $self->{data_dir} ||= File::Spec->catdir(File::Spec->rel2abs('.'), 'data'); 
     $self->{data_dir} =~ s#/$##;
     $self->{state_dir} ||= File::Spec->catdir($self->{data_dir}, '.state'); 
-    # create the state dir if it doesn't exist
-    if (!-d $self->{state_dir})
-    {
-	mkdir $self->{state_dir}
-	    or die "Cannot create state directory ", $self->{state_dir};
-	$self->debug(1, "Creating state dir $self->{state_dir}");
-    }
     $self->{flavour_dir} ||= File::Spec->catdir($self->{data_dir},
 						'.flavours'); 
 
@@ -747,6 +740,11 @@ sub parse_path {
 	# make path_name be the path-dir with underscores
 	$self->{path}->{name} = $self->{path}->{cat_id};
 	$self->{path}->{name} =~ s#/#_#g;
+	# and pretty the whole id with '::'
+	$self->{path}->{pretty} = $path_and_filebase;
+	$self->{path}->{pretty} =~ s#/# :: #g;
+	$self->{path}->{pretty} =~ s#_# #g;
+	$self->{path}->{pretty} =~ s/(\w+)/\u\L$1/g;
     }
 
     1;
@@ -813,8 +811,11 @@ sub select_by_path {
 	$flow_state->{entries} = [];
 	foreach my $key (keys %{$self->{files}})
 	{
-	    if ($self->{files}->{$key}->{cat_id} 
-		=~/^$self->{path}->{cat_id}/)
+	    if (($self->{files}->{$key}->{cat_id} 
+		 eq $self->{path}->{cat_id}) # the same directory
+		or ($self->{files}->{$key}->{cat_id} 
+		    =~ m#^$self->{path}->{cat_id}/#) # a subdir
+	       )
 	    {
 		push @{$flow_state->{entries}}, $key;
 	    }
@@ -1054,6 +1055,10 @@ sub do_entry_actions {
 	    warn "path_name undefined: entry_id=$entry_id";
 	    warn "Posy=", Data::Dumper::Dumper($self);
 	}
+	$current_entry{path_pretty} = $self->{files}->{$entry_id}->{cat_id};
+	$current_entry{path_pretty} =~ s#/# :: #g;
+	$current_entry{path_pretty} =~ s#_# #g;
+	$current_entry{path_pretty} =~ s/(\w+)/\u\L$1/g;
 
 	%entry_state = ();
 	$entry_state{stop} = 0;
@@ -1236,15 +1241,17 @@ sub parse_entry {
     my $entry_state = shift;
 
     my $id = $current_entry->{id};
-    if ($self->{files}->{$id}->{ext} =~ /^htm[l]?$/)
+    my $file_type = $self->{file_extensions}->{$self->{files}->{$id}->{ext}};
+    if ($file_type eq 'html')
     {
 	$self->debug(2, "$id is html");
 	$current_entry->{raw} =~ m#<title>(.*)</title>#si;
 	$current_entry->{title} = $1;
-	$current_entry->{raw} =~ m#<body[^>]*>(.*)</body>#is;
-	$current_entry->{body} = $1;
+	$current_entry->{raw} =~ m#<body([^>]*)>(.*)</body>#is;
+	$current_entry->{body_attrib} = $1;
+	$current_entry->{body} = $2;
     }
-    elsif ($self->{files}->{$id}->{ext} =~ /^t[e]?xt$/)
+    elsif ($file_type eq 'text')
     {
 	$self->debug(2, "$id is txt");
 	$current_entry->{raw} =~ m/^(.*)$/mi;
@@ -1254,9 +1261,9 @@ sub parse_entry {
 	    join('', "\n<pre>\n", $current_entry->{raw}, "\n</pre>\n");
     }
     # blosxom format
-    elsif ($self->{files}->{$id}->{ext} =~ /^blx$/)
+    elsif ($file_type eq 'blosxom')
     {
-	$self->debug(2, "$id is something else");
+	$self->debug(2, "$id is blosxom");
 	# title on first line, body in the rest
 	$current_entry->{raw} =~ m/^(.*)$/mi;
 	$current_entry->{title} = $1;
@@ -1265,6 +1272,7 @@ sub parse_entry {
     }
     else # something else
     {
+	$self->debug(2, "$id is something else");
 	$current_entry->{title} = '';
 	$current_entry->{body} = $current_entry->{raw};
     }
@@ -1496,7 +1504,7 @@ sub get_template {
 	    flavour=>$flavour,
 	    path_id=>$path_id,
 	    path_type=>$path_type);
-	return $template if $template;
+	return $template if (defined $template);
 	# chunk, flavour, path, alt_path_type
 	if ($alt_path_type)
 	{
@@ -1505,7 +1513,7 @@ sub get_template {
 						  flavour=>$flavour,
 						  path_id=>$path_id,
 						  path_type=>$alt_path_type);
-	    return $template if $template;
+	    return $template if (defined $template);
 	}
 	# chunk, flavour, path
 	$template = $self->_look_for_template(look_dir=>$look_dir,
@@ -1513,7 +1521,7 @@ sub get_template {
 	    flavour=>$flavour,
 	    path_id=>$path_id,
 	    path_type=>'');
-	return $template if $template;
+	return $template if (defined $template);
     } while (pop @path_split);
 
     # if all else fails, use the error flavour
@@ -1850,7 +1858,7 @@ sub _find_file_and_ext {
 
     my $ext = '';
     my $fullname = '';
-    foreach my $aext (@{$self->{file_extensions}})
+    foreach my $aext (sort keys %{$self->{file_extensions}})
     {
 	my $full = $full_path_and_filebase . '.' . $aext;
 	$self->debug(3, "find_file_end_ext: $full");
@@ -1884,7 +1892,7 @@ sub _look_for_template {
     my $pathtype_chunk = ($path_type ? "$chunk.$path_type" : $chunk);
     my $fh;
 
-    my $template = '';
+    my $template = undef;
     if (exists $self->{templates}->{$chunk}->
 	{$flavour}->{path}->{$path_id}->{$path_type}
 	and defined $self->{templates}->{$chunk}->
@@ -1905,7 +1913,7 @@ sub _look_for_template {
 	{
 	    my $data = <$fh>;
 	    # taint checking
-	    $data =~ m/^([^`]+)$/s;
+	    $data =~ m/^([^`]*)$/s;
 	    $self->{templates}->{$chunk}->
 	    {$flavour}->{path}->{$path_id}->{$path_type} = $1;
 	    close($fh);
@@ -2016,6 +2024,12 @@ sub _wanted {
 		    (@path_split ? @path_split : 0);
 		$self->{categories}->{$cat_id}->{basename} =
 		    $path_split[$#path_split];
+		# make a pretty name
+		$self->{categories}->{$cat_id}->{pretty} =
+		    $self->{categories}->{$cat_id}->{basename};
+		$self->{categories}->{$cat_id}->{pretty} =~ s#_# #g;
+		$self->{categories}->{$cat_id}->{pretty} =~ s/(\w+)/\u\L$1/g;
+
 		$self->{categories}->{$cat_id}->{num_entries} = 0;
 	    }
 	    else
@@ -2132,6 +2146,13 @@ Saved the information gathered by index_entries to caches.
 sub _save_caches {
     my $self = shift;
     return if (!$self->{config}->{use_caching});
+    # create the state dir if it doesn't exist
+    if (!-d $self->{state_dir})
+    {
+	mkdir $self->{state_dir}
+	    or die "Cannot create state directory ", $self->{state_dir};
+	$self->debug(1, "Creating state dir $self->{state_dir}");
+    }
     $self->debug(1, "Saving caches");
     Storable::lock_store($self->{files}, $self->{config}->{files_cachefile});
     Storable::lock_store($self->{others}, $self->{config}->{others_cachefile});

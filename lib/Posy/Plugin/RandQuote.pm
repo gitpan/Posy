@@ -7,11 +7,11 @@ Posy::Plugin::RandQuote - Posy plugin to give a random quote from a file
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::RandQuote.
+This describes version B<0.30> of Posy::Plugin::RandQuote.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 

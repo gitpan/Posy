@@ -7,11 +7,11 @@ Posy::Plugin::FileStats - Posy plugin to cache file statistics
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::FileStats.
+This describes version B<0.30> of Posy::Plugin::FileStats.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 

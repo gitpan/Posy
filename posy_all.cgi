@@ -9,15 +9,17 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.21> of posy.cgi.
+This describes version B<0.30> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
-posy.cgi?path=/
+posy.cgi?path=/reviews/movies/
+
+posy.cgi/reviews/movies/
 
 =head1 DESCRIPTION
 
@@ -72,7 +74,7 @@ our $libdir;
 BEGIN {
     use File::Spec;
     # untaint DOCUMENT_ROOT
-    $ENV{DOCUMENT_ROOT} =~ m#^([/\w]+)$#;
+    $ENV{DOCUMENT_ROOT} =~ m#^([-._/\w]+)$#;
     my $doc_root = $1;
     my @dd = File::Spec->splitdir($doc_root);
     pop @dd;
@@ -155,6 +157,7 @@ our @plugins = qw(Posy::Core
     Posy::Plugin::YamlConfig
     Posy::Plugin::Canonical
     Posy::Plugin::EntryTitles
+    Posy::Plugin::Pod
     Posy::Plugin::FileStats
     Posy::Plugin::DynamicCss
     Posy::Plugin::ThemeCss
@@ -170,19 +173,32 @@ our @plugins = qw(Posy::Core
     Posy::Plugin::Toc
     Posy::Plugin::NearLinks
     Posy::Plugin::BinFile
+    Posy::Plugin::Dump
     );
 
 =item file_extensions
 
 If you wish to change the default file extensions, then set this.
 Generally one would only do this if one had added a plugin to deal
-with a new kind of file.
+with a new kind of file, or if you want to use a different extension
+for a standard type of file.
  
-    my @file_extensions = qw(txt html blx);
+    our %file_extensions = (
+	txt=>'text',
+	html=>'html',
+	blx=>'blosxom',
+	);
 
 =cut
 
-our @file_extensions;
+our %file_extensions = (
+	txt=>'text',
+	html=>'html',
+	blx=>'blosxom',
+	pl=>'pod',
+	pm=>'pod',
+	pod=>'pod',
+	);
 
 =item actions
 
@@ -228,6 +244,7 @@ our @entry_actions = qw(
 	    entry_template
 	    read_entry
 	    parse_entry
+	    dump
 	    short_body
 	    anti_spambot_obscure_mail
 	    rand_quote
@@ -320,7 +337,7 @@ my %run_args = (
 	       );
 # set the other options, if they exist
 $run_args{url} = $url if defined $url;
-$run_args{file_extensions} = \@file_extensions if @file_extensions;
+$run_args{file_extensions} = \%file_extensions if %file_extensions;
 $run_args{actions} = \@actions if @actions;
 $run_args{entry_actions} = \@entry_actions if @entry_actions;
 

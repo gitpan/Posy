@@ -7,11 +7,11 @@ Posy::Plugin::AntiSpambot - Posy plugin to obfustcate mail links
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::AntiSpambot.
+This describes version B<0.30> of Posy::Plugin::AntiSpambot.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 

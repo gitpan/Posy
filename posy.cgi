@@ -9,11 +9,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.21> of posy.cgi.
+This describes version B<0.30> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -143,13 +143,18 @@ our @plugins;
 
 If you wish to change the default file extensions, then set this.
 Generally one would only do this if one had added a plugin to deal
-with a new kind of file.
+with a new kind of file, or if you want to use a different extension
+for a standard type of file.
  
-    my @file_extensions = qw(txt html blx);
+    my %file_extensions = (
+	txt=>'text',
+	html=>'html',
+	blx=>'blosxom',
+	);
 
 =cut
 
-our @file_extensions;
+our %file_extensions;
 
 =item actions
 
@@ -250,7 +255,7 @@ my %run_args = (
 	       );
 # set the other options, if they exist
 $run_args{url} = $url if defined $url;
-$run_args{file_extensions} = \@file_extensions if @file_extensions;
+$run_args{file_extensions} = \%file_extensions if %file_extensions;
 $run_args{actions} = \@actions if @actions;
 $run_args{entry_actions} = \@entry_actions if @entry_actions;
 

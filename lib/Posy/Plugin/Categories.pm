@@ -7,11 +7,11 @@ Posy::Plugin::Categories - Posy plugin to give category links.
 
 =head1 VERSION
 
-This describes version B<0.21> of Posy::Plugin::Categories.
+This describes version B<0.30> of Posy::Plugin::Categories.
 
 =cut
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 =head1 SYNOPSIS
 
@@ -54,7 +54,7 @@ Methods which can be called from elsewhere.
 	item_sep=>"\n",
 	tree_sep=>"\n",
 	use_count=>1,
-	root=>'home');
+	root=>'Home');
 
 Generates a list (of lists) of links of all the categories.
 
@@ -123,7 +123,7 @@ category.
 =item root
 
 What label should we give the "root" category?
-(default: home)
+(default: Home)
 
 =item you_were_here
 
@@ -146,7 +146,7 @@ sub category_tree {
 		post_active_item=>'</em>',
 		item_sep=>"\n",
 		tree_sep=>"\n",
-		root=>'home',
+		root=>'Home',
 		you_were_here=>'&lt;-- you were here',
 		use_count=>1,
 		@_
@@ -204,7 +204,7 @@ sub category_tree {
 	post_active_item=>'</em>',
 	item_sep=>"\n",
 	tree_sep=>"\n",
-	root=>'home');
+	root=>'Home');
 
 Generates a list (of lists) of links of the categories above
 (and just below) the current path.
@@ -274,7 +274,7 @@ The string to separate each tree.
 =item root
 
 What label should we give the "root" category?
-(default: home)
+(default: Home)
 
 =item start_depth
 
@@ -308,7 +308,7 @@ sub breadcrumb {
 		post_active_item=>'</em>',
 		item_sep=>"\n",
 		tree_sep=>"\n",
-		root=>'home',
+		root=>'Home',
 		start_depth=>0,
 		end_depth=>$self->{path}->{depth} + 1,
 		@_
@@ -428,7 +428,7 @@ sub _traverse_lol {
 			     $args->{pre_item},
 			     $args->{pre_active_item},
 			     ($self->{categories}->{$cat}->{basename}
-			      ? $self->{categories}->{$cat}->{basename}
+			      ? $self->{categories}->{$cat}->{pretty}
 			      : $args->{root}),
 			     $args->{post_active_item}
 			    );
@@ -439,7 +439,7 @@ sub _traverse_lol {
 		{
 		    $item = join('', $args->{pre_item},
 				 '<a href="', $self->{url}, '/', $cat, '/">',
-				 $self->{categories}->{$cat}->{basename},
+				 $self->{categories}->{$cat}->{pretty},
 				 '</a>');
 		}
 		else

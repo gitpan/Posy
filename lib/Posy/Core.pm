@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.92> of Posy::Core.
+This describes version B<0.93> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.92';
+our $VERSION = '0.93';
 
 =head1 SYNOPSIS
 
@@ -235,13 +235,15 @@ sub init {
 
     # set the error templates if not already set
     $self->{templates} = {};
-    $self->{templates}->{content_type}->{error} ||= 'text/html';
-    $self->{templates}->{head}->{error} ||=
-		'<html><body><p><font color="red">Error: I\'m afraid this is the first I\'ve heard of a "$path_flavour" flavoured Posy.  Try dropping the "/.$path_flavour" bit from the end of the URL.</font>';
-    $self->{templates}->{header}->{error} ||= '<h3>$entry_dw, $entry_da $entry_month $entry_year</h3>';
-    $self->{templates}->{entry}->{error} ||=
-		'<p><b>$entry_title</b><br />$entry_body <a href="$url/$path_cat_id/$path_basename.$config_flavour">#</a></p>';
-    $self->{templates}->{foot}->{error} ||= '</body></html>';
+    $self->{templates}->{content_type}->{default} ||= 'text/html';
+    $self->{templates}->{head}->{default} ||=
+		'<html><head><title>$config_site_title: $path_file_key ($path_flavour)</title>
+		</head>
+		<body><p>($path_basename.$path_flavour)</p>';
+    $self->{templates}->{header}->{default} ||= '<h3>$entry_dw, $entry_da $entry_month $entry_year</h3>';
+    $self->{templates}->{entry}->{default} ||=
+		'<p><b>$entry_title</b><br />$entry_body <a href="$url/$path_cat_id/$path_basename.$path_flavour">#</a></p>';
+    $self->{templates}->{foot}->{default} ||= '</body></html>';
 
     #
     # set default config things if they aren't already set
@@ -1393,8 +1395,7 @@ The contents of the <head> tag of a HTML entry, minus the <title> tag.
 
 =item entry_body_attrib
 
-The attributes of the body tag, or $self->{config}->{body_attrib}
-if no attributes were in the body.
+The attributes of the body tag.
 
 =back
 
@@ -1450,7 +1451,6 @@ sub parse_entry {
 	$current_entry->{body_attrib} = '';
 	$current_entry->{body} = $current_entry->{raw};
     }
-    $current_entry->{body_attrib} ||= $self->{config}->{body_attrib};
     1;
 } # parse_entry
 
@@ -1697,6 +1697,7 @@ Get the template file for this state, taking into account
 $self->{path}->{cat_id},
 $self->{path}->{type},
 $self->{path}->{flavour},
+$self->{path}->{basename}
 and of course $chunk
 
 Returns (a copy of) the found template.
@@ -1717,15 +1718,11 @@ I<chunk>.I<path_type>.I<basename>.I<flavour>
 
 =item *
 
-I<chunk>.I<alt_path_type>.I<basename>.I<flavour>
+I<chunk>.I<basename>.I<flavour>
 
 =item *
 
 I<chunk>.I<path_type>.I<flavour>
-
-=item *
-
-I<chunk>.I<alt_path_type>.I<flavour>
 
 =item *
 
@@ -1738,6 +1735,7 @@ sub get_template {
     my $self = shift;
     my $chunk = shift;
 
+    my $basename = $self->{path}->{basename};
     my $cat_id = $self->{path}->{cat_id};
     my $path_type = $self->{path}->{type};
     my $alt_path_type = ($path_type =~ /^top_(.*)$/ ? $1 : '');
@@ -1756,34 +1754,70 @@ sub get_template {
 	my $path_id = (@path_split ? join('/', @path_split) : '');
 	my $look_dir = ($path_id ?
 	    File::Spec->catdir($base_dir, @path_split) : $base_dir);
-	# chunk, flavour, path, path_type
+	# chunk, flavour, path, path_type, basename
 	$template = $self->_look_for_template(look_dir=>$look_dir,
+	    basename=>$basename,
 	    chunk=>$chunk,
 	    flavour=>$flavour,
 	    path_id=>$path_id,
 	    path_type=>$path_type);
 	return $template if (defined $template);
-	# chunk, flavour, path, alt_path_type
+	# chunk, flavour, path, path_type
+	if ($basename)
+	{
+	    $template = $self->_look_for_template(look_dir=>$look_dir,
+						  basename=>'',
+						  chunk=>$chunk,
+						  flavour=>$flavour,
+						  path_id=>$path_id,
+						  path_type=>$path_type);
+	    return $template if (defined $template);
+	}
+	# chunk, flavour, path, alt_path_type, basename
 	if ($alt_path_type)
 	{
 	    $template = $self->_look_for_template(look_dir=>$look_dir,
+						  basename=>$basename,
 						  chunk=>$chunk,
 						  flavour=>$flavour,
 						  path_id=>$path_id,
 						  path_type=>$alt_path_type);
 	    return $template if (defined $template);
+	    # chunk, flavour, path, alt_path_type
+	    if ($basename)
+	    {
+		$template = $self->_look_for_template(look_dir=>$look_dir,
+						      basename=>'',
+						      chunk=>$chunk,
+						      flavour=>$flavour,
+						      path_id=>$path_id,
+						      path_type=>$alt_path_type);
+		return $template if (defined $template);
+	    }
 	}
-	# chunk, flavour, path
+	# chunk, flavour, path, basename
 	$template = $self->_look_for_template(look_dir=>$look_dir,
+	    basename=>$basename,
 	    chunk=>$chunk,
 	    flavour=>$flavour,
 	    path_id=>$path_id,
 	    path_type=>'');
 	return $template if (defined $template);
+	# chunk, flavour, path
+	if ($basename)
+	{
+	    $template = $self->_look_for_template(look_dir=>$look_dir,
+						  basename=>'',
+						  chunk=>$chunk,
+						  flavour=>$flavour,
+						  path_id=>$path_id,
+						  path_type=>'');
+	    return $template if (defined $template);
+	}
     } while (pop @path_split);
 
-    # if all else fails, use the error flavour
-    $template = $self->{templates}->{$chunk}->{error};
+    # if all else fails, use the default flavour
+    $template = $self->{templates}->{$chunk}->{default};
     return $template;
 } # get_template
 
@@ -2195,51 +2229,64 @@ sub _look_for_template {
     my $self = shift;
     my %args = (
 	chunk=>'',
+	basename=>'',
+	path_type=>'',
+	path_id=>'',
 	@_
 	);
     my $look_dir = $args{look_dir};
     my $chunk = $args{chunk};
     my $flavour = $args{flavour};
+    my $basename = $args{basename};
     my $path_id = $args{path_id};
     my $path_type = $args{path_type};
 
-    my $pathtype_chunk = ($path_type ? "$chunk.$path_type" : $chunk);
     my $fh;
 
+    my $templ_file;
+    $templ_file = "${chunk}.${path_type}.${basename}.${flavour}"
+	if ($path_type and $basename);
+    $templ_file = "${chunk}.${basename}.${flavour}"
+	if (!$path_type and $basename);
+    $templ_file = "${chunk}.${path_type}.${flavour}"
+	if ($path_type and !$basename);
+    $templ_file = "${chunk}.${flavour}"
+	if (!$path_type and !$basename);
+
     my $template = undef;
-    if (exists $self->{templates}->{$chunk}->
-	{$flavour}->{path}->{$path_id}->{$path_type}
-	and defined $self->{templates}->{$chunk}->
-	{$flavour}->{path}->{$path_id}->{$path_type})
+    if (exists $self->{templates}->{$chunk}->{$flavour}->
+	{$path_id}->{$path_type}->{$basename}
+	and defined $self->{templates}->{$chunk}->{$flavour}->
+	{$path_id}->{$path_type}->{$basename})
     {
 	$template = 
 	    $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_id}->{$path_type};
+	    {$flavour}->{$path_id}->{$path_type}->{$basename};
 	return $template;
     }
-    elsif (!exists $self->{templates}->{$chunk}->
-	   {$flavour}->{path}->{$path_id}->{$path_type})
+    elsif (!exists $self->{templates}->{$chunk}->{$flavour}
+	->{$path_id}->{$path_type}->{$basename})
     {
 	local $/;
 	# look for the file
-	my $look_file = File::Spec->catfile($look_dir, "$pathtype_chunk.$flavour");
+	my $look_file = File::Spec->catfile($look_dir, $templ_file);
 	if (-r $look_file and open($fh, $look_file))
 	{
 	    my $data = <$fh>;
 	    # taint checking
 	    $data =~ m/^([^`]*)$/s;
 	    $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_id}->{$path_type} = $1;
+	    {$flavour}->{$path_id}->{$path_type}->{$basename} = $1;
 	    close($fh);
 	    $template =
 		$self->{templates}->{$chunk}->
-		{$flavour}->{path}->{$path_id}->{$path_type};
+		{$flavour}->{$path_id}->{$path_type}->{$basename};
 	    return $template;
 	}
 	else # not there
 	{
 	    $self->{templates}->{$chunk}->
-	    {$flavour}->{path}->{$path_id}->{$path_type} = undef;
+	    {$flavour}->{$path_id}->{$path_type}->{$basename} = undef;
 	}
     }
     return undef;
@@ -2257,7 +2304,6 @@ sub _look_for_config {
 	basename=>'',
 	path_type=>'',
 	path_id=>'',
-	path_type=>'',
 	@_
 	);
     my $look_dir = $args{look_dir};

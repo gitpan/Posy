@@ -1,0 +1,1226 @@
+=head1 NAME
+
+Posy::UserGuide - a guide for users of Posy.
+
+=head1 VERSION
+
+This describes version B<0.93> of Posy::UserGuide.
+
+=cut
+
+our $VERSION = '0.93';
+
+=head1 DESCRIPTION
+
+C<Posy> is a simple website content management system inspired
+by the design of blosxom.  The filesystem is the database, there
+are flavour templates, and plugins.  However, this system doesn't
+require one to write one's entry files in one particular format; one
+can choose from pure HTML, plain text, or blosxom format.  And other
+formats can be dealt with if one writes a plugin to deal with them.
+
+This is a guide to how to get your system running after you've
+installed it.
+
+=head1 GUIDE
+
+Make sure you've read the L<Posy> and L<posy.cgi> documentation, which tell
+you (a) a few terms (b) how to install the Posy modules and (c) how to
+install the posy.cgi CGI script (d) how to do the "bootstrap" configuration
+of the CGI script.
+
+When you have followed the above instructions, you should have a Posy
+setup with a script and modules.  It's not ready to roll yet --
+you have no content!
+
+=head2 Adding Content
+
+With Posy, you don't need to have no fancy databases, you don't need to
+have web applications, you don't have to use a special format.  All your
+content is files.  Just files.  Just ordinary files.  Which you can
+edit with your favourite editor.
+
+Every "entry" in your site is a text file saved under Posy's document
+"data directory".  Every page on your site is composed of
+either one "entry" or of multiple entries stuck together.
+
+So, to add an entry, add a file to the data directory.  What sort of file?
+Well, you have a choice.  You can make it a plain text file, which has the
+file extension '.txt' by default.  You can make it a proper HTML file,
+which has the file extension '.html'.  Or, for those of you who prefer
+something terser than HTML and more powerful than plain text, you can use
+the "blosxom" format (with file extension '.blx').  Blosxom format is taken
+from the blosxom weblogging software (http://www.blosxom.com) -- it
+consists of a first line which is the entry's title, and the rest of the
+file is basically HTML body-content (that is, what you would put between
+the <body> tags of a full HTML file).
+
+All these input file formats will be converted to HTML when displayed
+by Posy.  The text conversion is very rudimentary in the Posy core (it just
+sticks PRE around everything).  If you want more sophisticated text-to-HTML
+conversion for your plain text files, you can use the
+L<Posy::Plugin::TextToHTML> plugin.  Or you choose not to use plain text
+files at all if you prefer.
+
+This makes it very easy to change an existing site over to using Posy.
+Just move your files into the data directory.  And then customise
+as you want it.
+
+=head3 Indexes and Indexes
+
+You probably already know that when you point your web browser
+at a URL that doesn't point to a specific file (such as
+http://www.example.com/tools/) then the browser serves up an "index" file,
+which is either (a) a list of all the files in that directory,
+(b) the contents of the "index" file, which is usually named "index.html"
+or "index.php" or whatever.
+
+Posy does something similar. If you have an entry-file in a directory under
+the data_dir which has a base-name of "index" (for example, index.html)
+then Posy will display that file when the category/directory is
+requested.  If there is no such file, then Posy will display the
+content of all the entries below that directory.  (This behaviour can
+be configured in various ways - see L</Flavours>, L</Changing Defaults>,
+L<Posy::Plugin::ShortBody> and L<Posy::Plugin::LocalDepth> as a start).
+
+So be aware, when making your entries, that "index" is a special name.
+
+=head2 Viewing
+
+Of course, you've got to be able to view your content.  Posy has various
+ways of presenting the content: by path/category, by date, and a
+combination of the two.
+
+To start with, look at the site/sub-site you have just created an
+entry for.
+
+Now, each site's base URL is slightly different, depending on whether
+it lives at a domain, is hosted on an ISP's web-server, sits on
+your local PC, or whatever.  Here are a few examples:
+
+=over
+
+=item on your own computer
+
+If you installed Posy on your own computer, running its own web-server,
+then the URL to look at is probably
+
+	http://localhost/cgi-bin/posy.cgi
+
+(depending on where you actually installed the script, of course!)
+
+=item at your ISP
+
+If you installed Posy in a special cgi-bin directory on your ISP's
+web server, you'll probably need to look at
+
+	http://www.example.com/~username/cgi-bin/posy.cgi
+
+(where www.example.com is your ISP and "username" is your username)
+
+=item web-host with domain
+
+If you installed Posy on you web-host's web server, but have your
+own domain name, then, if your domain is www.example.com, then
+use at something like
+
+	http://www.example.com/posy.cgi or http://www.example.com/cgi-bin/posy.cgi
+
+=back
+
+If all goes to plan, this will show the default Posy view -- not very
+pretty, but we can soon fix that -- displaying whatever entries you
+may already have created.
+
+=head3 Viewing By Date
+
+By default, Posy sorts the list of entries in reverse chronological order
+(like a weblog).  If you have set a limited number of entries to display,
+you can't see them all -- so where did the old entries go?  You can see
+entries for a particular date (year, month, or day) by appending the
+numerical values of your preferred date to your URL.
+This is known as a 'chrono' path-type.
+
+Like so:
+
+=over
+
+=item year
+
+For a whole year's worth of entries, append the 4-digit year to the URL.
+
+	http://www.example.com/posy.cgi/2004
+(the year 2004)
+
+=item month
+
+For a month's worth of entries, append the 4-digit year and the 2-digit
+month to the URL.
+
+	http://www.example.com/posy.cgi/2004/03
+
+(March 2004)
+
+=item day
+
+For a particular day's worth of entries, append the 4-digit year, the
+2-digit month, and the 2-digit day to the URL.
+
+	http://www.example.com/posy.cgi/2004/03/22
+
+(22nd March 2004)
+
+=back
+
+=head3 Viewing By Path
+
+You aren't just limited to looking at the top index of the site.
+One can select by category (aka sub-directory) just by
+putting the name on the end of the URL.
+
+	http://www.example.com/posy.cgi/tools/
+	http://www.example.com/posy.cgi/tools/posy/
+	http://www.example.com/posy.cgi/tools/posy/plugins/
+
+(This is known as a 'category' path-type)
+
+And you can look at individual entries too.
+
+	http://www.example.com/posy.cgi/tools/posy/Changes.html
+
+(This is known as an 'entry' path-type.)
+
+You can also indicate the path by using the 'path' parameter.
+
+	http://www.example.com/posy.cgi?path=/tools/posy/plugins/
+
+=head3 Viewing By Path and Date
+
+And one can combine the two -- put the path first, then the date.
+
+	http://www.example.com/posy.cgi/tools/posy/plugins/2004
+
+=head2 Index Cache
+
+The first time you run posy.cgi, you will see your first post.
+However, if you add another post and run the script again, you won't
+find it.  This is because Posy uses a cached index of all entry files,
+and for the sake of speed, Posy doesn't update this cache until you
+tell it to.  So how do you tell it?
+
+The posy.cgi script takes a number of reindexing parameters, which
+will trigger it to rebuild and/or update the entry index cache.
+
+=over
+
+=item reindex
+
+	http://www.example.com/posy.cgi?reindex=1
+
+Setting this parameter to true (1) will trigger a re-index of the whole
+site.  For larger sites, this can take a while.
+
+=item reindex_cat
+
+	http://www.example.com/posy.cgi?reindex_cat=updates
+	http://www.example.com/posy.cgi?reindex_cat=tools/posy
+
+If you have only updated a particular category, then you may wish to
+just update the index cache for that particular category.  Setting
+the 'reindex_cat' parameter to the category in question will update
+and add files to the entry index cache.
+
+=item delindex
+
+	http://www.example.com/posy.cgi?delindex=1
+
+If you have just deleted some files, then setting 'delindex' to true
+will cause Posy to go through the entry index cache and delete from its
+listing, those files which are no longer there.
+Thus, a combination of 'reindex_cat' and 'delindex' will allow you
+to move and rename files without having to reindex the whole site.
+
+=back
+
+If you have just added one file, then you can "magically" add it to the
+index cache by pointing your browser at it.  For example, if you added the file
+'wibble.txt' (or 'wibble.html' or 'wibble.blx') to the data directory, then
+if your domain is C<www.example.com>, then
+
+	http://www.example.com/wibble.html
+
+will add 'wibble' to your index.
+
+If you really hate the idea of a cached index, you can turn caching
+off by setting 'use_caching' to off (0) in the global config
+file (see L</Changing Defaults>).
+
+=head2 Flavours
+
+You may have noticed that the displayed pages are very plain.  This is
+because Posy comes with one built-in default "flavour" (a collection of
+template files making up one page), which is, well, very plain.
+
+There are also a couple of sets of example flavour files given in the Posy
+distribution under C<data/flavours>: a plain "html" flavour, and an "rss"
+flavour.  Yes, the HTML flavour is crying out to be redesigned -- that is
+what you are supposed to do, to customise the site to look the way that is
+"you".
+
+So how do you do that?  Two things you need to understand: template files
+and template variables.
+
+=head3 Template Files
+
+When Posy builds a web-page, it takes the entry data (from one or more
+entry files) and pastes it together with five template files (chunks) which
+it interpolates to create the final page.
+
+The flavour files are put in the flavour directory (by default
+"data/flavours") where the most generic flavour file is called
+I<chunk>.I<flavour> (such as "head.html").
+
+Here are the different chunks:
+
+=over
+
+=item content_type
+
+The MIME-type of the output page.  Usually this is text/html, but some
+variations may call for text/plain or something else.
+
+=item head
+
+The "head" part of the page; which usually includes the opening
+<html> tag, the <head> content, and the opening <body> tag and
+any initial content required.
+
+=item header
+
+A header part of a page; it is re-generated for every entry, but if
+the new one is the same as the old one, it won't be repeated.
+This can be used, for example, to cluster together all entries
+written on the same date, if this template file uses the date-related
+variables in it (and the entries were sorted by date).
+
+=item entry
+
+The template for the actual page content; for pages which source multiple
+entry-files per page, this is repeated for each entry file.
+An entry file is just an individual input content file.
+
+=item foot
+
+The "foot" part of the page; usually contains trailing content,
+and the closing </body> and </html> tags.
+
+=back
+
+To allow for much finer control of flavours, they can be created on a
+per-path, per path-type, per basename level.
+
+For example, if you want your "tools" directory to have a different ".html"
+look, then create a "tools" subdirectory in the flavours directory, and
+create your new flavour files there.  Likewise, if you want your 'chrono'
+pages to look different to your 'entry' pages (for example, just list a
+link to the entries they refer to) then you can make separate 'chrono'
+flavours.
+
+For the most fine-grained approach, you can even make a flavour template
+for a specific file.  For example, if you want a special entry flavour
+template for the default flavour (.html) for the tools/posy/Changes.blx
+entry file, you can make a flavour template file in the flavour directory
+called "tools/posy/entry.Changes.html".
+
+Posy also looks for alternative path-types (that is 'top_entry' => 'entry',
+'top_category' => 'category').
+
+The template files are called:
+
+=over
+
+=item *
+
+I<chunk>.I<basename>.I<flavour>
+
+=item *
+
+I<chunk>.I<path_type>.I<flavour>
+
+=item *
+
+I<chunk>.I<flavour>
+
+=back
+
+=head3 Template Variables
+
+Okay, so you have your files, what do you put in them?  You put template
+variables in them.  There are basically four types of template variables --
+global variables, entry variables, flow variables, and config variables.
+
+Also see L<Posy::Core/set_vars> for more information about how the template
+variables are set.
+
+=head4 Global Variables
+
+Global variables are available in any template files.
+
+These include:
+
+=over
+
+=item url
+
+The URL of the posy.cgi (the URL of the site).
+
+=item path_info
+
+The full "PATH_INFO" of the path.
+
+=item path_type
+
+The type of the path (e.g 'entry', 'category').
+
+=item path_cat_id
+
+The ID of the category this path is in.
+
+=item dynamic
+
+True if the page is being generated by CGI script on a web-server.
+
+=item static
+
+True if the page is I<not> being generated by CGI script on a 
+web-server; in other words, if it is being generated in a static
+context.
+
+=back
+
+There are also the parameter variables, which are the names of any
+parameters to the script, prefixed with 'param_'
+
+Thus, the 'reindex' parameter would be called '$param_reindex'.
+
+See L<Posy::Core/parse_path> for more detailed informtation about the
+'$path_' variables.
+
+=head4 Entry Variables
+
+Entry variables are specific to the particular entry being processed,
+and so change from entry to entry.  These have an "entry_" prefix.
+
+These include:
+
+=over
+
+=item entry_basename
+
+The "basename" of this entry.
+
+=item entry_title
+
+The title of this entry.
+
+=item entry_body
+
+The contents of this entry, converted to HTML if need be.
+
+=item entry_raw
+
+The raw, unprocessed contents of this entry.
+
+=item entry_path
+
+The path of this entry.
+
+=item entry_ext
+
+The file extension of the original source entry file.
+
+=item entry_html_head
+
+The contents of the <head> tag of a HTML (.html) entry, minus
+the <title> tag.
+
+=item entry_body_attrib
+
+The attributes of the <body> tag of a HTML (.html) entry.  That way,
+you can put this in the flavour template and not lose it from the
+original file.
+
+	<body $entry_body_attrib>
+
+=item entry_dw
+
+The day of the week this entry was last modified.
+
+=item entry_da
+
+The day of the month this entry was last modified.
+
+=item entry_month
+
+The month this entry was last modified.
+
+=item entry_year
+
+The year this entry was last modified.
+
+=back
+
+=head4 Flow Variables
+
+These are somewhere between Global variables and Entry variables, because
+they are variables which are set during the Posy processing, (and thus may
+not be available at the start) but are not reset for each entry.  In
+L<Posy::Core>, these tend to be used more as part of Posy's processing, rather
+than for use inside flavour templates.  These include things such as the
+list of entry-identifiers, the content of each flavour template, the
+interpolated content of each chunk, and the content of the page as it is
+being built up.
+
+=over
+
+=item $flow_entry_count
+
+The number of the current entry.
+
+=back
+
+Note, however, that many plugins set flow variables to be used as flavour
+template variables, especially things designed to be put into the head of a
+page, such as the CSS links of L<Posy::Plugin::DynamicCss> or
+L<Posy::Plugin::ThemeCss>.
+
+=head4 Config Variables
+
+Config variables are caught betwixt and between, because some are
+available globally, and some are available only in a particular chunk
+or entry -- because of the very flexible way in which you, the user,
+are able to set up config files -- see L</Changing Defaults>.
+All config variables have a prefix of 'config_'.
+
+Here are some of them:
+
+=over
+
+=item config_site_title
+
+The default title for the site.
+
+=item config_flavour
+
+The default "flavour" to use if one is not given.
+
+=item config_num_entries
+
+The maximum number of entries to display per page.
+
+=back
+
+There are others which are generally just used by plugins.
+
+You can also create your very own config variables, and use them in your
+templates.  This can be very useful for customising things, and even
+more powerful if you use a more sophisticated interpolator, such as
+that in L<Posy::Plugin::TextTemplate>.
+
+See L</Changing Defaults> for more information.
+
+=head2 Changing Defaults
+
+There are two main ways of changing the look and feel of your site.
+One is flavours, as discussed above.  The other is changing the
+config settings.  Please don't confuse this with the "bootstrap"
+configuration settings inside the C<posy.cgi> script.  The general
+config settings are given in config files, which by default live
+in the data directory (but you can give them their own separate
+directory if you wish).
+
+B<IMPORTANT NOTE:> The "config variables" used inside flavour templates
+have a one-to-one correspondence with the config variables set inside
+config files, but I<they do not have the same names>.  When used inside
+flavour templates they have a name prefixed with 'config_'.  Thus, if a
+config variable is called 'flavour' inside the config file, it will be
+called '$config_flavour' inside the template file.
+
+The global config file is just called 'config'.  The values in this file
+can be overridden by other files which are more specific to the context
+in which they are used.  Thus, one can set defaults for a whole site,
+and then change them on a per-path, per-chunk, per-path-type and/or
+per-file basis.
+
+The config files are called
+
+=over
+
+=item *
+
+I<path_type>.I<chunk>.I<basename>.config
+
+=item *
+
+I<path_type>.I<basename>.config
+
+=item *
+
+I<chunk>.I<basename>.config
+
+=item *
+
+I<path_type>.I<chunk>.config
+
+=item *
+
+I<path_type>.config
+
+=item *
+
+I<chunk>.config
+
+=item *
+
+config
+
+=back
+
+Okay, so what's I<in> these config files?
+Very simple -- name:value pairs.
+
+For example:
+
+	site_title: Posy Demo Site
+	num_entries: 40
+
+Some plugins require more elaborate configuration setting, and so
+they depend on L<Posy::Plugin::YamlConfig> which replaces the default
+configuration file format with the L<YAML> format, a simple but powerful
+(and human-readable) data format.
+
+=head3 Configurable Values
+
+Here are some of the values which are settable for Posy.  Plugins will
+also have their own additional config variables.
+
+=over
+
+=item body_attrib
+
+Default attributes of the <body> tag, for entry pages.  For example,
+
+	body_attrib: class="smooth" 
+
+would set the BODY CSS class to "smooth", which could be the default
+style for the site -- useful if you have a mixture of text and HTML
+files and want to give them all the same look and feel.
+
+To use this in your flavour template, you would give
+
+	<body $config_body_attrib>
+
+Note that this of course conflicts with the $entry_body_attrib flavour
+variable -- you will either have to choose one or the other, or use
+a more sophisticated interpolator plugin such as
+L<Posy::Plugin::TextTemplate> which would enable you to use these
+variables conditionally.
+
+For example, if you were using Posy::Plugin::TextTemplate you could
+do it this way:
+
+	<body [==($entry_body_attrib ? $entry_body_attrib : $config_body_attrib)==]>
+
+The above will give the entry body_attrib if it exists, otherwise it gives
+the config body_attrib.
+
+=item flavour
+
+The "flavour" to use if no flavour is given. (default: html)
+
+=item num_entries
+
+The maximum number of entries to display per category/chrono page.
+If zero, display all entries. (default: zero)
+
+=item show_future_entries
+
+Should one include entries which are dated in the future?
+
+=item site_title
+
+For flavour templates, to enable use of $config_site_title inside the
+template file.  This is an example of the kind of config variable which is
+only used inside flavour templates.
+
+=item sort_type
+
+The type of sorting to do of entries (when displaying more than one).
+The possible types are:
+
+=over
+
+=item time
+
+Sort by the modification time of the entry.
+
+=item time_reversed
+
+Like 'time', but in reverse order (latest first).
+
+=item name
+
+Sort by the base-name of the entry.
+
+=item name_reversed
+
+Like 'name', but reversed.
+
+=item path
+
+Sort by the path (category + name) of the entry.
+
+=item path_reversed
+
+Like 'path', but reversed.
+
+=back
+
+Default is 'time_reversed'.
+
+=item use_caching
+
+Whether or not to use entry-index cache files.  (default: true)  Only turn
+this off if you have a small site and you find caching annoying.
+Do not ever turn it on explicitly, because that will interfere with the
+C<posy_one> script, which requires caching to be off.
+
+=back
+
+=head2 Plugins
+
+Posy supports a plugin architecture, allowing the core of Posy to remain
+unaffected by feeping creaturitis, and allowing the features to be added
+to plugins instead, extending Posy to suit different environments
+and needs.
+
+Plugins are generally of three kinds: those which override existing
+behaviour, those which add new actions, and those which provide supporting
+data or functions.  For example, Posy::Plugin::TextTemplate overrides
+the interpolation mechanism of Posy, but doesn't add any new actions;
+Posy::Plugin::LocalDepth adds a 'filter_by_localdepth' action;
+Posy::Plugin::FileStats builds a file statistics cache which is used by
+Posy::Plugin::BinFile and by Posy::Plugin::LinkExtra; and
+Posy::Plugin::Categories provides the 'category_tree' and 'breadcrumb'
+functions which can be called from within flavour template files
+(if one is using Posy::Plugin::TextTemplate as the interpolator).
+
+In order to use a plugin, three things are needed: (1) installation
+(2) activation (3) configuration.
+
+=head3 Installing Plugins
+
+Posy plugins are straightforward Perl modules, which are just installed
+into your system like any other Perl module.  See L<Posy/INSTALLATION>
+for different scenarios for this.
+
+Because the plugins are standard Perl modules, then the best place to
+actually look for Posy plugins is on CPAN, the Comprehensive Perl Archive
+Network, searching at http://search.cpan.org for them.  All the "standard"
+plugins are there, plus at least a few which other people have written.
+
+=head3 Activating Plugins
+
+A Posy plugin module isn't actually used by Posy unless you tell it to.
+This means that you can install modules on a trial basis and don't
+have to worry about having to remove them in order to deactivate them.
+
+Activation consists simply of telling Posy which plugin modules to
+use.  In the C<posy.cgi> script, there is a "bootstrap" configuration
+setting which is the list of plugins to use.  In the C<posy_static> script,
+one gives the list of plugins either on the command-line, or in an
+argument file.
+
+The order of the modules in this list is significant.  This is because,
+for plugins which override behaviour, a plugin which comes later in the
+list overrides a plugin which comes earlier in the list.  Look at the
+documentation for the individual plugins to see whether the given
+plugin is one for which the order is important.
+
+The second level of activation is for those plugins which add new actions
+to the actions which Posy performs.  If you don't add the action,
+then even though Posy knows about the module, it won't actually I<do>
+anything with it.  There are two kinds of actions, "action" actions,
+and "entry" actions.  The individual plugin will say which type of
+action, if any, it provides a new action for.
+
+B<Important note:> Posy has a default set of actions which it performs
+when no list of actions is given.  If you wish to add a new action,
+you need to supply a list of I<all> the actions which Posy is to perform,
+not just the new action, since Posy has no way of knowing how this action
+relates to all the other actions.  Instead of trying to guess, Posy simply
+takes any list of actions it is given, as a I<replacement> list of actions.
+So when adding the first new action, one needs to take the list
+of default actions (which is given in the posy.cgi documentation, or
+one can look inside the Posy::Core module), and then add the new action
+in the position where it is meant to go.
+
+=head3 Configuring Plugins
+
+Some plugins require additional configuration, either by setting
+"bootstrap" settings, or by putting required settings into a config
+file.  For example, Posy::Plugin::Pod requires one to set the
+'file_extensions' "bootstrap" setting, as it adds a new type of
+entry file to the set of known entry files.  While Posy::Plugin::ThemeCss,
+for example, requires a lot of information to be given in a config file.
+
+=head2 Static Rendering
+
+While the main orientation of Posy is to be run as a CGI script (posy.cgi)
+there is also a command-line script C<posy_static> for rendering the
+main index, category indexes, entries and/or date indexes as regular
+files on your filesystem.
+
+Static rendering is useful for those who either prefer to or are only able
+to (they cannot run CGI scripts) serve up files from their web server.  You
+can render your site from the command-line on your server, or you can
+render your site locally (for example, on your PC or laptop) and then copy
+the files up to your server (with FTP or rsync for example).
+
+You can also take a hybrid approach, statically rendering only part
+of your site or certain types of files, while leaving the CGI script
+available to do search, alternate flavours, or other plugin-related
+functionality.
+
+Note that the C<posy_static> script I<only> renders the generated files --
+that is, entry, category and chrono files; it doesn't copy across
+any other files.  This can be important to remember if you are using
+the Posy::Plugin::BinFile plugin and therefore have binary files
+in your data_dir; these will not be rendered statically unless you
+copy them by hand into their final destination.
+
+=head3 Setup
+
+While all the arguments to C<posy_static> are described in its
+documentation, there are a few things which need to be set up first.
+
+=over
+
+=item static_dir
+
+You need to have a directory into which the files will be rendered.
+Where this is depends a lot on your particular setup.  The two main
+choices are (a) a particular (sub)-directory on your actual website,
+where your server will find the files, or (b) a (temporary) staging
+directory, from which the files will be copied to their final destination.
+
+=item state_dir
+
+While you can reuse the state_dir which is used by dynamic rendering,
+some setups preclude this.  For example, if you are running your own
+web-server which runs as a different user, if you try to use the
+same state_dir, it could be rendered useless as posy_static will be
+run as your login, not as the web-server's login, and the file permissions
+would be different.
+
+=item config_dir
+
+You may find it useful to use different config settings for static
+versus dynamic rendering.  While some things can be achieved simply by
+checking the value of the $dynamic or $static variables, if you want
+something more, you could make a separate config_dir containing all
+the configuration files to be used when doing static rendering.
+
+=item argument config file
+
+Because you don't want to type in all those arguments (especially the lists
+of all the plugins and actions) at the command-line every time, it is
+advisable to use an argument configuration file, which contains all
+the common arguments you want to use.  This can be referenced by
+adding "@I<argfile>" to the command line.  See L<Getopt::ArgvFile> for more
+information.
+
+=back
+
+=head1 TIPS
+
+Here are a few tips and helpful hints for different ways of using Posy.
+
+=head2 Hiding the Posy Script
+
+The simplest way of using Posy is to put the CGI script somewhere, and
+making all your URLS refer to the posy script.
+
+If you are using Posy for your whole site, a URL might be:
+
+	http://www.example.com/posy.cgi/my/dir/file.html
+
+If you are using Posy for one particular sub-directory on your site,
+a URL might be:
+
+	http://www.example.com/archive/posy.cgi/my/dir/file.html
+
+This isn't particularly transparent -- ideally you would like all your URLS
+to look as if Posy wasn't there, as if there were no special processing,
+because (a) it makes it easier to convert your site without breaking things
+(b) it looks nicer.
+
+There are a number of different ways of doing this, which depend on
+(a) whether it is a whole site or a subdirectory (b) how much your
+site is amenable to server configuration, and which web-server you
+are using.
+
+No matter which method you use, you will have to alter the 'url'
+"bootstrap" configuration variable so that it shows the "hidden"
+version of the base URL, because the one calculated by the script
+includes the path of the script.
+
+=head3 Hiding For a Subdirectory
+
+If you just want to run Posy for a sub-directory of your site, say, an
+archive, then there are a few simpler methods available.
+
+=over
+
+=item Rename the Script
+
+If you are able to run CGI scripts in directories other than cgi-bin,
+place C<posy.cgi> into your chosen subdirectory, and rename it to
+C<index.cgi>.  This may or may not work for all the URLs, but it
+will at least work for the top entry.
+
+=item ScriptAlias
+
+If your web-server is Apache, and you have access to the global
+configuration file, you can set a script alias directive which applies to
+the given sub-directory.
+
+	ScriptAlias /archive /var/www/cgi-bin/posy.cgi
+
+Note that this will process all requests for things under "/archive"
+through Posy, and therefore you will need to use something like
+Posy::Plugin::BinFile if you want to have anything there besides just
+entries.
+
+=item Apache Rewrite
+
+If you don't have access to your web server's global configuration
+file, or your sysadmin/provider can't/won't make changes for you,
+but the web server is Apache, and you are allowed to write .htaccess files,
+then you can use Apache's mod_rewrite facility.
+
+Create a .htaccess file in your HTML document directory (where all your
+usual web files are kept).  The contents should be similar to this example:
+
+	RewriteEngine on
+	RewriteRule ^archive/?(.*)$ /~kat/cgi-bin/posy.cgi/$1
+
+As with the ScriptAlias above, this will process all requests for that
+sub-directory through Posy, so you may wish to use Posy::Plugin::BinFile
+if you want to have anything there besides just entries.
+
+=item Zeus Rewrite
+
+The Zeus webserver also has Rewrite rules, but you can only access these
+if you have configuration access to the server -- in other words, if you
+are running it yourself.  See the Zeus manual for how Zeus rewrite rules
+are different from Apache ones.
+
+=item Static Rendering
+
+If all else fails, one could render the contents for that sub-directory
+statically, and copy the files where they need to go.
+
+=back
+
+=head3 Hiding For The Whole Site
+
+Your whole site is powered by Posy, and you have your own domain.
+
+=over
+
+=item ScriptAlias
+
+If your web-server is Apache, and you have access to the global
+configuration file, you can set a script alias directive which applies to
+your whole site.
+
+	ScriptAlias / /var/www/cgi-bin/posy.cgi
+
+Note that this will process I<all> requests through Posy, and therefore you
+will need to use something like Posy::Plugin::BinFile to serve up binary
+files such as images.
+
+=item Apache Rewrite
+
+If you don't have access to your web server's global configuration
+file, or your sysadmin/provider can't/won't make changes for you,
+but the web server is Apache, and you are allowed to write .htaccess files,
+then you can use Apache's mod_rewrite facility.
+
+Put the C<posy.cgi> script into your DOCUMENT_ROOT directory, calling it
+C<index.cgi> (this is assuming that you can put CGI scripts anywhere).
+
+Create a .htaccess file in your DOCUMENT_ROOT directory (where all
+your usual web files are kept).  The contents should be similar to this
+example:
+
+	RewriteEngine on
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule ^(.*)$ index.cgi/$1 [L,QSA]
+
+This is different to the ScriptAlias solution, because it enables you to
+have a hybrid site: any files which already exist in your web directory
+will be served up as usual, but if it doesn't exist, then the request is
+passed to Posy for processing.  This means that you can, for example,
+put all your site images in the /images directory, and they will be served
+up faster.  It also means that you can transparently change your site
+(or parts of it) to static rendering, and if the static pages exist,
+the server will serve them without calling Posy, and if you want to
+change back again, all you have to do is delete the static rendered
+files from the web directory.
+
+=item Zeus Rewrite
+
+The Zeus webserver also has Rewrite rules, but you can only access these
+if you have configuration access to the server -- in other words, if you
+are running it yourself.
+
+There is information on the web on how to write Zeus rewrite rules, but
+they are beyond the scope of this document (because I don't have control
+of a Zeus webserver).
+
+=item Error Document
+
+If you don't have access to the Apache mod_rewrite mechanism, but you do
+have a web server which allows you to set an ErrorDocument directive in an
+.htaccess file, you can use this method as a last resort.  Posy has had
+special code added to check the environment for the different variables
+which are set when it is called as an ErrorDocument processor.
+
+Put the C<posy.cgi> script into your DOCUMENT_ROOT directory, calling it
+C<index.cgi> (this is assuming that you can put CGI scripts anywhere).
+
+Then put in your .htaccess file:
+
+	ErrorDocument 404 /index.cgi
+
+This will elicit similar behaviour to the above Apache Rewrite rules --
+that is, it will call Posy to process all documents that are not found
+(since this is the processing for 404 (Not Found) errors).
+
+It is less than satisfactory, however, and may not work fully on some web
+servers.  For example, if used with a Zeus web server, while it does serve
+up all the pages, it still returns a 404 Not Found error code, while Apache
+actually pays attention to Posy saying "yes I did find it after all" and
+does return a "Found" status code.
+
+This means that if one uses Zeus and this method, all search bots and
+link-checking bots will declare that your site has fallen off the net --
+not a very desireable outcome.
+
+=item Static Rendering
+
+If all else fails, one could render the whole site statically, and
+copy the files where they need to go.  You can also use a combination of
+this and the ErrorDocument approach to render most of your site statically,
+but still enable some dynamic rendering for less-used files.
+
+=back
+
+=head2 Speed Tips
+
+If you have a large site, and you find that the top page takes forever to
+render, then make an 'index' entry instead, and put most of the content
+in sub-directories (which you can link to by hand in the 'index' entry,
+or use a breadcrumb with Posy::Plugin::Categories and
+Posy::Plugin::TextTemplate).  Having an 'index' entry means that Posy
+will not attempt to load up every file in the site into the index page.
+
+A not-so-drastic, but also not so effective method is to set the
+'num_entries' config setting to a small number.  This is less efficient
+because Posy will still select and sort the entry-identifiers before it
+decides how many entries to display.
+
+Similarly, L<Posy::Plugin::LocalDepth> limits the entries displayed, by
+filtering the selected entry-identifiers by their "depth" in the tree.
+This is slightly more efficient than using 'num_entries' to limit the
+number of entries, because the filtering is done before the sorting.
+
+Of course, if you want the ultimate in speed, pre-generate your site with
+C<posy_static> rather than using the CGI script.  The advantage is speed,
+the disadvantage is a loss of flexibility.
+
+=head2 Setting The Base Dir Portably
+
+If you have your own domain, and you also mirror your site
+on a different server (such as a test server on your own PC), then
+it can be irritating to have to edit $base_dir and $libdir every time you
+sync your sites.  One way around this is to make sure that the
+base dir is in the same position relative to the DOCUMENT_ROOT,
+and then use the DOCUMENT_ROOT environment variable (which is set
+by the CGI mechanism) as a basis for figuring out where these
+directories are.
+
+Here is an example, where the base_dir is C<../data> and the lib dir
+is C<../data/perl/lib>.
+
+    our $base_dir;
+    our $libdir;
+    BEGIN {
+	use File::Spec;
+	# untaint DOCUMENT_ROOT
+	$ENV{DOCUMENT_ROOT} =~ m#^([-._/\w]+)$#;
+	my $doc_root = $1;
+	my @dd = File::Spec->splitdir($doc_root);
+	pop @dd;
+	push @dd, 'data';
+	$base_dir = File::Spec->catdir(@dd);
+	push @dd, 'perl';
+	push @dd, 'lib';
+	$libdir = File::Spec->catdir(@dd);
+    }
+
+=head2 Posy From the Command Line
+
+When you've updated your site, you might usually reindex your site by
+pointing your browser at your site and then using one or more of the
+'reindex' related parameters.  On the other hand, you may find it more
+convenient to do it from the command-line, if it so happens that the user
+the web-server would normally run your CGI as, is the same user as you are
+on the command-line (this can be the case when the "suexec" mechanism is
+used, which is very common with ISPs and web-hosts).
+
+Since Posy accepts parameters from the command line, this is possible; even
+though "dynamic" will be false, this should not affect the index cache,
+since that shouldn't care whether the call is static or dynamic.
+
+For example:
+
+	perl ./cgi-bin/posy.cgi reindex=1
+
+If you are using the above DOCUMENT_ROOT-related method of setting
+the base_dir, then something like the following will work on a Unix-like
+system:
+
+	cd /your/document/root
+	DOCUMENT_ROOT=`pwd` perl ./cgi-bin/posy.cgi reindex=1
+
+In either case, when the reindexing is done, posy will then spit out the
+contents of the top page of the Posy-site.
+
+This can also be used to check your site without having to point your
+browser at it, since you can put the output through a pager and thus have a
+convenient way of looking at the source.
+
+	perl ./cgi-bin/posy.cgi path=/tools/ | less
+
+Or you could even look at it with a console browser like w3m:
+
+	perl ./cgi-bin/posy.cgi path=/tools/ | w3m -T 'text/html'
+
+=head2 Maintaining A Hybrid Site
+
+If you are using the Apache Rewrite rules for your whole site, where Posy
+only processes those directories and files which don't exist in the web
+directory, and you have a hybrid site where some parts of the site
+are not controlled by Posy, but the main part of the site is, then there
+are a few things that need to be worked around.
+
+Say, for example, you have a 'graphics' sub-directory, and a sub-category
+of this is 'digitart', which is served up by Posy (and thus the contents of
+'digitart' are in the Posy data-docs directory, and not on the web
+directory) and another sub-directory called 'gallery' which runs a
+photo-gallery CGI script, and hence is not suitable to be served up by
+Posy.  Therefore the 'graphics/gallery' directory does exist in the web
+directory.
+
+This creates two problems:
+
+=over
+
+=item *
+
+Since the 'graphics' directory exists ('graphics/gallery'), then Posy is
+not called when the user points their browser to
+C<http://www.example.com/graphics/>, even though you want Posy to display
+the index-page for that page.  This is because Posy will only serve files
+and directories that I<don't exist> in the web directory.  That directory
+does exist, so the web-server will serve up the generic directory index
+for that directory, or a "Forbidden" error, depending on the particular
+setup.
+
+If you use the URL C<http://www.example.com/graphics/index.html> then Posy
+I<will> serve that file, since there is no index file in the 'graphics'
+sub-directory.
+
+There are two possible solutions to this.  One is to provide an index file
+which is not served by Posy -- which you would then have to create or
+update by hand, which would be somewhat annoying.
+
+The second is to provide an index file, yes, but to provide an C<index.cgi>
+file, which is the same C<posy.cgi> script which the whole site uses.
+If your website is on a Unix-like system, you can insure that both copies
+of the Posy script are the same by using a soft link.
+
+	cd graphics
+	ln -s ../cgi-bin/posy.cgi index.cgi
+
+=item *
+
+If you are using breadcrumbs or a site map (as generated by
+Posy::Plugin::Categories), then the 'graphics/gallery' directory won't be
+included since it isn't served up by Posy and isn't in the Posy data
+directory.  You can fake out Posy by creating an empty directory
+in the data_dir, which will then be taken as a Category that doesn't have
+any entries in it.
+
+	cd data/docs
+	mkdir graphics/gallery
+
+=back
+
+=head2 Changing Entry Dates
+
+If you have a site where entries are sorted by time rather than by basename
+or path, then you are going to be interested in the date-time information
+of your entry files.  Posy gets that date-time information from the
+modification time of the given entry file.  Which means that if you edit an
+entry, it's modification time changes, and it will be listed in a different
+order.
+
+Barring the use of a plugin which changes the way that Posy gets the
+date-time information for a file, what does one do if one wishes to
+ensure that an entry file will have a particular modification date?
+If one is on a Unix-like system, one can use the 'touch' command.
+On Linux, 'touch' has the '--date' option, which will enable one to set a
+file's modification date and time to a specific time rather than the
+current time.  See the 'touch' man page for details.
+
+=head1 SEE ALSO
+
+perl(1).
+L<Posy>
+posy.cgi
+
+=head1 BUGS
+
+Please report any bugs or feature requests to the author.
+
+=head1 AUTHOR
+
+    Kathryn Andersen (RUBYKAT)
+    perlkat AT katspace dot com
+    http://www.katspace.com
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (c) 2005 by Kathryn Andersen
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+1; # End of Posy::UserGuide

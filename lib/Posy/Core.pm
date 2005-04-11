@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.93> of Posy::Core.
+This describes version B<0.94> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.93';
+our $VERSION = '0.94';
 
 =head1 SYNOPSIS
 
@@ -440,8 +440,8 @@ For "chrono" paths, the day part of the request.  Optional.
 
 =back
 
-Expects parameters to have been initialized (so that it can check
-$self->param('path') as well as PATH_INFO).
+This uses the 'get_path_info' helper method to get the path-info
+to parse.
 
 If it fails to parse the path, sets $self->{path}->{error} to true,
 and $self->{path}->{info} will be the only other part set.
@@ -454,9 +454,7 @@ sub parse_path {
 
     my $data_dir = $self->{data_dir};
     my $path_type = '';
-    my $path_info = $ENV{PATH_INFO} || $self->param('path');
-    $path_info = $ENV{DOCUMENT_URI} if (!defined $path_info);
-    $path_info = $ENV{REDIRECT_URL} if (!defined $path_info);
+    my $path_info = $self->get_path_info();
     $self->{path}->{info} = $path_info;
     $self->debug(2, "parse_path: path_info=$path_info");
     # set the status to 200 until not found
@@ -1579,6 +1577,30 @@ sub param {
     }
     return 0;
 } # param
+
+=head2 get_path_info
+
+    my $path = $self->get_path_info();
+
+Returns the current "path info" (to be parsed by 'parse_path')
+
+Expects parameters to have been initialized (so that it can check
+$self->param('path') as well as PATH_INFO).
+
+This method can be overridden by plugins to enable path-info
+to be given another way.
+
+=cut
+
+sub get_path_info {
+    my $self = shift;
+
+    my $path_info = $ENV{PATH_INFO} || $self->param('path');
+    $path_info = $ENV{DOCUMENT_URI} if (!defined $path_info);
+    $path_info = $ENV{REDIRECT_URL} if (!defined $path_info);
+
+    return $path_info;
+} # get_path_info
 
 =head2 set_vars
 

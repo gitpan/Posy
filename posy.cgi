@@ -11,11 +11,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.93> of posy.cgi.
+This describes version B<0.94> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.93';
+our $VERSION = '0.94';
 
 =head1 SYNOPSIS
 

@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.93> of Posy.
+This describes version B<0.94> of Posy.
 
 =cut
 
-our $VERSION = '0.93';
+our $VERSION = '0.94';
 
 =head1 SYNOPSIS
 
@@ -23,11 +23,17 @@ our $VERSION = '0.93';
 =head1 DESCRIPTION
 
 This plugin replaces the 'run' method in order to generate all
-known pages of a given type.
+known pages of a given type.  It replaces the 'get_path_info' helper method.
+It also provides a new action 'set_outfile', which will automatically be
+added to the list of actions before 'render_page'.
 
 It expects extra parameters:
 
 =over
+
+=item flavours=>\@flavours
+
+The flavours to generate.  If this is not given, uses the default flavour.
 
 =item static_dir=>I<directory>
 
@@ -35,7 +41,7 @@ The directory where the static pages are to be put.
 
 =item gen_type=>I<string>
 
-The type of pages to generate.
+A comma-separated list of the type of pages to generate.
 
 =over
 
@@ -94,10 +100,12 @@ sub run {
     my $class = shift;
     my %args = (@_);
 
-    my $static_dir = delete $args{static_dir};
     my $gen_type = delete $args{gen_type};
     my $gen_match = delete $args{gen_match};
     my $verbose = $args{verbose};
+    my $static_dir = $args{static_dir};
+    my @flavours = @{$args{flavours}} if defined $args{flavours};
+    delete $args{flavours} if defined $args{flavours};
 
     # First, read in all the file info into a hash.
     # Make a new Posy object, set the actions to read
@@ -107,22 +115,42 @@ sub run {
     my $self = $class->new(%args);
     $self->init();
 
-    # now, change the actions
+    #
+    # Change the actions
+    #
     my @actions = @{$self->{actions}};
+
+    # make some temporary actions to set {files} etc
     $self->{actions} = [qw(init_params parse_path set_config index_entries)];
+
+    # add 'set_outfile' to the passed-in actions
+    for (my $i=0; $i < @actions; $i++)
+    {
+	# if it's already there, exit the loop
+	if ($actions[$i] eq 'set_outfile')
+	{
+	    last;
+	}
+	# otherwise put it just before 'render_page'
+	if ($actions[$i] eq 'render_page')
+	{
+	    splice(@actions,$i,0, ('set_outfile'));
+	    last;
+	}
+    }
 
     # now go and get the files and categories list
     $self->do_actions();
     my @files = keys %{$self->{files}};
     my @categories = keys %{$self->{categories}};
 
-    my $flavour = $self->{config}->{flavour};
+    my $default_flavour = $self->{config}->{flavour};
     # save the path
     my $orig_path = $self->param('path');
     $self->param('path'=>'');
 
-    # now generate the files
-    if ($gen_type eq 'init')
+    # run init if need be
+    if ($gen_type =~ /init/)
     {
 	# run the actions without generating anything
 	# send the output to /dev/null
@@ -132,95 +160,44 @@ sub run {
 	print STDERR "INIT start\n" if $verbose;
 	$self->do_actions();
 	print STDERR "INIT end\n" if $verbose;
+	# if we are only doing init, then return.
+	if ($gen_type eq 'init')
+	{
+	    return 1;
+	}
     }
-    elsif ($gen_type eq 'path' and $orig_path)
+
+    if ($gen_type =~ /path/ and $orig_path)
     {
 	# generate one file, the passed-in path
-	$self->{params}->{path} = $orig_path;
-	print STDERR "path=$orig_path\n" if $verbose;
+	$self->{_path} = $orig_path;
 	my @path_split = split('/', $orig_path);
-	$self->{outfile} ||= File::Spec->catfile($static_dir, @path_split);
-	print STDERR "outfile=", $self->{outfile}, "\n" if $verbose;
 	@{$self->{actions}} = @actions;
 	$self->do_actions();
-    }
-    elsif ($gen_type eq 'entry')
-    {
-	# go through every entry in @files
-	foreach my $key (@files)
+	# if we are only doing path, then return.
+	if ($gen_type eq 'path')
 	{
-	    if (!$gen_match
-		|| ($gen_match && $key =~ /$gen_match/o))
-	    {
-		my @cat_split =
-		    split(/\//, $self->{files}->{$key}->{cat_id});
-		my $fullcat = File::Spec->catfile($static_dir, @cat_split);
-		mkdir $fullcat if (!-e $fullcat);
-		my $path = $key;
-		$path .= '.' . $flavour;
-		@{$self->{actions}} = @actions;
-		$self->{params}->{path} = $path;
-		print STDERR "$path\n" if $verbose;
-		$self->{outfile} =
-		    File::Spec->catfile($static_dir,
-					@cat_split,
-					$self->{files}->{$key}->{basename});
-		$self->{outfile} .= '.' . $flavour;
-		# to side-step memory leaks, fork this
-		my $child_pid;
-		if (!defined($child_pid = fork())) {
-		    warn "cannot fork: $!";
-		    # do the actions anyway
-		    $self->do_actions();
-		} elsif ($child_pid) {
-		    # I'm the parent
-		    waitpid($child_pid,0);
-		} else {
-		    # I'm the child
-		    $self->do_actions();
-		    exit;
-		} 
-	    }
+	    return 1;
 	}
     }
-    elsif ($gen_type eq 'category')
+
+    # Assert: gen_type probably includes entry, category or chrono
+
+    #
+    # Make the list of paths to generate
+    #
+    my @paths = ();
+    if ($gen_type =~ /category/)
     {
-	# go through every category in $self->{categories}
-	foreach my $category (@categories)
-	{
-	    if (!$gen_match
-		|| ($gen_match && $category =~ /$gen_match/o))
-	    {
-		my @cat_split = split(/\//, $category);
-		my $fullcat = File::Spec->catfile($static_dir, @cat_split);
-		mkdir $fullcat if (!-e $fullcat);
-		my $path = join('/', $category, 'index');
-		$path .= '.' . $flavour;
-		@{$self->{actions}} = @actions;
-		$self->{params}->{path} = $path;
-		print STDERR "$path\n" if $verbose;
-		$self->{outfile} =
-		    File::Spec->catfile($static_dir,
-					@cat_split, 'index');
-		$self->{outfile} .= '.' . $flavour;
-		# to side-step memory leaks, fork this
-		my $child_pid;
-		if (!defined($child_pid = fork())) {
-		    warn "cannot fork: $!";
-		    # do the actions anyway
-		    $self->do_actions();
-		} elsif ($child_pid) {
-		    # I'm the parent
-		    waitpid($child_pid,0);
-		} else {
-		    # I'm the child
-		    $self->do_actions();
-		    exit;
-		} 
-	    }
-	}
+	push @paths,
+	    (grep {(!$gen_match || ($gen_match && /$gen_match/o))} sort @categories);
     }
-    elsif ($gen_type eq 'chrono')
+    if ($gen_type =~ /entry/)
+    {
+	push @paths,
+	    (grep {(!$gen_match || ($gen_match && /$gen_match/o))} sort @files);
+    }
+    if ($gen_type =~ /chrono/)
     {
 	# find out all the dates
 	my %dates = ();
@@ -232,51 +209,142 @@ sub run {
 		$self->{files}->{$key}->{date}->[2]); # day
 	    $dates{"$chrono_path"} = $self->{files}->{$key}->{date};
 	}
-	# generate for dates
-	while (my $date = each %dates)
+	push @paths,
+	    (grep {(!$gen_match || ($gen_match && /$gen_match/o))} sort keys %dates);
+    }
+
+    #
+    # generate the files
+    #
+    push @flavours, $default_flavour if (!@flavours);
+    foreach my $flavour (@flavours)
+    {
+	foreach my $path (@paths)
 	{
-	    if (!$gen_match
-		|| ($gen_match && $date =~ /$gen_match/o))
-	    {
-		# make the date directories
-		my @dparts = ();
-		foreach my $dpart (@{$dates{$date}})
-		{
-		    push @dparts, $dpart;
-		    my $fullpath = File::Spec->catdir($static_dir, @dparts);
-		    if (!-e $fullpath)
-		    {
-			print STDERR "DIR: $fullpath\n" if $verbose;
-			mkdir $fullpath;
-		    }
-		}
-		my $path = $date;
-		@{$self->{actions}} = @actions;
-		$self->{params}->{path} = $path;
-		$self->{params}->{flav} = $flavour;
-		print STDERR "$path\n" if $verbose;
-		$self->{outfile} = File::Spec->catfile($static_dir,
-						       @{$dates{date}},
-						       "index.$flavour");
-		# to side-step memory leaks, fork this
-		my $child_pid;
-		if (!defined($child_pid = fork())) {
-		    warn "cannot fork: $!";
-		    # do the actions anyway
-		    $self->do_actions();
-		} elsif ($child_pid) {
-		    # I'm the parent
-		    waitpid($child_pid,0);
-		} else {
-		    # I'm the child
-		    $self->do_actions();
-		    exit;
-		} 
-	    }
+	    @{$self->{actions}} = @actions;
+	    $self->{_path} = "$path.$flavour";
+	    # to side-step memory leaks, fork this
+	    my $child_pid;
+	    if (!defined($child_pid = fork())) {
+		warn "cannot fork: $!";
+		# do the actions anyway
+		$self->do_actions();
+	    } elsif ($child_pid) {
+		# I'm the parent
+		waitpid($child_pid,0);
+	    } else {
+		# I'm the child
+		$self->do_actions();
+		exit;
+	    } 
 	}
     }
 
 } # run
+
+=head1 Flow Action Methods
+
+Methods implementing actions.  All such methods expect a
+reference to a flow-state hash, and generally will update
+either that hash or the object itself, or both in the course
+of their running.
+
+=head2 set_outfile
+
+Calculates the outfile name from the current path, if $self->{outfile}
+is not already set.
+Creates directories if the directories don't already exist.
+
+=cut
+sub set_outfile {
+    my $self = shift;
+    my $flow_state = shift;
+
+    return if $self->{outfile};
+
+    my $static_dir = $self->{static_dir};
+    my $verbose = $self->{verbose};
+
+    # make the directories
+    my @cat_split = split('/', $self->{path}->{cat_id});
+    my $fullcat = File::Spec->catdir($static_dir, @cat_split);
+    if (!-e $fullcat)
+    {
+	mkdir $fullcat;
+	print STDERR "DIR: $fullcat\n" if $verbose;
+    }
+    if ($self->{path}->{type} eq 'chrono')
+    {
+	# year
+	my $fulldatepath =
+	    File::Spec->catdir($static_dir, $self->{path}->{year});
+	if (!-e $fulldatepath)
+	{
+	    mkdir $fulldatepath;
+	    print STDERR "DIR: $fulldatepath\n" if $verbose;
+	}
+	# month
+	$fulldatepath =
+	    File::Spec->catdir($static_dir, $self->{path}->{month});
+	if (!-e $fulldatepath)
+	{
+	    mkdir $fulldatepath;
+	    print STDERR "DIR: $fulldatepath\n" if $verbose;
+	}
+	# day
+	$fulldatepath =
+	    File::Spec->catdir($static_dir, $self->{path}->{day});
+	if (!-e $fulldatepath)
+	{
+	    mkdir $fulldatepath;
+	    print STDERR "DIR: $fulldatepath\n" if $verbose;
+	}
+    }
+
+    # calculate the outfile name
+    my $outfile = '';
+    my $flavour = $self->{path}->{flavour};
+    if ($self->{path}->{type} =~ /chrono/)
+    {
+	$outfile = File::Spec->catfile($static_dir,
+	    $self->{path}->{year},
+	    $self->{path}->{month},
+	    $self->{path}->{day},
+	    "index.$flavour");
+    }
+    elsif ($self->{path}->{basename})
+    {
+	$outfile = File::Spec->catfile($static_dir, @cat_split,
+	    $self->{path}->{basename} . '.' . $flavour);
+    }
+    elsif ($self->{path}->{type} =~ /category/)
+    {
+	$outfile = File::Spec->catfile($static_dir, @cat_split, "index.$flavour");
+    }
+
+    $self->{outfile} = $outfile;
+    print STDERR "outfile=", $self->{outfile}, "\n" if $self->{verbose};
+} # set_outfile
+
+=head1 Helper Methods
+
+Methods which can be called from within other methods.
+
+=head2 get_path_info
+
+    my $path = $self->get_path_info();
+
+Returns the current "path info" (to be parsed by 'parse_path')
+
+=cut
+
+sub get_path_info {
+    my $self = shift;
+
+    my $path_info = $self->{_path} || $self->param('path');
+
+    return $path_info;
+} # get_path_info
 
 =head1 REQUIRES
 

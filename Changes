@@ -1,6 +1,22 @@
 Revision history for Posy
 =========================
 
+0.94 Mon 11 April 2005
+----------------------
+
+  * (11 Apr 2005) enhancements to static generation
+  	- can now generate more than one 'gen_type' type per run
+  	- can now generate more than just the default flavour
+  	- also did a complete revamp of how GenStatic does things,
+  including adding an action 'set_outfile' which sets the outfile name
+  just before it is rendered, rather than at the start.  This could
+  enable other Plugins to override this.
+
+  * (10 Apr 2005) get_path_info
+  	Added the 'get_path_info' helper method, which is called by
+  'parse_path'; so that plugins could override the means of getting
+  the path_info.
+
 0.93 Tue 22 March 2005
 ----------------------
 

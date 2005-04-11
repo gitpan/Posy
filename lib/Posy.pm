@@ -7,11 +7,11 @@ Posy - a website generator inspired by blosxom
 
 =head1 VERSION
 
-This describes version B<0.93> of Posy.
+This describes version B<0.94> of Posy.
 
 =cut
 
-our $VERSION = '0.93';
+our $VERSION = '0.94';
 
 =head1 SYNOPSIS
 

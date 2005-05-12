@@ -1,6 +1,12 @@
 TODO list for Posy
 ==================
- 34. more tests
+ 36. more tests
     Added:05/02/05, 15:09  Priority: medium
+
+ 37. enable templates to look for the $config_flavour as backup
+    Added:16/04/05, 16:47  Priority: medium
+
+ 38. add set_vars call inside parse_path?
+    Added:23/04/05, 08:00  Priority: medium
 
 

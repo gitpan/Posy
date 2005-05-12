@@ -4,11 +4,11 @@ Posy::UserGuide - a guide for users of Posy.
 
 =head1 VERSION
 
-This describes version B<0.94> of Posy::UserGuide.
+This describes version B<0.95> of Posy::UserGuide.
 
 =cut
 
-our $VERSION = '0.94';
+our $VERSION = '0.95';
 
 =head1 DESCRIPTION
 
@@ -213,12 +213,21 @@ will trigger it to rebuild and/or update the entry index cache.
 
 =over
 
+=item reindex_all
+
+	http://www.example.com/posy.cgi?reindex_all=1
+
+Setting this parameter to true (1) will trigger a re-index of the whole site,
+clearing all values and starting from scratch.  For larger sites, this can take
+a while.
+
 =item reindex
 
 	http://www.example.com/posy.cgi?reindex=1
 
 Setting this parameter to true (1) will trigger a re-index of the whole
-site.  For larger sites, this can take a while.
+site; while this does go through every file, it only updates the data for
+new files.  For larger sites, this can take a while.
 
 =item reindex_cat
 

@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.94> of Posy::Core.
+This describes version B<0.95> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.94';
+our $VERSION = '0.95';
 
 =head1 SYNOPSIS
 
@@ -783,11 +783,14 @@ This uses caching by default.
 
 Expects $self->{path} and $self->{config} to be set.
 
-Sets $self->{reindex} if full reindexing has been done.
+Sets $self->{reindex_all} if full reindexing has been done.
 
 This will do a full reindex if
 (a) there are no caches existing
-(b) the 'reindex' parameter is true
+(b) the 'reindex_all' parameter is true
+
+This will do an "updating" reindex (only change data for new files)
+if the 'reindex' parameter is true.
 
 This will do a partial reindex (one category) if the 'reindex_cat'
 parameter is set to a category id.
@@ -814,23 +817,31 @@ sub index_entries {
     $self->{config}->{categories_cachefile} ||=
 	File::Spec->catfile($self->{state_dir}, 'categories.dat');
 
-    $self->{reindex} = 1 if ($self->param('reindex'));
-    $self->{reindex} = 1 if (!$self->_init_caching());
-    if (!$self->{reindex})
+    my $do_reindex = 0;
+    my $do_delindex = 0;
+    $self->{reindex_all} = 1 if ($self->param('reindex_all'));
+    $self->{reindex_all} = 1 if (!$self->_init_caching());
+    if (!$self->{reindex_all})
     {
-	$self->{reindex} = 1 if (!$self->_read_caches());
+	$self->{reindex_all} = 1 if (!$self->_read_caches());
     }
+    $do_reindex = 1 if ($self->param('reindex') or $self->{reindex_all});
+    $do_delindex = 1 if ($self->param('reindex') or $self->param('delindex'));
 
-    if ($self->{reindex}) {
-	$self->{files} = {};
-	$self->{others} = {};
-	$self->{categories} = {};
-	$self->debug(1, "reindexing $self->{reindex}");
+    if ($do_reindex) {
+	if ($self->{reindex_all})
+	{
+	    $self->{files} = {};
+	    $self->{others} = {};
+	    $self->{categories} = {};
+	}
+	$self->debug(1, "reindexing $do_reindex");
 	find({wanted=>sub { $self->_wanted() },
 	    untaint=>1,
 	    follow=>$self->{follow_symlinks},
 	    },
 	     $self->{data_dir});
+	$self->set_category_count();
 	$self->_save_caches();
     }
     else {
@@ -848,27 +859,8 @@ sub index_entries {
 		 follow=>$self->{follow_symlinks},
 		 },
 		 $reindex_dir);
+	    $self->set_category_count();
 	    $self->_save_caches();
-	}
-
-	# If any files not available, delete them and just save the cache
-	if ($self->param('delindex'))
-	{
-	    $self->debug(1, "checking for deleted files");
-	    my $deletions = 0;
-	    while (my $key = each %{$self->{files}})
-	    { -f $self->{files}->{$key}->{fullname}
-		or do { $deletions++; delete $self->{files}->{$key} };
-	    }
-	    while (my $key = each %{$self->{others}})
-	    { -f $key
-		or do { $deletions++; delete $self->{others}->{$key} };
-	    }
-	    while (my $key = each %{$self->{categories}})
-	    { -d $self->{categories}->{$key}->{fullname}
-		or do { $deletions++; delete $self->{categories}->{$key} };
-	    }
-	    $self->_save_caches() if $deletions;
 	}
 
 	# if the current path entry exists, but is not indexed,
@@ -907,6 +899,26 @@ sub index_entries {
 	    $self->debug(1, "added new file $file_id");
 	    $self->_save_caches();
 	}
+    }
+    # If any files not available, delete them and just save the cache
+    if ($do_delindex)
+    {
+	$self->debug(1, "checking for deleted files");
+	my $deletions = 0;
+	while (my $key = each %{$self->{files}})
+	{ -f $self->{files}->{$key}->{fullname}
+	    or do { $deletions++; delete $self->{files}->{$key} };
+	}
+	while (my $key = each %{$self->{others}})
+	{ -f $key
+	    or do { $deletions++; delete $self->{others}->{$key} };
+	}
+	while (my $key = each %{$self->{categories}})
+	{ -d $self->{categories}->{$key}->{fullname}
+	    or do { $deletions++; delete $self->{categories}->{$key} };
+	}
+	$self->set_category_count();
+	$self->_save_caches() if $deletions;
     }
 } # index_entries
 
@@ -1711,6 +1723,32 @@ sub set_vars {
     return %vars;
 } # set_vars
 
+=head2 set_category_count
+
+$self->set_category_count();
+
+Count the number of files in each category.
+(Called from L<index_entries>)
+
+=cut
+sub set_category_count {
+    my $self = shift;
+
+    while (my $cat_id = each(%{$self->{categories}}))
+    {
+	# reset the count to zero
+	$self->{categories}->{$cat_id}->{num_entries} = 0;
+    }
+    # go through all the files
+    while (my $id = each(%{$self->{files}}))
+    {
+	my $cat_id = $self->{files}->{$id}->{cat_id};
+	# increment for all non-index entries
+	$self->{categories}->{$cat_id}->{num_entries}++
+	    if ($self->{files}->{$id}->{basename} ne 'index');
+    }
+} # set_category_count
+
 =head2 get_template
 
     my $template = $self->get_template($chunk);
@@ -2398,7 +2436,12 @@ sub _wanted {
 					   $self->{data_dir});
 	    my @path_split = File::Spec->splitdir($path);
 	    my $cat_id = join('/', @path_split);
-	    if ($dir_base !~ /^\./) # not hidden
+	    if (exists $self->{categories}->{$cat_id}
+		and defined $self->{categories}->{$cat_id})
+	    {
+		# do nothing
+	    }
+	    elsif ($dir_base !~ /^\./) # not hidden
 	    {
 		$self->{categories}->{$cat_id}->{id} = $cat_id;
 		$self->{categories}->{$cat_id}->{fullname} = $File::Find::name;
@@ -2433,10 +2476,14 @@ sub _wanted {
 		my $path_and_filebase = ($cat_id
 		    ? join('/', $cat_id, $fn_base) : $fn_base);
 		$self->debug(2, "$cat_id:$fn_base:$ext <=> $fullname\n");
-
-		# to show or not to show future entries
-		if ($self->{config}->{show_future_entries}
+		if (exists $self->{files}->{$path_and_filebase}
+		    and defined $self->{files}->{$path_and_filebase})
+		{
+		    # do nothing
+		}
+		elsif ($self->{config}->{show_future_entries}
 		    or stat($File::Find::name)->mtime <= $self->{now}) 
+		# to show or not to show future entries
 		{
 		    $self->{files}->{$path_and_filebase}->{fullname} =
 			$File::Find::name;

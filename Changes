@@ -1,6 +1,23 @@
 Revision history for Posy
 =========================
 
+0.95 Thu 12 May 2005
+--------------------
+
+  * (12 May 2005) revamp reindexing
+  	Changed "reindex" parameter to only update new files;
+  added "reindex_all" which does what the old "reindex" used to do.
+
+  * (11 May 2005) "other" gen_type in static generation
+  	The new "other" type for static generation will copy all the
+  "other" files (non-config, non-entry) from the data directory to
+  the static directory.  This was the missing link for generating
+  a truely "static" site.
+
+  * (11 May 2005) added Makefile.PL
+  	Seems that some install failures were because CPAN.pm
+  can't cope without Makefile.PL being there.
+
 0.94 Mon 11 April 2005
 ----------------------
 

@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.94> of Posy.
+This describes version B<0.95> of Posy.
 
 =cut
 
-our $VERSION = '0.94';
+our $VERSION = '0.95';
 
 =head1 SYNOPSIS
 
@@ -66,6 +66,11 @@ Generate all category files.
 
 Generate all chrono files.
 
+=item other
+
+Copy all "other" non-configuration files from the data dir over
+to the static dir.
+
 =back
 
 =item gen_match=>I<regex>
@@ -82,8 +87,7 @@ Be verbose?
 =cut
 
 use File::Spec;
-use Storable;
-use Data::Dumper;
+use File::Copy;
 
 =head1 CLASS METHODS
 
@@ -176,6 +180,46 @@ sub run {
 	$self->do_actions();
 	# if we are only doing path, then return.
 	if ($gen_type eq 'path')
+	{
+	    return 1;
+	}
+    }
+    # make sure the static directory exists!
+    if (!-e $static_dir)
+    {
+	mkdir $static_dir;
+    }
+    #
+    # copy over all the non-config "other" files
+    #
+    if ($gen_type =~ /other/)
+    {
+	while (my ($file, $cat_id) = each(%{$self->{others}}))
+	{
+	    if ($file !~ /config$/)
+	    {
+		# make the directory if need be
+		my @cat_split = split('/', $cat_id);
+		my @dir_parts = ();
+		foreach my $dir_part (@cat_split)
+		{
+		    push @dir_parts, $dir_part;
+		    my $fullcat = File::Spec->catdir($static_dir, @dir_parts);
+		    if (!-e $fullcat)
+		    {
+			mkdir $fullcat;
+			print STDERR "DIR: $fullcat\n" if $verbose;
+		    }
+		}
+		# copy the file
+		my $rel_file = File::Spec->abs2rel($file, $self->{data_dir});
+		my $dest_file = File::Spec->rel2abs($rel_file, $static_dir);
+		print STDERR "COPY: $file -> $dest_file\n" if $verbose;
+		copy($file, $dest_file);
+	    }
+	}
+	# if we are only doing other, then return.
+	if ($gen_type eq 'other')
 	{
 	    return 1;
 	}
@@ -350,6 +394,8 @@ sub get_path_info {
 
     Posy
     Posy::Core
+    File::Spec
+    File::Copy
 
     Test::More
 

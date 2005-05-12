@@ -9,6 +9,7 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/Posy.pm',
 	requires            => {
 	'File::Spec' => 0,
+	'File::Copy' => 0,
 	'File::stat' => 0,
 	'File::Find' => 0,
 	'Storable' => 0,
@@ -26,3 +27,8 @@ my $builder = Module::Build->new(
 );
 
 $builder->create_build_script();
+
+# create the Makefile.PL
+use Module::Build::Compat;
+print "creating Makefile.PL\n";
+Module::Build::Compat->create_makefile_pl('passthrough', $builder);

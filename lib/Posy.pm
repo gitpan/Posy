@@ -7,11 +7,11 @@ Posy - a website generator inspired by blosxom
 
 =head1 VERSION
 
-This describes version B<0.94> of Posy.
+This describes version B<0.95> of Posy.
 
 =cut
 
-our $VERSION = '0.94';
+our $VERSION = '0.95';
 
 =head1 SYNOPSIS
 
@@ -155,6 +155,7 @@ of the output pages while keeping the content separate.
 =head1 REQUIRES
 
     File::Spec
+    File::Copy
     File::stat
 
     File::Find

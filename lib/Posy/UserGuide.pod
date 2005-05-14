@@ -4,11 +4,11 @@ Posy::UserGuide - a guide for users of Posy.
 
 =head1 VERSION
 
-This describes version B<0.95> of Posy::UserGuide.
+This describes version B<0.96> of Posy::UserGuide.
 
 =cut
 
-our $VERSION = '0.95';
+our $VERSION = '0.96';
 
 =head1 DESCRIPTION
 
@@ -558,8 +558,8 @@ called '$config_flavour' inside the template file.
 The global config file is just called 'config'.  The values in this file
 can be overridden by other files which are more specific to the context
 in which they are used.  Thus, one can set defaults for a whole site,
-and then change them on a per-path, per-chunk, per-path-type and/or
-per-file basis.
+and then change them on a per-path, per-path-type, per-flavour
+and/or per-file basis.
 
 The config files are called
 
@@ -567,7 +567,7 @@ The config files are called
 
 =item *
 
-I<path_type>.I<chunk>.I<basename>.config
+I<path_type>.I<basename>.I<flavour>.config
 
 =item *
 
@@ -575,11 +575,19 @@ I<path_type>.I<basename>.config
 
 =item *
 
-I<chunk>.I<basename>.config
+I<path_type>.I<flavour>.config
 
 =item *
 
-I<path_type>.I<chunk>.config
+I<basename>.I<flavour>.config
+
+=item *
+
+I<basename>.config
+
+=item *
+
+I<flavour>.config
 
 =item *
 
@@ -587,13 +595,13 @@ I<path_type>.config
 
 =item *
 
-I<chunk>.config
-
-=item *
-
 config
 
 =back
+
+Don't be daunted by the huge amount of flexibility in this: most of the
+time you're just going to be putting config settings in the top level
+most general config file: 'config'.
 
 Okay, so what's I<in> these config files?
 Very simple -- name:value pairs.

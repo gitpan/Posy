@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.95> of Posy::Core.
+This describes version B<0.96> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.95';
+our $VERSION = '0.96';
 
 =head1 SYNOPSIS
 
@@ -769,7 +769,7 @@ sub set_config {
     my $self = shift;
     my $flow_state = shift;
 
-    my %config = $self->get_config('');
+    my %config = $self->get_config();
     while (my ($key, $val) = each %config)
     {
 	$self->{config}->{$key} = $val;
@@ -1070,11 +1070,6 @@ sub content_type {
     my $self = shift;
     my $flow_state = shift;
 
-    my %config = $self->get_config('content_type');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
     my %vars = $self->set_vars($flow_state);
     my $template = $self->get_template('content_type');
     my $content_type = $self->interpolate('content_type', $template, \%vars);
@@ -1095,11 +1090,6 @@ sub head_template {
     my $self = shift;
     my $flow_state = shift;
 
-    my %config = $self->get_config('head');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
     $flow_state->{head_template} = $self->get_template('head');
     1;	
 } # head_template
@@ -1116,11 +1106,6 @@ sub foot_template {
     my $self = shift;
     my $flow_state = shift;
 
-    my %config = $self->get_config('foot');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
     $flow_state->{foot_template} = $self->get_template('foot');
     1;	
 } # foot_template
@@ -1489,11 +1474,6 @@ sub header {
     {
 	$current_entry->{$key} = $val;
     }
-    my %config = $self->get_config('header');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
     my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
     my $template = $self->get_template('header');
     my $header = $self->interpolate('header', $template, \%vars);
@@ -1520,11 +1500,6 @@ sub entry_template {
     my $current_entry = shift;
     my $entry_state = shift;
 
-    my %config = $self->get_config('entry');
-    while (my ($key, $val) = each %config)
-    {
-	$self->{config}->{$key} = $val;
-    }
     $entry_state->{entry_template} = $self->get_template('entry');
     1;	
 } # entry_template
@@ -1767,6 +1742,8 @@ Possible chunks are "content_type", "head", "header", "entry", "foot".
 The "header" and "entry" chunks are used during entry processing.
 
 Also looks for alternative path-types (minus the 'top_')
+Also looks for the default flavour file, if there is no closer matching
+file for the current cat_id.
 
 The template files are called
 
@@ -1797,8 +1774,9 @@ sub get_template {
 
     my $basename = $self->{path}->{basename};
     my $cat_id = $self->{path}->{cat_id};
-    my $path_type = $self->{path}->{type};
-    my $alt_path_type = ($path_type =~ /^top_(.*)$/ ? $1 : '');
+    my @path_types = ();
+    push @path_types, $self->{path}->{type},
+	$self->get_alt_path_types($self->{path}->{type});
     my $flavour = $self->{path}->{flavour} || $self->{config}->{flavour};
 
     my @path_split = split(/\//, $cat_id);
@@ -1813,37 +1791,20 @@ sub get_template {
     do {
 	my $path_id = (@path_split ? join('/', @path_split) : '');
 	my $look_dir = ($path_id ?
-	    File::Spec->catdir($base_dir, @path_split) : $base_dir);
-	# chunk, flavour, path, path_type, basename
-	$template = $self->_look_for_template(look_dir=>$look_dir,
-	    basename=>$basename,
-	    chunk=>$chunk,
-	    flavour=>$flavour,
-	    path_id=>$path_id,
-	    path_type=>$path_type);
-	return $template if (defined $template);
-	# chunk, flavour, path, path_type
-	if ($basename)
+			File::Spec->catdir($base_dir, @path_split) : $base_dir);
+
+	# search for the main path-type first, then alternates
+	foreach my $path_type (@path_types)
 	{
-	    $template = $self->_look_for_template(look_dir=>$look_dir,
-						  basename=>'',
-						  chunk=>$chunk,
-						  flavour=>$flavour,
-						  path_id=>$path_id,
-						  path_type=>$path_type);
-	    return $template if (defined $template);
-	}
-	# chunk, flavour, path, alt_path_type, basename
-	if ($alt_path_type)
-	{
+	    # chunk, flavour, path, path_type, basename
 	    $template = $self->_look_for_template(look_dir=>$look_dir,
 						  basename=>$basename,
 						  chunk=>$chunk,
 						  flavour=>$flavour,
 						  path_id=>$path_id,
-						  path_type=>$alt_path_type);
+						  path_type=>$path_type);
 	    return $template if (defined $template);
-	    # chunk, flavour, path, alt_path_type
+	    # chunk, flavour, path, path_type
 	    if ($basename)
 	    {
 		$template = $self->_look_for_template(look_dir=>$look_dir,
@@ -1851,28 +1812,28 @@ sub get_template {
 						      chunk=>$chunk,
 						      flavour=>$flavour,
 						      path_id=>$path_id,
-						      path_type=>$alt_path_type);
+						      path_type=>$path_type);
 		return $template if (defined $template);
 	    }
-	}
-	# chunk, flavour, path, basename
-	$template = $self->_look_for_template(look_dir=>$look_dir,
-	    basename=>$basename,
-	    chunk=>$chunk,
-	    flavour=>$flavour,
-	    path_id=>$path_id,
-	    path_type=>'');
-	return $template if (defined $template);
-	# chunk, flavour, path
-	if ($basename)
-	{
+	    # chunk, flavour, path, basename
 	    $template = $self->_look_for_template(look_dir=>$look_dir,
-						  basename=>'',
+						  basename=>$basename,
 						  chunk=>$chunk,
 						  flavour=>$flavour,
 						  path_id=>$path_id,
 						  path_type=>'');
 	    return $template if (defined $template);
+	    # chunk, flavour, path
+	    if ($basename)
+	    {
+		$template = $self->_look_for_template(look_dir=>$look_dir,
+						      basename=>'',
+						      chunk=>$chunk,
+						      flavour=>$flavour,
+						      path_id=>$path_id,
+						      path_type=>'');
+		return $template if (defined $template);
+	    }
 	}
     } while (pop @path_split);
 
@@ -1883,16 +1844,14 @@ sub get_template {
 
 =head2 get_config
 
-    my %config = $self->get_config($chunk);
+    my %config = $self->get_config();
 
 Get the config settings for this state, taking into account
 $self->{path}->{cat_id},
 $self->{path}->{type}
+$self->{path}->{flavour}
+and
 $self->{path}->{basename}
-and $chunk
-
-Possible chunks are nothing, "content_type", "head", "header", "entry",
-"foot".
 
 The config files are called
 
@@ -1900,7 +1859,7 @@ The config files are called
 
 =item *
 
-I<path_type>.I<chunk>.I<basename>.config
+I<path_type>.I<basename>.I<flavour>.config
 
 =item *
 
@@ -1908,19 +1867,23 @@ I<path_type>.I<basename>.config
 
 =item *
 
-I<chunk>.I<basename>.config
+I<basename>.I<flavour>.config
 
 =item *
 
-I<path_type>.I<chunk>.config
+I<path_type>.I<flavour>.config
+
+=item *
+
+I<basename>.config
+
+=item *
+
+I<flavour>.config
 
 =item *
 
 I<path_type>.config
-
-=item *
-
-I<chunk>.config
 
 =item *
 
@@ -1933,19 +1896,23 @@ Returns a hash of cumulative config settings.
 =cut
 sub get_config {
     my $self = shift;
-    my $chunk = shift;
 
     my $cat_id = $self->{path}->{cat_id};
-    my $basename = $self->{path}->{basename};
-    my $path_type = ($self->{path}->{type} ? $self->{path}->{type} : '');
-    my $alt_path_type = ($path_type =~ /^top_(.*)$/ ? $1 : '');
-    my $pathtype_chunk = ($path_type ? "$chunk.$path_type" : $chunk);
-    my $alt_pathtype_chunk = ($alt_path_type ? "$chunk.$alt_path_type" : $chunk);
+    my @path_types = ();
+    push @path_types, ($self->{path}->{type} ? $self->{path}->{type} : ''),
+	$self->get_alt_path_types($self->{path}->{type});
+    push @path_types, '';
+    my @bn_list = ();
+    push @bn_list, ($self->{path}->{basename} ? $self->{path}->{basename} : '');
+    push @bn_list, '' if $self->{path}->{basename};
+    my @flavours = ();
+    push @flavours, ($self->{path}->{flavour} ? $self->{path}->{flavour} : '');
+    push @flavours, '' if $self->{path}->{flavour};
 
     my @path_split = split(/\//, $cat_id);
     my $base_dir = $self->{config_dir};
 
-    $self->debug(2, "get_config: chunk=$chunk, cat_id=$cat_id, path_type=$path_type");
+    $self->debug(2, "get_config: cat_id=$cat_id, path_type=$self->{path}->{type}");
     # to save time, cache the settings, but only as we need them
     # if we fail to find one, deliberately set it to undefined
 
@@ -1960,83 +1927,24 @@ sub get_config {
     do {
 	my $path_id = (@path_split ? join('/', @path_split) : '');
 	my $look_dir = File::Spec->catdir($base_dir, @path_split);
-	if ($basename)
+
+	# search for the main path-type first, then alternates
+	foreach my $path_type (@path_types)
 	{
-	    if ($chunk)
+	    # search for with-basename first, then not
+	    foreach my $basename (@bn_list)
 	    {
-		# basename, path, path_type, chunk
-		$conf = $self->_look_for_config(look_dir=>$look_dir,
-						basename=>$basename,
-						chunk=>$chunk,
-						path_id=>$path_id,
-						path_type=>$path_type);
-		push @config_hashes, $conf if (defined $conf);
-		# basename, path, chunk
-		$conf = $self->_look_for_config(look_dir=>$look_dir,
-						basename=>$basename,
-						chunk=>$chunk,
-						path_id=>$path_id,
-						path_type=>'');
-		push @config_hashes, $conf if (defined $conf);
+		# search for with-flavour first, then not
+		foreach my $flavour (@flavours)
+		{
+		    $conf = $self->_look_for_config(look_dir=>$look_dir,
+						    basename=>$basename,
+						    flavour=>$flavour,
+						    path_id=>$path_id,
+						    path_type=>$path_type);
+		    push @config_hashes, $conf if (defined $conf);
+		}
 	    }
-	    # basename, path, path_type
-	    $conf = $self->_look_for_config(look_dir=>$look_dir,
-					    basename=>$basename,
-					    path_id=>$path_id,
-					    path_type=>$path_type);
-	    push @config_hashes, $conf if (defined $conf);
-	    # basename, path
-	    if ($path_id)
-	    {
-		$conf = $self->_look_for_config(look_dir=>$look_dir,
-						basename=>$basename,
-						path_id=>$path_id,
-						path_type=>'');
-		push @config_hashes, $conf if (defined $conf);
-	    }
-	    else # basename, top dir
-	    {
-		$conf = $self->_look_for_config(look_dir=>$base_dir,
-						basename=>$basename,
-						path_id=>'',
-						path_type=>'');
-		push @config_hashes, $conf if (defined $conf);
-	    }
-	}
-	if ($chunk)
-	{
-	    # path, path_type, chunk
-	    $conf = $self->_look_for_config(look_dir=>$look_dir,
-		chunk=>$chunk,
-		path_id=>$path_id,
-		path_type=>$path_type);
-	    push @config_hashes, $conf if (defined $conf);
-	    # path, chunk
-	    $conf = $self->_look_for_config(look_dir=>$look_dir,
-		chunk=>$chunk,
-		path_id=>$path_id,
-		path_type=>'');
-	    push @config_hashes, $conf if (defined $conf);
-	}
-	# path, path_type
-	$conf = $self->_look_for_config(look_dir=>$look_dir,
-					   path_id=>$path_id,
-					   path_type=>$path_type);
-	push @config_hashes, $conf if (defined $conf);
-	# path
-	if ($path_id)
-	{
-	    $conf = $self->_look_for_config(look_dir=>$look_dir,
-					       path_id=>$path_id,
-					       path_type=>'');
-	    push @config_hashes, $conf if (defined $conf);
-	}
-	else # top dir
-	{
-	    $conf = $self->_look_for_config(look_dir=>$base_dir,
-					       path_id=>'',
-					       path_type=>'');
-	    push @config_hashes, $conf if (defined $conf);
 	}
     } while (pop @path_split);
 
@@ -2053,6 +1961,31 @@ sub get_config {
 
     return %config;
 } # get_config
+
+=head2 get_alt_path_types
+
+my @alt_path_types = $self->get_alt_path_types($path_type)
+
+Return an array of possible alternative path-types (to use
+for matching in things like get_template and get_config).
+The array may be empty.
+
+    top_category -> category
+    top_entry -> entry
+
+(This may be overridden for additional path types)
+
+=cut
+sub get_alt_path_types {
+    my $self = shift;
+    my $path_type = shift;
+
+    my @alt_pts = ();
+    my $alt_path_type = ($path_type =~ /^top_(.*)$/ ? $1 : '');
+    push @alt_pts, $alt_path_type if $alt_path_type;
+
+    return @alt_pts;
+} # get_alt_path_types
 
 =head2 read_config_file
 
@@ -2173,9 +2106,9 @@ sub nice_date_time {
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
 	localtime($unixtime);
     my %vals = (
-	sec=>$sec,
-	min=>$min,
-	hour=>$hour,
+	sec=>sprintf("%02d", $sec),
+	min=>sprintf("%02d", $min),
+	hour=>sprintf("%02d", $hour),
 	year=>$year + 1900,
 	mnum=>$mon + 1,
 	da=>$mday,
@@ -2360,53 +2293,54 @@ Look for the given config with combination of features.
 sub _look_for_config {
     my $self = shift;
     my %args = (
-	chunk=>'',
 	basename=>'',
+	flavour=>'',
 	path_type=>'',
 	path_id=>'',
 	@_
 	);
     my $look_dir = $args{look_dir};
-    my $chunk = $args{chunk};
+    my $flavour = $args{flavour};
     my $basename = $args{basename};
     my $path_id = $args{path_id};
     my $path_type = $args{path_type};
 
 
     my $conf_file;
-    $conf_file = "${chunk}.${path_type}.${basename}.config"
-	if ($path_type and $chunk and $basename);
-    $conf_file = "${chunk}.${basename}.config"
-	if (!$path_type and $chunk and $basename);
+    $conf_file = "${path_type}.${basename}.${flavour}.config"
+	if ($flavour and $path_type and $basename);
+    $conf_file = "${basename}.${flavour}.config"
+	if ($flavour and !$path_type and $basename);
+    $conf_file = "${path_type}.${flavour}.config"
+	if ($flavour and $path_type and !$basename);
+    $conf_file = "${flavour}.config"
+	if ($flavour and !$path_type and !$basename);
+
     $conf_file = "${path_type}.${basename}.config"
-	if ($path_type and !$chunk and $basename);
-    $conf_file = "${chunk}.${path_type}.config"
-	if ($path_type and $chunk and !$basename);
+	if (!$flavour and $path_type and $basename);
     $conf_file = "${basename}.config"
-	if (!$path_type and !$chunk and $basename);
+	if (!$flavour and !$path_type and $basename);
     $conf_file = "${path_type}.config"
-	if ($path_type and !$chunk and !$basename);
-    $conf_file = "${chunk}.config"
-	if (!$path_type and $chunk and !$basename);
+	if (!$flavour and $path_type and !$basename);
     $conf_file = 'config'
-	if (!$path_type and !$chunk and !$basename);
+	if (!$flavour and !$path_type and !$basename);
 
     my $fh;
 
     my $config = undef;
-    if (exists $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename}
-	and defined $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename})
+    if (exists $self->{configs}->{$path_id}->{$path_type}->{$flavour}->{$basename}
+	and defined $self->{configs}->{$path_id}->{$path_type}->{$flavour}->{$basename})
     {
 	$config = 
-	    $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename};
+	    $self->{configs}->{$path_id}->{$path_type}->{$flavour}->{$basename};
 	return $config;
     }
-    elsif (!exists $self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename})
+    elsif (!exists $self->{configs}->{$path_id}->{$path_type}->{$flavour}->{$basename})
     {
 	# look for the file
 	my $look_file = File::Spec->catfile($look_dir, $conf_file);
 	my %cfg = $self->read_config_file($look_file);
-	$self->{configs}->{$path_id}->{$path_type}->{$chunk}->{$basename} =
+	$self->{configs}->{$path_id}->{$path_type}->{$flavour}->{$basename} =
 	    (%cfg ? \%cfg : undef);
 	return \%cfg if %cfg;
     }

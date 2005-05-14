@@ -1,6 +1,29 @@
 Revision history for Posy
 =========================
 
+0.96 Sat 14 May 2005
+--------------------
+
+  * (14 May 2005) nicer nice-date
+  	Now the times parts of the "nice" split out date-times of
+  the modification times of entries, are nicely two-digit, rather than
+  single-digit -- this makes them more sensible when displaying the times.
+
+  * (14 May 2005) removed per-chunk config
+  	Having a per-chunk config was unnecessarily complicated, it wasted
+  time, and I can't think of a good reason for needing it.  So I removed it.
+
+  * (14 May 2005) per-flavour config files
+  	Added per-flavour config files.  This could be useful for
+  special flavours which need particular settings (like perhaps special
+  ".edit" flavours or the like).
+
+  * (14 May 2005) get_alt_path_types
+  	The get_template and get_config methods now use the new method
+  get_alt_path_types to get a list of alternative path-types for a given
+  path_type.  This will facilitate plugins being able to add their own
+  path-types.
+
 0.95 Thu 12 May 2005
 --------------------
 

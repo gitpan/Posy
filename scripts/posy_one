@@ -10,11 +10,11 @@ posy_one - Script which uses the Posy engine to generate one file from an input 
 
 =head1 VERSION
 
-This describes version B<0.95> of posy_one.
+This describes version B<0.96> of posy_one.
 
 =cut
 
-our $VERSION = '0.95';
+our $VERSION = '0.96';
 
 =head1 SYNOPSIS
 

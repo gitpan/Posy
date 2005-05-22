@@ -24,7 +24,8 @@ data/flavours/head.rss
 data/flavours/header.html
 lib/Posy.pm
 lib/Posy/Core.pm
-lib/Posy/UserGuide.pod
+lib/Posy/Docs/UserGuide.pod
+lib/Posy/Docs/ProgrammerGuide.pod
 lib/Posy/Plugin/GenStatic.pm
 MANIFEST
 MANIFEST.SKIP

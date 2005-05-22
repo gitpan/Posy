@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.96> of Posy::Core.
+This describes version B<0.97> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.96';
+our $VERSION = '0.97';
 
 =head1 SYNOPSIS
 
@@ -1777,6 +1777,7 @@ sub get_template {
     my @path_types = ();
     push @path_types, $self->{path}->{type},
 	$self->get_alt_path_types($self->{path}->{type});
+    push @path_types, '';
     my $flavour = $self->{path}->{flavour} || $self->{config}->{flavour};
 
     my @path_split = split(/\//, $cat_id);
@@ -1793,48 +1794,22 @@ sub get_template {
 	my $look_dir = ($path_id ?
 			File::Spec->catdir($base_dir, @path_split) : $base_dir);
 
-	# search for the main path-type first, then alternates
-	foreach my $path_type (@path_types)
+	# Basename trumps all
+	foreach my $bn ($basename, '')
 	{
-	    # chunk, flavour, path, path_type, basename
-	    $template = $self->_look_for_template(look_dir=>$look_dir,
-						  basename=>$basename,
-						  chunk=>$chunk,
-						  flavour=>$flavour,
-						  path_id=>$path_id,
-						  path_type=>$path_type);
-	    return $template if (defined $template);
-	    # chunk, flavour, path, path_type
-	    if ($basename)
+	    # search for the main path-type first, then alternates
+	    foreach my $path_type (@path_types)
 	    {
 		$template = $self->_look_for_template(look_dir=>$look_dir,
-						      basename=>'',
+						      basename=>$bn,
 						      chunk=>$chunk,
 						      flavour=>$flavour,
 						      path_id=>$path_id,
 						      path_type=>$path_type);
 		return $template if (defined $template);
 	    }
-	    # chunk, flavour, path, basename
-	    $template = $self->_look_for_template(look_dir=>$look_dir,
-						  basename=>$basename,
-						  chunk=>$chunk,
-						  flavour=>$flavour,
-						  path_id=>$path_id,
-						  path_type=>'');
-	    return $template if (defined $template);
-	    # chunk, flavour, path
-	    if ($basename)
-	    {
-		$template = $self->_look_for_template(look_dir=>$look_dir,
-						      basename=>'',
-						      chunk=>$chunk,
-						      flavour=>$flavour,
-						      path_id=>$path_id,
-						      path_type=>'');
-		return $template if (defined $template);
-	    }
 	}
+
     } while (pop @path_split);
 
     # if all else fails, use the default flavour
@@ -1902,9 +1877,7 @@ sub get_config {
     push @path_types, ($self->{path}->{type} ? $self->{path}->{type} : ''),
 	$self->get_alt_path_types($self->{path}->{type});
     push @path_types, '';
-    my @bn_list = ();
-    push @bn_list, ($self->{path}->{basename} ? $self->{path}->{basename} : '');
-    push @bn_list, '' if $self->{path}->{basename};
+    my $basename = $self->{path}->{basename};
     my @flavours = ();
     push @flavours, ($self->{path}->{flavour} ? $self->{path}->{flavour} : '');
     push @flavours, '' if $self->{path}->{flavour};
@@ -1928,17 +1901,36 @@ sub get_config {
 	my $path_id = (@path_split ? join('/', @path_split) : '');
 	my $look_dir = File::Spec->catdir($base_dir, @path_split);
 
+	#
+	# Basename trumps everything
+	#
+
 	# search for the main path-type first, then alternates
 	foreach my $path_type (@path_types)
 	{
-	    # search for with-basename first, then not
-	    foreach my $basename (@bn_list)
+	    # search for with-flavour first, then not
+	    foreach my $flavour (@flavours)
+	    {
+		$conf = $self->_look_for_config(look_dir=>$look_dir,
+						basename=>$basename,
+						flavour=>$flavour,
+						path_id=>$path_id,
+						path_type=>$path_type);
+		push @config_hashes, $conf if (defined $conf);
+	    }
+	}
+
+	# now look for the non-basename ones, if there was a basename
+	if ($basename)
+	{
+	    # search for the main path-type first, then alternates
+	    foreach my $path_type (@path_types)
 	    {
 		# search for with-flavour first, then not
 		foreach my $flavour (@flavours)
 		{
 		    $conf = $self->_look_for_config(look_dir=>$look_dir,
-						    basename=>$basename,
+						    basename=>'',
 						    flavour=>$flavour,
 						    path_id=>$path_id,
 						    path_type=>$path_type);
@@ -2300,9 +2292,10 @@ sub _look_for_config {
 	@_
 	);
     my $look_dir = $args{look_dir};
+    my $path_id = $args{path_id};
+
     my $flavour = $args{flavour};
     my $basename = $args{basename};
-    my $path_id = $args{path_id};
     my $path_type = $args{path_type};
 
 

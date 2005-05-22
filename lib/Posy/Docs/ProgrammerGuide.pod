@@ -1,0 +1,551 @@
+=head1 NAME
+
+Posy::Docs::ProgrammerGuide - a guide for programmers of Posy.
+
+=head1 VERSION
+
+This describes version B<0.96> of Posy::Docs::ProgrammerGuide.
+
+=cut
+
+our $VERSION = '0.96';
+
+=head1 SYNOPSIS
+
+	perldoc Posy::Docs::ProgrammerGuide
+
+=head1 DESCRIPTION
+
+Welcome to the Posy documentation for developers.  If you want
+to know how to install, configure and use Posy, then look at
+L<Posy>, L<posy.cgi> and L<Posy::Docs::UserGuide>.
+
+Here you will find documentation on developing for and with Posy.
+This mainly covers how to write plugins for Posy.  If you can play
+with Perl in comfort, you can write a Posy plug-in.  Plugins are
+simply Perl modules which can be installed just like any other Perl
+module.
+
+=head1 WRITING PLUGINS
+
+=head2 Programmer Requirements
+
+Things you need to be reasonably familiar with in order to write
+Posy plugins:
+
+=over
+
+=item Perl
+
+Obviously.
+
+=item Perl module writing
+
+Because Posy plugins are Perl modules. See L<perlmod> for more information.
+
+=item Perl POD
+
+Because good work should be documented.  See L<perlpod> for more
+information.
+
+=item Perl Object-Oriented design
+
+Because Posy is object-oriented, and Posy plugins depend on this.  But you
+don't need to know a whole lot, since Posy takes care of most of this for
+you.  See L<perlboot> for a beginners introduction.
+
+=item Posy itself
+
+Well, you need to know how to use Posy before you can write for it, eh?
+
+=back
+
+=head2 Do I Need To Write A Plugin?
+
+People generally write plugins because they need to do something
+which the core functionality doesn't do.  But it may be that they
+don't actually need to write a plugin, because someone else
+has written a plugin which does what they need, or they haven't
+realized the full power of what they can already do, or both.
+
+=head3 Looking for Plugins
+
+Finding plugins for Posy is easy: all you have to do is search on CPAN.
+Go to http://search.cpan.org and enter "Posy" in the search field,
+and it will give you a list of all Posy-related modules which exist
+on CPAN.  You can then look through and see if there is anything
+there which does what you need.
+
+=head3 Posy::Plugin::TextTemplate
+
+If what you need isn't very complicated, you may find that all you need is
+to use the L<Posy::Plugin::TextTemplate> module, which enables you to put
+embedded perl inside your template files, and also optionally inside your
+entry files.
+
+=head3 Posy::Plugin::YamlConfig
+
+The config file mechanism is really, really flexible.  You can define
+config variables globally, per category, per flavour, and even per
+entry-file.  Add the flexibility of L<Posy::Plugin::YamlConfig> to that,
+and you can define config variables which are quite complicated.
+Combine that with L<Posy::Plugin::TextTemplate> and you can do an
+awful lot.
+
+For example, on my own site, I use a "site_links" config variable,
+which defines the global links for the navbar on my site.  Combined
+with the Posy::Plugin::TextTemplate and L<Posy::Plugin::LinkList>
+plugins, I just call the "link_list" method with the "$config_site_links"
+variable, inside my templates, and I didn't have to write anything more.
+(The Posy::Plugin::LinkList plugin is used by the
+L<Posy::Plugin::NearLinks> plugin -- ah, code reuse is good!)
+
+Another thing this can be useful for is trying out ideas first, to
+get them to work, and then write a plugin which streamlines it all,
+later.
+
+=head2 How Posy Works
+
+Posy has two modules which drive the whole thing: L<Posy> and L<Posy::Core>.
+Posy has been set up so that, when you give it a list of plugin modules to
+use, it imports them as children of each other, so that each one overrides
+the methods of the previous one, and/or adds new methods of its own.
+(see L<Posy/import> for more details).
+
+What this boils down to is that, if you want to change Posy's behaviour,
+you can (a) write methods which override existing methods, simply by
+writing a method with the same name, and (b) add additional functionality
+to Posy by writing new methods, especially new Action methods.
+
+Action methods?  Okay, back to how Posy works.
+
+Posy first sets up all the Plugins with its "import" method, and then it
+calls its "run" method, which (a) creates a new Posy object, (b) calls
+"init" on the object, (c) calls "do_actions" on the object.
+
+The "do_actions" method in turn calls all the actions in the passed-in
+"actions" array, which should include the "do_entry_actions" method,
+which in turn calls all the actions in the passed-in "entry_actions"
+array.  The entry actions are called once per entry; the "flow" actions
+are called once per run.
+
+Flow actions?
+
+Well, I had to have a name for them.  They flow on, one after another.
+Posy doesn't always manipulate the Posy object itself when building up the
+final web page -- it manipulates the "flow-state" hash, which is passed to
+every flow-action.  Until finally the "render_page" action takes all the
+separate parts of the page which have been built up (head, page_body and
+foot) and pastes them together and outputs them (to either a file or
+STDOUT).
+
+Entry actions?
+
+Entry actions are applied to each entry.  One of the early flow-actions,
+"select_entries", picks the list of entries which are going to be
+in the final page, either one (for an "entry" page) or many (for a
+"category" or "chrono" page).  Entry actions not only deal with the
+"flow_state" hash, but they have two other hashes that they manipulate, the
+"current_entry" hash, and the "entry_state" hash.  The current_entry hash
+contains (as one would expect) information about the current entry, such as
+the raw content of the entry ($current_entry->{raw}) and the processed
+content of the entry (such as $current_entry->{body},
+$current_entry->{title}) and so on.
+
+What the entry actions do is build up the "page_body" part of the page (the
+flow actions deal with the head and the foot).  Though, actually,
+"head_render" and "foot_render" could be considered dual-purpose actions.
+
+Dual-purpose actions?
+
+There are some actions which can be called as either "flow" actions or
+"entry" actions, and change their behaviour according to whether they are
+called as one or the other.  See L<Posy::Core/head_render> for an example.
+They aren't common, but can be useful in certain circumstances.
+
+For more details about the core methods, look in L<Posy::Core>.
+
+=head2 Before You Start
+
+All Posy plugins should be named as modules in the Posy::Plugin
+namespace.  Try to give your plugin a descriptive name, which explains
+I<what> it does, not I<how> it does it -- because you might change the
+"how" in the future, might you not?  On the other hand, sometimes the
+"how" is part of the "what", so use your discretion.
+
+Since Posy plugins are modules, you should set up the directory
+structure that Perl modules require.  There are a number of tools that
+can automate this for you.  The classic is "h2xs", which comes with
+Perl.  However, there are a few other ones which have been written
+since, as separate scripts/modules.  The one I use at the moment is
+L<Module::Starter>, which has a nice plugin archetecture (in fact, I
+based Posy's plugin archetecture on that of Module::Starter!)
+
+=head2 Kinds of Plugin
+
+What kind of plugin do you want to write?  Here are some examples.
+
+=over
+
+=item New Entry Type
+
+A new entry type plugin enables a new type of file to be used as an
+entry file; what it has to do is to know how to (a) generate HTML
+from the entry contents and (b) provide the contents of the entry title.
+L<Posy::Plugin::Pod> creates a new "pod" entry type, which enables .pod
+(and .pm) files to have their POD displayed as HTML.
+
+=item Entry Selection
+
+An entry-selection plugin affects how the list of entries is selected
+and/or filtered.  L<Posy::Plugin::FindGrep> generates a list of entries
+based on the search critera.  L<Posy::Plugin::LocalDepth> filters the list
+of entries based on their "depth" in the category tree.
+L<Posy::Plugin::Paginate> filters the list of entries based on the
+page-number in a set of pages.
+
+=item Filter entry body
+
+An entry-body filter plugin manipulates the $current_entry->{body}
+content, going through and replacing certain content with something else.
+
+L<Posy::Plugin::LinkExtra> checks for certain keywords inside relative
+links, and adds extra information to the link.
+L<Posy::Plugin::RandQuote> checks for <!--quote(filename)--> strings and
+displays a random quote from that file.
+L<Posy::Plugin::ThisFlavour> replaces all local links to the default
+flavour, with links to the current flavour (if this flavour is not the
+default).
+L<Posy::Plugin::Toc> goes through the body and adds a table of contents.
+
+=item Template-Variable generator
+
+Plugins of this kind create variables which can be used inside flavour
+templates.
+
+Some make variables to be used in the "header" template.  These variables
+are put into the "flow_state" hash.
+
+L<Posy::Plugin::DynamicCss> checks the browser agent information and
+creates $flow_dynamic_css_line which contains the stylesheet link
+metatag for the currently selected (browser-specific) CSS file.
+L<Posy::Plugin::FlavourMenu> creates a menu in $flow_flavour_menu to
+enable users to pick different "flavours" for the current page.
+
+Some make variables to be used in the "entry" template.
+
+L<Posy::Plugin::ShortBody> creates "entry_short_body", which contains the
+first sentence of the entry -- useful for "chrono" or "category" pages
+where you don't want to display the whole entry, but just link to it.
+
+=item Template-function provider
+
+Sometimes one wants something a bit more sophisticated and flexible than
+just a template variable -- a function that can be given different
+arguments, and called only when needed; if one is using
+Posy::Plugin:TextTemplate, then one can call functions/methods easily,
+just by putting C<[==$Posy-E<gt>function_name()==]> in one's template
+(or optionally entry-file).
+
+L<Posy::Plugin::Categories> provides the C<category_tree> and
+C<breadcrumb> functions, which will generate, respectively, a site map
+of the Posy site, and a "breadcrumb trail" set of links -- either as a nice
+structured line, or as a set of nested lists.  The flexibility of a
+function is required for this, because, for example, a breadcrumb trail
+is likely to need to be in a different style for different flavour
+templates.
+
+=item Enhancing Existing Functionality
+
+Some plugins replace default methods with a way of doing the same thing
+in a more powerful, useful, extended way.
+
+L<Posy::Plugin::YamlConfig> replaces the default C<read_config_file> method
+with one which reads config files in L<YAML> format -- something which is
+much more powerful and flexible.
+
+L<Posy::Plugin::TextTemplate> replaces the default interpolation with
+a method which enables the use of embedded Perl inside template (and entry)
+files.
+
+L<Posy::Plugin::TextToHTML> replaces the default entry-parsing for 'text'
+entries, and uses the powerful L<HTML::TextToHTML> module to HTMLise
+text entries.
+
+L<Posy::Plugin::NotFound> replaces the simple error message given when an
+entry is not found, with the ability to provide a special "not-found-error"
+entry file, which is processed with all the power of Posy.
+
+=item Support
+
+Some plugins are for support -- to put common, needed, functionality into
+one plugin, which other plugins can use, or just general support, such as
+debugging support.
+
+L<Posy::Plugin::CgiCarp> helps debugging by adding the L<CGI::Carp>
+functionality to Posy.
+
+L<Posy::Plugin::EntryTitles> provides a cache of the titles of all the known
+entries.  This can be used by plugins like L<Posy::Plugin::NearLinks>, and
+also provides the C<get_title> method, which hides the details of what any
+particular entry-type considers to be a "title", which means that all that
+new entry-types have to do is override this method, and any other plugins
+which need to know about titles don't have to be altered. (Ah, I love
+inheritance!)
+
+L<Posy::Plugin::FileStats> provides a cache of statistics about the files
+in the data directory -- this is used by L<Posy::Plugin::LinkExtra>, for
+example.
+
+=back
+
+Of course, not every plugin is going to fit neatly into the above
+categories, but the above should give you some ideas, anyway.
+
+=head2 Overriding Methods
+
+Some plugins will require you to override existing C<Posy::Core> methods.
+
+If you are overriding any method, try if at all possible to call the
+$self->SUPER::(method-name) method in your method, rather than trying to
+reproduce the original functionality with your own additions -- this makes
+the plugin more robust if the Core functionality gets changed, and/or with
+interacting with other plugins.
+
+Remember that the order of I<plugins> in the @plugins array determines
+which plugin overrides which, while the order of I<actions> in the
+@actions and @entry_actions arrays determines the order in which actions
+are performed.  The two are completely independent of each other.
+
+The methods inside Posy::Core are divided into six groups:
+
+=over
+
+=item CLASS METHODS
+
+Methods for the "Posy" class - in other words, "import" and "run".
+The "import" method can't really be overridden, because it's the
+thing which drives the plugin mechanism.  The "run" method can
+be overridden, but 99% of the time you don't need to do that.
+(L<Posy::Plugin::GenStatic> does override it, because it needs to
+generate multiple files instead of just one.  But unless you're writing
+a static-generation plugin, you won't need to).
+
+=item OBJECT METHODS
+
+Methods just for the Posy object; "new" and "init" and "do_actions".  Do
+NOT override "new" or "do_actions", you will break things.  If you need
+to do some initialization, make an "init" method, and call
+C<$self-E<gt>SUPER::init()> inside it, followed by your own
+initialization.  This makes sure that everybody's C<init> call will be
+called, in the order that the plugins were listed in the @plugins array.
+
+=item Flow Action Methods
+
+These are the methods called by the "do_actions" method.  These are
+required to have one argument (besides passing in the object itself), a
+reference to the "flow_state" hash.  These methods do processing for the
+whole page, their order is determined by the @actions array.
+
+Do NOT override the "do_entry_actions" method -- that could mess up the
+entry actions processing.
+
+=item Entry Action Methods
+
+These are the methods called by the "do_entry_actions" method. These
+are required to have three arguments (besides passing in the object
+itself).  First, the reference to the "flow_state" hash, as for Flow-action
+methods.  Then a reference to the "current_entry" hash, then a reference to
+the "entry_state" hash.
+
+=item Helper Methods
+
+These are helpful methods which are either (a) called by one or more of
+the above methods, or (b) as a Template-function called by the user.
+They are generally intended to be able to be overridden.
+
+=item Private Methods
+
+These are methods which shouldn't be known to the outside world, which can
+go away or be changed, which are called by other methods.  These methods
+shouldn't be overridden (since they could go away in future), but you can
+provide your own private methods which are called by your own methods
+in the other categories.  Private method names should be prefixed with "_"
+as a sign that they are private.
+
+=back
+
+=head2 Adding New Methods
+
+Some plugins require new methods to be added as well as or instead of
+overriding existing methods. You need to figure out what groups of methods
+your new methods fit into (see L</Overriding Methods> for the six groups).
+Most new methods will either be Helper methods or one of the Action
+methods.  Remember that Actions needed to be added to the @actions or
+@entry_actions arrays in order to be activated, as well as adding your new
+plugin to the @plugins array.
+
+If you're not sure whether a new action should be an entry-action or a
+flow action, consider this: if you had a page displaying multiple
+entries, would you want to do this action once, or for every entry?
+If only once, then it should be a flow-action, and manipulate the
+$flow_state hash.  If it is something that will change for every entry,
+then it should be an entry-action, and any per-entry values that you
+generate should be put in the $current_entry hash.
+
+=head2 Dos and Don'ts
+
+=over
+
+=item *
+
+Try to avoid polluting the config directory with new directory names
+to put specialized data files into; while this doesn't break things
+like the above problem, it does render things less flexible, since
+it forces people using your plugin to have a separate config
+directory -- which may be worth the price, or it may not.
+
+Alternatives:
+
+=over
+
+=item use Posy::Plugin::YamlConfig
+
+See L</Posy::Plugin::YamlConfig> above; the YamlConfig plugin enables
+one to define arbitrarily complex config data, and it saves you time
+and effort, since you don't have to write a parser for your data,
+and it enables the user to be very flexible in how they use
+your plugin.
+
+The downside, of course, is that it requires the user to install and use
+the YamlConfig plugin, which you might, for some unknown reason, wish to
+avoid.
+
+=item use a new .extension
+
+See L<Posy::Plugin::Info> for an example.  That plugin makes ".info"
+a new extension for files which contain extra information related
+to a given entry file.  Of course, that only makes sense if your
+data needs to be on a per-entry basis.
+
+=back
+
+=item *
+
+DO: Config variable names for your plugin must be prefixed with the name of
+the plugin; for example, L<Posy::Plugin::Toc> has config variables
+which are prefixed with "toc_".
+
+=item *
+
+DO: Have a config variable which turns your plugin on and off (if it's
+that kind of plugin) -- either an explicit "on/off" variable, or
+a variable which is checked whether it is set, and if it is not set,
+the plugin doesn't do anything.
+
+This means that the user can choose which categories and/or entries to
+turn that functionality on for.  For example,
+L<Posy::Plugin::LocalDepth> does nothing when the "localdepth" variable
+is zero, and L<Posy::Plugin::TextTemplate> uses "tt_recurse_into_entry" to
+decide whether or not to enable embedded perl inside entry files. The
+beauty of this is that, because config files can be on a per-entry
+level, one can turn on embedded perl processing for only those entry
+files into which one has put embedded perl, and all the rest can be off
+by default (that makes things more secure, as well as faster).
+
+Of course, this doesn't make sense for every kind of plugin.
+
+=item *
+
+DO: New method names for a plugin should have the plugin-name (or
+reasonable abbreviation thereof) as part of their name.  It doesn't have
+to be a prefix, but it needs to be easy to distinguish.  So, for
+example, the L<Posy::Plugin::Toc> plugin has an entry-action "make_toc"
+which is the action where it makes the table of contents; because this
+is an I<action> method, it's more readable to give it an "action" name
+"make_toc" rather than "toc_make".
+
+=item *
+
+DO remember the State directory.  Most plugins don't need to use it,
+but if your plugin needs to cache information from one invocation to the
+next, the state_dir is the place to put it.  However, DON'T put
+user-configured information in the state_dir, that's what the config_dir is
+for.
+
+=item *
+
+DO document your plugin in a similar way to the core plugins.
+Have the usual POD sections for NAME, SYNOPSIS, DESCRIPTION (with
+Activation and Configuration sub-sections), INSTALLATION and so on.
+Have POD sections for the different groups of methods.
+Of course, don't have a section for methods you don't implement.
+Most of the time plugins will only have Flow Action Methods,
+Entry Action Methods and/or Helper Methods (along with Private Methods).
+
+=item *
+
+DO upload your plugin to CPAN if you think anyone else might find it
+useful.
+
+=back
+
+=head2 Debugging
+
+Posy has a built-in "debug" method, which one can use to print out
+debugging messages from within your code, at different levels of
+verbosity, which you can switch on and off with the "debug_level"
+argument to Posy::run.  A debug level of zero switches off debug
+output; a level of 1 will print all debug statements with a level
+of 1, a level of 2 will print all debug statements with a level of
+2 or below, and so on.
+
+There are also a few plugins which can be helpful to use to aid debugging
+when you are developing a plugin.
+
+=over
+
+=item Posy::Plugin::Dump
+
+L<Posy::Plugin::Dump> helps debugging by enabling one to "dump" the
+contents of the object and other hashes, at any time, by providing 
+a dual-purpose Action which can be put at any point in the "actions"
+or "entry_actions" lists -- multiple times, if you so wish.
+This can be helful in figuring out if Posy has managed to read in
+certain values correctly, or basically trying to figure out what it
+thinks it's doing.
+
+=item Posy::Plugin::CgiCarp
+
+The L<Posy::Plugin::CgiCarp> plugin aids debugging my making all
+fatal errors and warning messages be displayed in the browser by
+using the L<CGI::Carp> module.
+
+=back
+
+=head1 SEE ALSO
+
+perl(1).
+L<Posy>
+posy.cgi
+
+=head1 BUGS
+
+Please report any bugs or feature requests to the author.
+
+=head1 AUTHOR
+
+    Kathryn Andersen (RUBYKAT)
+    perlkat AT katspace dot com
+    http://www.katspace.com
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (c) 2005 by Kathryn Andersen
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+1; # End of Posy::Docs::ProgrammerGuide

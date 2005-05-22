@@ -1,14 +1,18 @@
 =head1 NAME
 
-Posy::UserGuide - a guide for users of Posy.
+Posy::Docs::UserGuide - a guide for users of Posy.
 
 =head1 VERSION
 
-This describes version B<0.96> of Posy::UserGuide.
+This describes version B<0.97> of Posy::Docs::UserGuide.
 
 =cut
 
-our $VERSION = '0.96';
+our $VERSION = '0.97';
+
+=head1 SYNOPSIS
+
+	perldoc Posy::Docs::UserGuide
 
 =head1 DESCRIPTION
 
@@ -1240,4 +1244,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1; # End of Posy::UserGuide
+1; # End of Posy::Docs::UserGuide

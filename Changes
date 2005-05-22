@@ -1,6 +1,22 @@
 Revision history for Posy
 =========================
 
+0.97 Sun 22 May 2005
+--------------------
+
+  * (22 May 2005) Posy::Docs::ProgrammerGuide
+  	Now the Programmer Guide for writing plugins!
+
+  * (22 May 2005) bugfix for template and config files
+  	The get_template and get_config methods weren't finding the "basename"
+  files in the right order.
+
+  * (22 May 2005) added darcs boringfile
+
+  * (14 May 2005) renamed UserGuide
+  	Now it's called Posy::Docs::UserGuide, in anticipation
+  of having other Docs in future.
+
 0.96 Sat 14 May 2005
 --------------------
 

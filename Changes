@@ -1,6 +1,35 @@
 Revision history for Posy
 =========================
 
+0.98 Sat 23 July 2005
+---------------------
+
+  * (23 Jul 2005) fixes and efficiency
+  	Bug-fixing the footer stuff.
+  	Changes to make a few things run a bit more effciently.
+  	And some documentation tweaks.
+
+  * (21 Jul 2005) tweaking debug info
+
+  * (18 Jul 2005) changed the meaning of static
+  	Now the $self->{static} value no longer means Not dynamic; it is
+  now only set to true when static generation is being done by
+  Posy::Plugin::GenStatic (called by posy_static).  This I think is more
+  meaningful, because it enables one to change behaviour when one is
+  really doing static generation, not just when one is not running from a
+  webserver.
+
+  * (10 Jul 2005) footer
+  	Added a "footer" chunk which is a complement to "header"; it
+  changes when the header changes, and is placed to bookend the previous
+  header (and is thus also added just before the "foot" is added).
+  	The default footer is empty.
+
+  * (10 Jul 2005) got rid of posy_one
+  	The posy_one script has never really worked properly, and was only
+  used by me to build templates for CGI scripts being used in a hybrid site.
+  Since Posy::Plugin::CgiFile makes that needless, I'm removing it.
+
 0.97 Sun 22 May 2005
 --------------------
 

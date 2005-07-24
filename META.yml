@@ -1,6 +1,6 @@
 ---
 name: Posy
-version: 0.97
+version: 0.98
 author:
   - Kathryn Andersen
 abstract: a website generator inspired by blosxom
@@ -20,11 +20,11 @@ build_requires:
 provides:
   Posy:
     file: lib/Posy.pm
-    version: 0.97
+    version: 0.98
   Posy::Core:
     file: lib/Posy/Core.pm
-    version: 0.97
+    version: 0.98
   Posy::Plugin::GenStatic:
     file: lib/Posy/Plugin/GenStatic.pm
-    version: 0.97
-generated_by: Module::Build version 0.261
+    version: 0.98
+generated_by: Module::Build version 0.2611

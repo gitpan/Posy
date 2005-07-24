@@ -32,7 +32,6 @@ MANIFEST.SKIP
 META.yml			# Will be created by "make dist"
 posy.cgi
 README
-scripts/posy_one
 scripts/posy_static
 t/00_dist.t
 t/01_load.t

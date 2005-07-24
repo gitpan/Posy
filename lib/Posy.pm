@@ -7,11 +7,11 @@ Posy - a website generator inspired by blosxom
 
 =head1 VERSION
 
-This describes version B<0.97> of Posy.
+This describes version B<0.98> of Posy.
 
 =cut
 
-our $VERSION = '0.97';
+our $VERSION = '0.98';
 
 =head1 SYNOPSIS
 
@@ -40,8 +40,8 @@ require one to write one's entry files in a particular format; one
 can choose from pure HTML, plain text, or blosxom format.  And other
 formats can be dealt with if one writes a plugin to deal with them.
 
-This distribution includes a CGI script (posy.cgi) and two command-line
-scripts (posy_static, posy_one) which use the Posy engine to process input
+This distribution includes a CGI script (posy.cgi) and one command-line
+script (posy_static) which use the Posy engine to process input
 data files into web-page output.
 
 =head2 Terms
@@ -186,9 +186,8 @@ installing the modules is to use the CPAN or CPANPLUS system.
 
     cpanp -i Posy
 
-This will install the modules and the B<posy_static> and B<posy_one>
-scripts in the usual places which they get installed when one is using
-CPAN(PLUS).
+This will install the modules and the B<posy_static> script in the usual
+places which they get installed when one is using CPAN(PLUS).
 
 Note, however, that this does NOT install the CGI script, and that this
 will need to be done separately.  Therefore you will need to grovel around
@@ -249,8 +248,7 @@ Download the Posy-*tar.gz file.
 This will install the files underneath /home/fred/perl.
 
 You will then need to make sure that you alter the PERL5LIB variable to
-find the modules, and the PATH variable to find the scripts (posy_one,
-posy_static).
+find the modules, and the PATH variable to find the script (posy_static).
 
 Therefore you will need to change:
 your path, to include /home/fred/perl/script (where the script will be)

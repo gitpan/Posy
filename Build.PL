@@ -22,7 +22,7 @@ my $builder = Module::Build->new(
         'Test::More' => 0,
     },
     #add_to_cleanup      => [ 'Posy-*' ],
-    script_files => [qw(scripts/posy_one scripts/posy_static)],
+    script_files => [qw(scripts/posy_static)],
 
 );
 

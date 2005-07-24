@@ -7,11 +7,11 @@ Posy::Plugin::GenStatic - Posy plugin for generating static pages.
 
 =head1 VERSION
 
-This describes version B<0.97> of Posy.
+This describes version B<0.98> of Posy.
 
 =cut
 
-our $VERSION = '0.97';
+our $VERSION = '0.98';
 
 =head1 SYNOPSIS
 
@@ -26,6 +26,10 @@ This plugin replaces the 'run' method in order to generate all
 known pages of a given type.  It replaces the 'get_path_info' helper method.
 It also provides a new action 'set_outfile', which will automatically be
 added to the list of actions before 'render_page'.
+
+This sets the $self->{static} variable to true, as we are generating static
+pages here; this can be used in templates (as $static) or in plugins,
+to change their behaviour when static pages are being generated.
 
 It expects extra parameters:
 
@@ -118,6 +122,7 @@ sub run {
     # desired actions.
     my $self = $class->new(%args);
     $self->init();
+    $self->{static} = 1;
 
     #
     # Change the actions

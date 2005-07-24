@@ -307,7 +307,7 @@ categories, but the above should give you some ideas, anyway.
 Some plugins will require you to override existing C<Posy::Core> methods.
 
 If you are overriding any method, try if at all possible to call the
-$self->SUPER::(method-name) method in your method, rather than trying to
+$self->SUPER::I<method-name> method in your method, rather than trying to
 reproduce the original functionality with your own additions -- this makes
 the plugin more robust if the Core functionality gets changed, and/or with
 interacting with other plugins.

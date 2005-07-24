@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.97> of Posy::Core.
+This describes version B<0.98> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.97';
+our $VERSION = '0.98';
 
 =head1 SYNOPSIS
 
@@ -109,6 +109,7 @@ sub run {
     my $class = shift;
 
     my $self = $class->new(@_);
+    $self->{static} = 0;
     $self->init();
 
     $self->do_actions();
@@ -241,6 +242,7 @@ sub init {
 		</head>
 		<body><p>($path_basename.$path_flavour)</p>';
     $self->{templates}->{header}->{default} ||= '<h3>$entry_dw, $entry_da $entry_month $entry_year</h3>';
+    $self->{templates}->{footer}->{default} ||= '';
     $self->{templates}->{entry}->{default} ||=
 		'<p><b>$entry_title</b><br />$entry_body <a href="$url/$path_cat_id/$path_basename.$path_flavour">#</a></p>';
     $self->{templates}->{foot}->{default} ||= '</body></html>';
@@ -304,16 +306,18 @@ of their running.
 =head2 init_params
 
 Parse the global parameters.
-Creates a CGI object in $self->{cgi} and checks whether we are
-in a CGI environment (dynamic) or not (static) and sets
-$self->{dynamic} and $self->{static} accordingly.
 
-Note that "static" does not mean the same thing as with blosxom2;
+Creates a CGI object in $self->{cgi} and checks whether we are in a CGI
+environment (dynamic) or not and sets $self->{dynamic} accordingly.
+
+Note that "dynamic" does not mean the same thing as with blosxom2;
 what actions are performed depend entirely on the $self->{actions} array;
 it won't be trying to generate all the files just because we
-aren't in CGI mode.
+aren't in CGI mode; if you want to do that, then use the posy_static
+script.
 
 Sets $self->{url} if it isn't already set.
+Does a number of other initializations.
 
 When this is not in dynamic mode, the parameters can be set (a) by passing
 them through the $self->{params} hash (by setting params=>{...} when
@@ -331,7 +335,6 @@ sub init_params {
 
     if ($ENV{GATEWAY_INTERFACE}) {
 	$self->{dynamic} = 1;
-	$self->{static} = 0;
 	# if we were redirected in a non-standard way, check query string
 	if (!$ENV{QUERY_STRING} and $ENV{REDIRECT_QUERY_STRING})
 	{
@@ -342,7 +345,6 @@ sub init_params {
     else
     {
 	$self->{dynamic} = 0;
-	$self->{static} = 1;
 
 	# trick CGI::Minimal into NOT reading STDIN
 	# this will now check $ENV{QUERY_STRING}
@@ -366,11 +368,14 @@ sub init_params {
 	}
     }
     # only set $self->{url} if it isn't defined; this allows users
-    # to define an empty URL for static generation
+    # to define an empty URL 
     if (!defined $self->{url})
     {
 	$self->{url} = $self->_url();
     }
+
+    # initialize the page body to nothing.
+    $flow_state->{page_body} = [];
 } # init_params
 
 =head2 parse_path
@@ -1083,7 +1088,6 @@ sub content_type {
 $self->head_template($flow_state, $current_entry, $entry_state);
 
 Set the head template in $flow_state->{head_template}
-This also sets the $self->{config} for head.
 
 =cut
 sub head_template {
@@ -1099,7 +1103,6 @@ sub head_template {
 $self->foot_template($flow_state);
 
 Set the foot template in $flow_state->{foot_template}
-This also sets the $self->{config} for foot.
 
 =cut
 sub foot_template {
@@ -1137,14 +1140,12 @@ sub head_render {
 	my %vars = $self->set_vars($flow_state);
 	my $template = $flow_state->{head_template};
 	$flow_state->{head} = $self->interpolate('head', $template, \%vars);
-	$flow_state->{page_body} = [];
     }
     elsif ($current_entry && $self->{path}->{type} =~ /entry$/)
     {
 	my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
 	my $template = $flow_state->{head_template};
 	$flow_state->{head} = $self->interpolate('head', $template, \%vars);
-	$flow_state->{page_body} = [];
     }
     1;	
 } # head_render
@@ -1156,11 +1157,13 @@ $self->foot_render($flow_state);
 Interpolate the foot template into the foot content;
 Set the foot content in $flow_state->{foot}
 
+This also adds the last "footer" before the "foot" content is given.
+
 If called as an entry action, will do nothing unless the current
 path type ($self->{path}->{type}) is an entry; if it is an entry,
 this will set the entry variables and set $flow_state->{foot}.
 If not called as an entry action, will not set $flow_state->{foot}
-if the path type is an entry and the foot has already been set.
+if the path type is an entry.
 
 =cut
 sub foot_render {
@@ -1171,16 +1174,32 @@ sub foot_render {
 
     if ($self->{path}->{type} =~ /entry$/ and $current_entry)
     {
-	$self->debug(2, "foot_render: rendering entry foot");
+	# add the last footer
 	my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
+	my $footer_template = $self->get_template('footer');
+	my $footer = $self->interpolate('footer', $footer_template, \%vars);
+	if (defined $flow_state->{header}
+	    && $footer)
+	{
+	    push @{$flow_state->{page_body}},  $footer;
+	}
+	$self->debug(2, "foot_render: rendering entry foot");
 	my $template = $flow_state->{foot_template};
 	$flow_state->{foot} = $self->interpolate('foot', $template, \%vars);
     }
     elsif ($self->{path}->{type} !~ /entry/
 	and !$current_entry)
     {
+	# add the last footer
+	my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
+	my $footer_template = $self->get_template('footer');
+	my $footer = $self->interpolate('footer', $footer_template, \%vars);
+	if (defined $flow_state->{header}
+	    && $footer)
+	{
+	    push @{$flow_state->{page_body}},  $footer;
+	}
 	$self->debug(2, "foot_render: rendering non-entry foot");
-	my %vars = $self->set_vars($flow_state);
 	my $template = $flow_state->{foot_template};
 	$flow_state->{foot} = $self->interpolate('foot', $template, \%vars);
     }
@@ -1225,8 +1244,8 @@ sub do_entry_actions {
 	if (!defined $current_entry{path_name}) # oh dear!
 	{
 	    require Data::Dumper;
-	    warn "path_name undefined: entry_id=$entry_id";
-	    warn "Posy=", Data::Dumper::Dumper($self);
+	    warn "path_name undefined: entry_id=", $entry_id, " num=", $current_entry{num};
+	    #warn "Posy=", Data::Dumper::Dumper($self);
 	}
 	$current_entry{path_pretty} = $self->{files}->{$entry_id}->{cat_id};
 	$current_entry{path_pretty} =~ s#/# :: #g;
@@ -1460,6 +1479,9 @@ Set the header content in $flow_state->{header}
 and add the header to @{$flow_state->{page_body}}
 if it is different to the previous header.
 
+If this is not the first header, also adds a footer, just
+before the new header.
+
 =cut
 sub header {
     my $self = shift;
@@ -1477,9 +1499,16 @@ sub header {
     my %vars = $self->set_vars($flow_state, $current_entry, $entry_state);
     my $template = $self->get_template('header');
     my $header = $self->interpolate('header', $template, \%vars);
+    my $footer_template = $self->get_template('footer');
     if (!defined $flow_state->{header}
 	or ($header ne $flow_state->{header}))
     {
+	# not the first header, add a footer
+	if (defined $flow_state->{header})
+	{
+	    my $footer = $self->interpolate('footer', $footer_template, \%vars);
+	    push @{$flow_state->{page_body}},  $footer if $footer;
+	}
 	push @{$flow_state->{page_body}},  $header;
 	$flow_state->{header} = $header;
     }
@@ -1644,54 +1673,58 @@ sub set_vars {
     my $entry_state = (@_ ? shift : undef);
 
     my %vars = ();
-    # set various global vars
-    foreach my $key (keys %{$self})
-    {
-	if (!ref $self->{$key})
-	{
-	    $vars{$key} = $self->{$key};
-	}
-    }
+    my $key;
+    # set selected global vars
+    $vars{url} = $self->{url};
+    $vars{dynamic} = $self->{dynamic};
+    $vars{static} = $self->{static};
+    $vars{base_dir} = $self->{base_dir};
+    $vars{data_dir} = $self->{data_dir};
+    $vars{config_dir} = $self->{config_dir};
+    $vars{state_dir} = $self->{state_dir};
+    $vars{flavour_dir} = $self->{flavour_dir};
+    $vars{debug_level} = $self->{debug_level};
+    $vars{now} = $self->{now};
+    $vars{this_year} = $self->{this_year};
+    $vars{this_month} = $self->{this_month};
+
     # set the path vars with path_ prepended
-    foreach my $key (keys %{$self->{path}})
+    foreach $key (keys %{$self->{path}})
     {
-	my $nm = "path_$key";
+	my $nm = 'path_' . $key;
 	$vars{$nm} = $self->{path}->{$key};
     }
     # set the param vars with param_ prepended
     my @keys = $self->param();
     foreach my $key (@keys)
     {
-	my $nm = "param_$key";
+	my $nm = 'param_' . $key;
 	$vars{$nm} = $self->param($key);
     }
     # set the config vars with config_ prepended
-    foreach my $key (keys %{$self->{config}})
+    foreach $key (keys %{$self->{config}})
     {
-	my $nm = "config_$key";
+	my $nm = 'config_' . $key;
 	$vars{$nm} = $self->{config}->{$key};
     }
     # set the flow vars with flow_ prepended
-    foreach my $key (keys %{$flow_state})
+    foreach $key (keys %{$flow_state})
     {
-	my $nm = "flow_$key";
+	my $nm = 'flow_' . $key;
 	$vars{$nm} = $flow_state->{$key};
     }
     if (defined $current_entry)
     {
 	# set the entry vars with entry_ prepended
-	foreach my $key (keys %{$current_entry})
+	foreach $key (keys %{$current_entry})
 	{
-	    my $nm = "entry_$key";
+	    my $nm = 'entry_' . $key;
 	    $vars{$nm} = $current_entry->{$key};
 	}
-    }
-    if (defined $entry_state)
-    {
 	# set the entry-state vars with es_ prepended
-	foreach my $key (keys %{$entry_state})
+	foreach $key (keys %{$entry_state})
 	{
-	    my $nm = "es_$key";
+	    my $nm = 'es_' . $key;
 	    $vars{$nm} = $entry_state->{$key};
 	}
     }
@@ -1738,8 +1771,9 @@ and of course $chunk
 Returns (a copy of) the found template.
 This is so that the following actions can alter the template as they see fit.
 
-Possible chunks are "content_type", "head", "header", "entry", "foot".
-The "header" and "entry" chunks are used during entry processing.
+Possible chunks are "content_type", "head", "header", "footer", "entry",
+"foot".  The "header", "footer" and "entry" chunks are used during entry
+processing.
 
 Also looks for alternative path-types (minus the 'top_')
 Also looks for the default flavour file, if there is no closer matching
@@ -1772,36 +1806,44 @@ sub get_template {
     my $self = shift;
     my $chunk = shift;
 
-    my $basename = $self->{path}->{basename};
-    my $cat_id = $self->{path}->{cat_id};
     my @path_types = ();
     push @path_types, $self->{path}->{type},
 	$self->get_alt_path_types($self->{path}->{type});
     push @path_types, '';
     my $flavour = $self->{path}->{flavour} || $self->{config}->{flavour};
 
-    my @path_split = split(/\//, $cat_id);
-    my $base_dir = (defined $self->{flavour_dir} and $self->{flavour_dir}
-	? $self->{flavour_dir} : $self->{data_dir});
-    # to save time, cache the templates, but only as we need them
-    # (useful for "header" and "story" templates)
-    # if we fail to find one, deliberately set it to undefined
+    my @path_split = split(/\//, $self->{path}->{cat_id});
+    my $look_dir;
+    my $template;
 
-    my $template = '';
     my $found = 0;
     do {
 	my $path_id = (@path_split ? join('/', @path_split) : '');
-	my $look_dir = ($path_id ?
-			File::Spec->catdir($base_dir, @path_split) : $base_dir);
+	$look_dir = ($path_id ?
+			File::Spec->catdir($self->{flavour_dir}, @path_split)
+			: $self->{flavour_dir});
 
 	# Basename trumps all
-	foreach my $bn ($basename, '')
+	# search for the main path-type first, then alternates
+	foreach my $path_type (@path_types)
+	{
+	    $template = $self->_look_for_template(look_dir=>$look_dir,
+						  basename=>$self->{path}->{basename},
+						  chunk=>$chunk,
+						  flavour=>$flavour,
+						  path_id=>$path_id,
+						  path_type=>$path_type);
+	    return $template if (defined $template);
+	}
+
+	# now look for the non-basename ones, if there was a basename
+	if ($self->{path}->{basename})
 	{
 	    # search for the main path-type first, then alternates
 	    foreach my $path_type (@path_types)
 	    {
 		$template = $self->_look_for_template(look_dir=>$look_dir,
-						      basename=>$bn,
+						      basename=>'',
 						      chunk=>$chunk,
 						      flavour=>$flavour,
 						      path_id=>$path_id,
@@ -1883,9 +1925,7 @@ sub get_config {
     push @flavours, '' if $self->{path}->{flavour};
 
     my @path_split = split(/\//, $cat_id);
-    my $base_dir = $self->{config_dir};
 
-    $self->debug(2, "get_config: cat_id=$cat_id, path_type=$self->{path}->{type}");
     # to save time, cache the settings, but only as we need them
     # if we fail to find one, deliberately set it to undefined
 
@@ -1899,7 +1939,7 @@ sub get_config {
     my $conf = undef;
     do {
 	my $path_id = (@path_split ? join('/', @path_split) : '');
-	my $look_dir = File::Spec->catdir($base_dir, @path_split);
+	my $look_dir = File::Spec->catdir($self->{config_dir}, @path_split);
 
 	#
 	# Basename trumps everything
@@ -1993,14 +2033,12 @@ sub read_config_file {
     my $self = shift;
     my $filename = shift;
 
-    $self->debug(2, "read_config_file: $filename");
     my %config;
     if (-r $filename)
     {
 	my $fh;
 	open($fh, $filename)
 		or die "couldn't open config file $filename: $!";
-	$self->debug(2, "read_config_file: file found");
 
 	while (<$fh>) { 
 		chomp;

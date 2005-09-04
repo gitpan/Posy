@@ -11,11 +11,11 @@ posy.cgi - CGI script using the Posy website generator
 
 =head1 VERSION
 
-This describes version B<0.98> of posy.cgi.
+This describes version B<0.99> of posy.cgi.
 
 =cut
 
-our $VERSION = '0.98';
+our $VERSION = '0.99';
 
 =head1 SYNOPSIS
 
@@ -259,7 +259,8 @@ our %file_extensions;
 The list of actions which Posy will perform.  Only alter this if you're using
 a plugin which requires adding a new action.
 
-    our @actions = qw(init_params
+    our @actions = qw(init_settings
+	    init_params
 	    parse_path
 	    process_path_error
 	    set_config
@@ -274,6 +275,7 @@ a plugin which requires adding a new action.
 	    do_entry_actions
 	    foot_render
 	    render_page
+	    tidy_up
 	);
 
 =cut

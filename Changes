@@ -1,6 +1,14 @@
 Revision history for Posy
 =========================
 
+0.99 Sun 04 September 2005
+--------------------------
+
+  * (2 Sep 2005) init_settings and tidy_up
+  	Added two new action methods, 'init_settings', which initializes
+  settings at the start, and 'tidy_up', which tidies things up after the
+  page has been rendered.
+
 0.98 Sat 23 July 2005
 ---------------------
 

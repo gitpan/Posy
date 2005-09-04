@@ -7,11 +7,11 @@ Posy::Core - the core methods for the Posy generator
 
 =head1 VERSION
 
-This describes version B<0.98> of Posy::Core.
+This describes version B<0.99> of Posy::Core.
 
 =cut
 
-our $VERSION = '0.98';
+our $VERSION = '0.99';
 
 =head1 SYNOPSIS
 
@@ -151,7 +151,8 @@ sub init {
     }
     if (!defined $self->{actions})
     {
-	$self->{actions} = [qw(init_params
+	$self->{actions} = [qw(init_settings
+	    init_params
 	    parse_path
 	    process_path_error
 	    set_config
@@ -166,6 +167,7 @@ sub init {
 	    do_entry_actions
 	    foot_render
 	    render_page
+	    tidy_up
 	)];
     }
     if (!defined $self->{entry_actions})
@@ -303,6 +305,23 @@ reference to a flow-state hash, and generally will update
 either that hash or the object itself, or both in the course
 of their running.
 
+=head2 init_settings
+
+Initialize various settings that need to be set before everything
+else.
+
+This is not the same as "init", because this is the start of
+the actions sequence.
+
+=cut
+sub init_settings {
+    my $self = shift;
+    my $flow_state = shift;
+
+    # initialize the page body to nothing.
+    $flow_state->{page_body} = [];
+} # init_settings
+
 =head2 init_params
 
 Parse the global parameters.
@@ -317,7 +336,6 @@ aren't in CGI mode; if you want to do that, then use the posy_static
 script.
 
 Sets $self->{url} if it isn't already set.
-Does a number of other initializations.
 
 When this is not in dynamic mode, the parameters can be set (a) by passing
 them through the $self->{params} hash (by setting params=>{...} when
@@ -373,9 +391,6 @@ sub init_params {
     {
 	$self->{url} = $self->_url();
     }
-
-    # initialize the page body to nothing.
-    $flow_state->{page_body} = [];
 } # init_params
 
 =head2 parse_path
@@ -1315,6 +1330,18 @@ sub render_page {
     }
     1;	
 } # render_page
+
+=head2 tidy_up
+
+Clean up things that need to be cleaned up after everything
+is done.
+
+=cut
+sub tidy_up {
+    my $self = shift;
+    my $flow_state = shift;
+
+} # tidy_up
 
 =head1 Entry Action Methods
 
